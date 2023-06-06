@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ghost-ghostk8s
+  namespace: ghostk8s
+  labels:
+    app: ghost-ghostk8s
+spec:
+  ports:
+  - port: 2368
+    protocol: TCP
+    targetPort: 2368
+    name: ghost-ec
+  type: ClusterIP
+  selector:
+    app: ghost-ghostk8s
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ghost-ghostk8s
+  namespace: ghostk8s
+spec:
+  tls:
+  - hosts:
+    - ghostk8s.cl
+    - www.ghostk8s.cl
+    secretName: ghostk8s-cl-tls
+  rules:
+  - host: ghostk8s.cl
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: ghost-ghostk8s
+            port:
+              number: 2368
+  - host: www.ghostk8s.cl
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: ghost-ghostk8s
+            port:
+              number: 2368

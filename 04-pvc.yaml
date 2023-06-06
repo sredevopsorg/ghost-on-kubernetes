@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ghostk8s-pvc
+  namespace: ngeorger
+spec:
+  accessModes:
+  - ReadWriteOnce # or ReadWriteMany, if you want to use NFS or similar
+  resources:
+    requests:
+      storage: 1Gi 
+  storageClassName: default # or default, depending on your provider, this is for k3s
