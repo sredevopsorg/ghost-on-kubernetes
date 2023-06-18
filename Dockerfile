@@ -1,7 +1,8 @@
 # https://docs.ghost.org/faq/node-versions/
 # https://github.com/nodejs/Release (looking for "LTS")
 # https://github.com/TryGhost/Ghost/blob/v4.1.2/package.json#L38
-FROM node:18-bullseye
+# FROM node:18-bullseye
+FROM node:18.16-bookworm
 
 # grab gosu for easy step-down from root
 # https://github.com/tianon/gosu/releases
