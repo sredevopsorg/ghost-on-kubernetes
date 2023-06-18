@@ -24,7 +24,7 @@ spec:
 # 1. Check persistent storage permissions 
       containers:
       - name: ghost-ghostk8s
-        image: ghost:5
+        image: ghcr.io/sredevopsdev/ghost-on-kubernetes:main
         imagePullPolicy: Always
         resources:
           requests:
