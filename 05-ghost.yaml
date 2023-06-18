@@ -1,14 +1,14 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ghost-ghostk8s
-  namespace: ghostk8s
+  name: sredevopsweb
+  namespace: sredevops-web
   labels:
-    app: ghost-ghostk8s
+    app: sredevopsweb
 spec:
   selector:
     matchLabels:
-      app: ghost-ghostk8s
+      app: sredevopsweb
   replicas: 1
   strategy:
     rollingUpdate:
@@ -18,12 +18,12 @@ spec:
   template:
     metadata:
       labels:
-        app: ghost-ghostk8s
+        app: sredevopsweb
     spec:
 # TODO: Add initContainers to:
 # 1. Check persistent storage permissions 
       containers:
-      - name: ghost-ghostk8s
+      - name: sredevopsweb
         image: ghcr.io/sredevopsdev/ghost-on-kubernetes:main
         imagePullPolicy: Always
         resources:
@@ -37,83 +37,85 @@ spec:
         - name: database__connection__host
           valueFrom:
             secretKeyRef:
-              name: ghostk8s-secrets
+              name: sredevopsweb-secrets
               key: database-host
         - name: database__connection__user
           valueFrom:
             secretKeyRef:
-              name: ghostk8s-secrets
+              name: sredevopsweb-secrets
               key: user
         - name: database__connection__password
           valueFrom:
             secretKeyRef:
-              name: ghostk8s-secrets
+              name: sredevopsweb-secrets
               key: password
         - name: database__connection__database
           valueFrom:
             secretKeyRef:
-              name: ghostk8s-secrets
+              name: sredevopsweb-secrets
               key: database
         - name: url
           valueFrom:
             secretKeyRef:
-              name: ghostk8s-secrets
+              name: sredevopsweb-secrets
               key: url
         - name: NODE_ENV
           value: production
         - name: server__port
           valueFrom:
             secretKeyRef:
-              name: ghostk8s-secrets
+              name: sredevopsweb-secrets
               key: port
         - name: server__host
           value: "0.0.0.0"
         - name: admin__url
           valueFrom:
             secretKeyRef:
-              name: ghostk8s-secrets
+              name: sredevopsweb-secrets
               key: admin-url
         - name: mail__transport
           value: "SMTP"
         - name: mail__options__service
-          valueFromSecret:
-            name: ghostk8s-secrets
-            key: smtp-service
+          valueFrom:
+            secretKeyRef:
+              name: sredevopsweb-secrets
+              key: smtp-service
         - name: mail__options__host
           valueFrom:
             secretKeyRef:
-              name: ghostk8s-secrets
+              name: sredevopsweb-secrets
               key: smtp-host
         - name: mail__options__port
           value: "587"
         - name: mail__options__auth__user
           valueFrom:
             secretKeyRef:
-              name: ghostk8s-secrets
+              name: sredevopsweb-secrets
               key: smtp-user
         - name: mail__options__auth__pass
           valueFrom:
             secretKeyRef:
-              name: ghostk8s-secrets
+              name: sredevopsweb-secrets
               key: smtp-password
         ports:
         - containerPort: 2368 # Ghost default port, if you change it, you must change it in the service too
-          name: ghost-ec
+          name: sredevopsweb
           protocol: TCP
         volumeMounts:
-        - name: ghost-ghostk8s-persistent-storage
+        - name: sredevopsweb-persistent-storage
           mountPath: /var/lib/ghost/content
-        # - name: ghost-config
-        #   mountPath: /var/lib/ghost/config.production.json
-        #   subPath: config.production.json
+        # - name: ghost-locale
+        #   mountPath: /var/lib/ghost/locales/es.json 
+        #   subPath: es.json
       volumes:
-      - name: ghost-ghostk8s-persistent-storage
+      - name: sredevopsweb-persistent-storage
         persistentVolumeClaim:
-          claimName: ghostk8s-pvc # Here we use the PVC created with 03-pvc.yaml
+          claimName: sredevopsweb-pvc # Here we use the PVC created with 03-pvc.yaml
       # TODO: Generate config.production.json with secrets from 01-secrets.yaml
-      # - name: ghost-config
+      # - name: ghost-locale
       #   configMap:
-      #     name: ghost-config
-      #     items:
-      #     - key: config.production.json
-      #       path: config.production.json
+      #     name: ghost-locale 
+      #     items: 
+      #     - key: es.json
+      #       path: es.json
+

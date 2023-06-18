@@ -103,3 +103,4 @@ kubernetes-deployment/config.json
 dockermount/
 
 test/
+**.local

@@ -1,42 +1,42 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: mysql-ghostk8s
-  namespace: ghostk8s
+  name: mysql-sredevopsweb
+  namespace: sredevops-web
   labels:
-    app: mysql-ghostk8s
+    app: mysql-sredevopsweb
 spec:        
   ports:
     - port: 3306
       protocol: TCP
       targetPort: 3306
-      name: mysql-ghostk8s
+      name: mysql-sredevopsweb
   type: ClusterIP
   clusterIP: None # We don't want to expose this service to the world, so we connect to it using containerPort.
   selector:
-    app: mysql-ghostk8s
+    app: mysql-sredevopsweb
 ---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: mysql-ghostk8s
-  namespace: ghostk8s
+  name: mysql-sredevopsweb
+  namespace: sredevops-web
   labels:
-    app: mysql-ghostk8s
+    app: mysql-sredevopsweb
 
 spec:
-  serviceName: mysql-ghostk8s
+  serviceName: mysql-sredevopsweb
   replicas: 1
   selector:
     matchLabels:
-      app: mysql-ghostk8s
+      app: mysql-sredevopsweb
   template:
     metadata:
       labels:
-        app: mysql-ghostk8s
+        app: mysql-sredevopsweb
     spec:
       containers:
-        - name: mysql-ghostk8s
+        - name: mysql-sredevopsweb
           image: docker.io/mysql/mysql-server # We use mysql as recommended by Ghost
           imagePullPolicy: Always
           resources:
@@ -51,36 +51,36 @@ spec:
             - name: MYSQL_ROOT_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: ghostk8s-secrets
+                  name: sredevopsweb-secrets
                   key: root-password
             - name: MYSQL_DATABASE
               valueFrom:
                 secretKeyRef:
-                  name: ghostk8s-secrets
-                  key: database-name
+                  name: sredevopsweb-secrets
+                  key: database
             - name: MYSQL_USER
               valueFrom:
                 secretKeyRef:
-                  name: ghostk8s-secrets
+                  name: sredevopsweb-secrets
                   key: user
             - name: MYSQL_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: ghostk8s-secrets
+                  name: sredevopsweb-secrets
                   key: password
           ports:
             - containerPort: 3306
               protocol: TCP
           volumeMounts:
-            - name: ghostk8s-mysql-storage
+            - name: sredevopsweb-mysql-storage
               mountPath: /var/lib/mysql
   volumeClaimTemplates:
     - metadata:
-        name: ghostk8s-mysql-storage
+        name: sredevopsweb-mysql-storage
       spec:
         accessModes: [ "ReadWriteOnce" ]
         storageClassName: local-path # This is the default storage class for k3s, you can use (and maybe should) another storage class.
         resources:
           requests:
-            storage: 3Gi # More than enough for a blog, but you can change it.
+            storage: 5Gi # More than enough for a blog, but you can change it.
   
