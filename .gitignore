@@ -1,0 +1,105 @@
+# File created using '.gitignore Generator' for Visual Studio Code: https://bit.ly/vscode-gig
+# Created by https://www.toptal.com/developers/gitignore/api/visualstudiocode,macos,direnv,dotenv,helm,yarn
+# Edit at https://www.toptal.com/developers/gitignore?templates=visualstudiocode,macos,direnv,dotenv,helm,yarn
+
+### direnv ###
+.direnv
+.envrc
+
+### dotenv ###
+.env
+
+### Helm ###
+# Chart dependencies
+**/charts/*.tgz
+
+### macOS ###
+# General
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Icon must end with two \r
+Icon
+
+# Thumbnails
+._*
+
+# Files that might appear in the root of a volume
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Directories potentially created on remote AFP share
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+### macOS Patch ###
+# iCloud generated files
+*.icloud
+
+### VisualStudioCode ###
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+
+# Local History for Visual Studio Code
+.history/
+
+# Built Visual Studio Code Extensions
+*.vsix
+
+### VisualStudioCode Patch ###
+# Ignore all local history of files
+.history
+.ionide
+
+### yarn ###
+# https://yarnpkg.com/getting-started/qa#which-files-should-be-gitignored
+
+.yarn/*
+!.yarn/releases
+!.yarn/patches
+!.yarn/plugins
+!.yarn/sdks
+!.yarn/versions
+
+# if you are NOT using Zero-installs, then:
+# comment the following lines
+!.yarn/cache
+
+# and uncomment the following lines
+# .pnp.*
+
+# End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,macos,direnv,dotenv,helm,yarn
+
+# Custom rules (everything added below won't be overriden by 'Generate .gitignore File' if you use 'Update' option)
+
+***.local
+**/**/*.local
+**/**/**/*.local
+backups-ghost/**
+persistence/**
+
+node_modules/
+**/node_modules/
+***/dist/
+deployment/config.json
+themes/elclaustro-casper/okteto.yml
+deployment/04-service-elclaustro.okteto.yaml
+deployment/05-ghost-elclaustro.okteto.yaml
+themes/elclaustro-casper/yarn.lock
+kubernetes-deployment/config.json
+dockermount/
+
+test/
