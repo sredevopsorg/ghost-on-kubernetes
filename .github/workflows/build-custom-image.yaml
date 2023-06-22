@@ -70,6 +70,11 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=ref,event=tag
+          labels: |
+            org.opencontainers.image.title=ghost-on-kubernetes
+            org.opencontainers.image.description=Ghost 5.x upstream, latest compatible node with gosu on debian based image.
+            org.opencontainers.image.vendor=SREDevOps.cl
+
       -
         name: Login to GitHub Container Registry
         if: github.event_name != 'pull_request'
