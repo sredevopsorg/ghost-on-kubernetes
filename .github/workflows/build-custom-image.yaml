@@ -1,19 +1,31 @@
 name: ci
 
 on:
-  push:
-    branches:
-      - 'main'
-    paths:
-      - 'Dockerfile'
-      - 'docker-entrypoint.sh'
-      - '.github/workflows/build-custom-image.yaml'
-    tags:
-      - 'v*'
-  pull_request:
-    branches:
-      - 'main'
+  # push:
+  #   branches:
+  #     - 'main'
+  #   paths:
+  #     - 'Dockerfile'
+  #     - 'docker-entrypoint.sh'
+  #     - '.github/workflows/build-custom-image.yaml'
+  #   tags:
+  #     - 'v*'
+  # pull_request:
+  #   branches:
+  #     - 'main'
   workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag'
+        required: true
+        default: 'latest'
+        type: string
+      ghost_version:
+        description: 'Ghost version'
+        required: true
+        default: '5.0.0'
+        type: string
+
 
 jobs:
   docker:
@@ -91,3 +103,5 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            GHOST_VERSION=${{ github.event.inputs.ghost_version }}
