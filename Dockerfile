@@ -3,7 +3,7 @@
 # https://github.com/TryGhost/Ghost/blob/v4.1.2/package.json#L38
 # FROM node:18-bullseye
 # FROM node:18.16-bookworm
-FROM node:18-slim
+FROM node:20-slim
 
 # grab gosu for easy step-down from root
 # https://github.com/tianon/gosu/releases
