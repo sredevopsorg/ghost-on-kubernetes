@@ -17,13 +17,13 @@ on:
     inputs:
       tag:
         description: 'Tag'
-        required: true
-        default: 'latest'
+        required: false
+        default: 'main'
         type: string
       ghost_version:
         description: 'Ghost version'
         required: true
-        default: '5.0.0'
+        default: '5.53.2'
         type: string
 
 
@@ -82,11 +82,12 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=ref,event=tag
+            type=ref,event=
           labels: |
             org.opencontainers.image.title=ghost-on-kubernetes
             org.opencontainers.image.description=Ghost 5.x upstream, latest compatible node with gosu on debian based image.
             org.opencontainers.image.vendor=SREDevOps.cl
-
+            org.opencontainers.image.source=https://github.com/sredevopsdev/ghost-on-kubernetes
       -
         name: Login to GitHub Container Registry
         if: github.event_name != 'pull_request'
@@ -105,3 +106,4 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             GHOST_VERSION=${{ github.event.inputs.ghost_version }}
+            
