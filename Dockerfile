@@ -12,7 +12,7 @@ RUN set -eux; \
   # save list of currently installed packages for later so we can clean up
   savedAptMark="$(apt-mark showmanual)"; \
   apt-get update; \
-  apt-get install -y --no-install-recommends ca-certificates gnupg wget; \
+  apt-get install -y --no-install-recommends ca-certificates gnupg wget nano; \
   rm -rf /var/lib/apt/lists/*; \
   \
   dpkgArch="$(dpkg --print-architecture | awk -F- '{ print $NF }')"; \
@@ -38,7 +38,7 @@ RUN set -eux; \
 
 ENV NODE_ENV production
 
-ENV GHOST_CLI_VERSION 1.24.0
+ENV GHOST_CLI_VERSION 1.24.1
 RUN set -eux; \
   npm install -g "ghost-cli@$GHOST_CLI_VERSION"; \
   npm cache clean --force
