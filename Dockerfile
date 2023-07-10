@@ -1,8 +1,6 @@
 # https://docs.ghost.org/faq/node-versions/
 # https://github.com/nodejs/Release (looking for "LTS")
 # https://github.com/TryGhost/Ghost/blob/v4.1.2/package.json#L38
-# FROM node:18-bullseye
-# FROM node:18.16-bookworm
 FROM node:18-bookworm
 
 # grab gosu for easy step-down from root
@@ -38,9 +36,9 @@ RUN set -eux; \
 
 ENV NODE_ENV production
 
-ENV GHOST_CLI_VERSION 1.24.1
+# ENV GHOST_CLI_VERSION 1.24.1
 RUN set -eux; \
-  npm install -g "ghost-cli@$GHOST_CLI_VERSION"; \
+  npm install -g "ghost-cli@latest"; \
   npm cache clean --force
 
 ENV GHOST_INSTALL /var/lib/ghost
@@ -102,7 +100,8 @@ RUN set -eux; \
   apt-get install -y --no-install-recommends g++ make python3; \
   case "$package" in \
   # TODO sharp@*) apt-get install -y --no-install-recommends libvips-dev ;; \
-  sharp@*) echo >&2 "sorry: libvips 8.10 in Debian bullseye is not new enough (8.12.2+) for sharp 0.30 😞"; continue ;; \
+  sharp@*) apt-get install -y --no-install-recommends libvips-dev ;; \
+  # sharp@*) echo >&2 "sorry: libvips had an issue with debian bookworm 👮🏻‍♀️"; continue ;; \
   esac; \
   \
   eval "$installCmd --build-from-source"; \
@@ -119,6 +118,7 @@ RUN set -eux; \
   gosu node yarn cache clean; \
   gosu node npm cache clean --force; \
   npm cache clean --force; \
+  yarn cache clean; \
   rm -rv /tmp/yarn* /tmp/v8*
 
 WORKDIR $GHOST_INSTALL
