@@ -36,17 +36,19 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: |
-            docker.io/ngeorger/${{ github.event.repository.name }}
+            docker.io/${{ secrets.DOCKER_USER }}/${{ github.event.repository.name }}
             ghcr.io/${{ github.repository }}
           tags: |
             type=ref,event=branch
+            type=req,event=tag
             type=raw,value=${{ github.event.inputs.manual-tag }}
-            type=raw,value=latest            
+            type=raw,value=latest
           labels: |
             org.opencontainers.image.title=ghost-on-kubernetes
-            org.opencontainers.image.description=${{ github.event.inputs.ghost_version }} Ghost 5.x upstream, latest compatible node with gosu on debian based image.
-            org.opencontainers.image.vendor="SREDevOps.cl"
-            org.opencontainers.image.source="https://github.com/sredevopsdev/ghost-on-kubernetes.git"            
+            org.opencontainers.image.description=Ghost CMS upstream v${{ github.event.inputs.ghost_version }} , with node:18-bookworm and 
+            org.opencontainers.image.vendor=SREDevOps.cl
+            org.opencontainers.image.source=https://github.com/sredevopsdev/ghost-on-kubernetes
+            org.opencontainers.image.documentation=https://github.com/sredevopsdev/ghost-on-kubernetes
       -
         name: Login to DockerHub
         uses: docker/login-action@v2
