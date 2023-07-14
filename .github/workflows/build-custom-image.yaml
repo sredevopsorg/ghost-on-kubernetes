@@ -24,6 +24,14 @@ jobs:
       -
         name: Checkout
         uses: actions/checkout@v3
+      - 
+        name: Set up github_output if is a tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        id: github_output
+        run: |
+          echo "GHOST_VERSION=${{ vars.GHOST_VERSION }}" >> $GITHUB_OUTPUT
+          echo "GHOST_VERSION=${{ github.event.inputs.ghost_version }}" >> $GITHUB_OUTPUT
+          echo "MANUAL_TAG=main" >> $GITHUB_OUTPUT
       -
         name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -40,12 +48,12 @@ jobs:
             ghcr.io/${{ github.repository }}
           tags: |
             type=ref,event=branch
-            type=req,event=tag
+            type=ref,event=tag
             type=raw,value=${{ github.event.inputs.manual-tag }}
             type=raw,value=latest
           labels: |
             org.opencontainers.image.title=ghost-on-kubernetes
-            org.opencontainers.image.description=Ghost CMS upstream v${{ github.event.inputs.ghost_version }} , with node:18-bookworm and 
+            org.opencontainers.image.description=Ghost CMS upstream v${{ github.event.inputs.ghost_version }}, with node:18-bookworm and gosu
             org.opencontainers.image.vendor=SREDevOps.cl
             org.opencontainers.image.source=https://github.com/sredevopsdev/ghost-on-kubernetes
             org.opencontainers.image.documentation=https://github.com/sredevopsdev/ghost-on-kubernetes
@@ -74,4 +82,5 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
+            GHOST_VERSION=${{ steps.github_output.outputs.ghost_version }}
             GHOST_VERSION=${{ github.event.inputs.ghost_version }}
