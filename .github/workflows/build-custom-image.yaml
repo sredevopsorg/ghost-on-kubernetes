@@ -25,13 +25,18 @@ jobs:
         name: Checkout
         uses: actions/checkout@v3
       - 
-        name: Set up github_output if is a tag
-        if: startsWith(github.ref, 'refs/tags/v')
-        id: github_output
+        name: Set up GHOST_VERSION and MANUAL_TAG values, depending on event type (push or workflow_dispatch)
+        id: versions
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
         run: |
-          echo "GHOST_VERSION=${{ vars.GHOST_VERSION }}" >> $GITHUB_OUTPUT
-          echo "GHOST_VERSION=${{ github.event.inputs.ghost_version }}" >> $GITHUB_OUTPUT
-          echo "MANUAL_TAG=main" >> $GITHUB_OUTPUT
+          if [ ${{ env.GITHUB_EVENT_NAME  }} == workflow_dispatch ]; then
+            echo "GHOST_VERSION=${{ github.event.inputs.ghost_version }}" >> $GITHUB_OUTPUT
+            echo "MANUAL_TAG=${{ github.event.inputs.manual-tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "GHOST_VERSION=$(curl -s https://api.github.com/repos/tryghost/ghost/releases/latest | jq '.name' | sed 's/\"//g')" >> $GITHUB_OUTPUT
+            echo "MANUAL_TAG=main" >> $GITHUB_OUTPUT
+          fi
       -
         name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -49,11 +54,11 @@ jobs:
           tags: |
             type=ref,event=branch
             type=ref,event=tag
-            type=raw,value=${{ github.event.inputs.manual-tag }}
+            type=raw,value=${{ steps.versions.outputs.MANUAL_TAG }}
             type=raw,value=latest
           labels: |
             org.opencontainers.image.title=ghost-on-kubernetes
-            org.opencontainers.image.description=Ghost CMS upstream v${{ github.event.inputs.ghost_version }}, with node:18-bookworm and gosu
+            org.opencontainers.image.description=Ghost CMS upstream v${{ steps.versions.outputs.GHOST_VERSION }} , with node:18-bookworm and gosu
             org.opencontainers.image.vendor=SREDevOps.cl
             org.opencontainers.image.source=https://github.com/sredevopsdev/ghost-on-kubernetes
             org.opencontainers.image.documentation=https://github.com/sredevopsdev/ghost-on-kubernetes
@@ -82,5 +87,4 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            GHOST_VERSION=${{ steps.github_output.outputs.ghost_version }}
-            GHOST_VERSION=${{ github.event.inputs.ghost_version }}
+            GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }}
