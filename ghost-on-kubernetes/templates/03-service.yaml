@@ -1,0 +1,60 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ghost-svc
+  labels:
+    app: ghost-on-kubernetes
+  {{- include "ghost-on-kubernetes.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    app: ghost-on-kubernetes
+  {{- include "ghost-on-kubernetes.selectorLabels" . | nindent 4 }}
+  ports:
+    - port: {{ .Values.ghostConfigProd.port }}
+      protocol: TCP
+      targetPort: {{ .Values.ghostConfigProd.port }}
+      name: ghost-svc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "ghost-on-kubernetes.fullname" . }}-mysql
+  labels:
+    app: {{ include "ghost-on-kubernetes.fullname" . }}-mysql
+  {{- include "ghost-on-kubernetes.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    app: {{ include "ghost-on-kubernetes.fullname" . }}-mysql
+  ports:
+    - port: {{ .Values.mysqlGhostOnKubernetes.mysqlPort }}
+      protocol: TCP
+      targetPort: {{ .Values.mysqlGhostOnKubernetes.mysqlPort }}
+      name: mysql
+  clusterIP: None
+  
+  
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ghost-on-kubernetes
+  labels:
+  {{- include "ghost-on-kubernetes.labels" . | nindent 4 }}
+spec:
+  rules:
+  - host: ghost-on-kubernetes.local
+    http:
+      paths:
+      - backend:
+          service:
+            name: ghost-svc
+            port:
+              number: 2368
+        path: /
+        pathType: ImplementationSpecific
+---

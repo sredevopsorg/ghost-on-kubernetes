@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "ghost-on-kubernetes.fullname" . }}-ghost-on-kubernetes
+  labels:
+  {{- include "ghost-on-kubernetes.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.ghostOnKubernetes.replicas }}
+  selector:
+    matchLabels:
+      app: ghost-on-kubernetes
+  serviceName: {{ include "ghost-on-kubernetes.fullname" . }}-ghost-service
+  template:
+    metadata:
+      labels:
+        app: ghost-on-kubernetes
+    spec:
+      containers:
+      - env:
+        - name: NODE_ENV
+          value: {{ quote .Values.ghostOnKubernetes.ghostOnKubernetes.env.nodeEnv }}
+        - name: KUBERNETES_CLUSTER_DOMAIN
+          value: {{ quote .Values.kubernetesClusterDomain }}
+        image: {{ .Values.ghostOnKubernetes.ghostOnKubernetes.image.repository }}:{{
+          .Values.ghostOnKubernetes.ghostOnKubernetes.image.tag | default .Chart.AppVersion
+          }}
+        name: ghost-on-kubernetes
+        ports:
+        - containerPort: 2368
+          name: ghost-port
+          protocol: TCP
+        resources: {}
+        volumeMounts:
+        - mountPath: /var/lib/ghost/content
+          name: ghost-on-kubernetes-volume
+        - mountPath: /var/lib/ghost/config.production.json
+          name: ghost-config-prod
+          readOnly: true
+          subPath: config.production.json
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: ghost-config-prod
+        secret:
+          secretName: {{ include "ghost-on-kubernetes.fullname" . }}-ghost-config-prod
+  volumeClaimTemplates:
+  - metadata:
+      name: ghost-on-kubernetes-volume
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: {{ .Values.volumeClaimTemplates.ghost.storage }}
+      storageClassName: {{ .Values.volumeClaimTemplates.ghost.storageClassName }}
+      volumeMode: Filesystem
