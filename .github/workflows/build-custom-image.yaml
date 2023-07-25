@@ -21,7 +21,7 @@ jobs:
   docker:
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         platform:
           - linux/amd64
@@ -43,6 +43,10 @@ jobs:
             echo "GHOST_VERSION=$(curl -s https://api.github.com/repos/tryghost/ghost/releases/latest | jq '.name' | sed 's/\"//g')" >> $GITHUB_OUTPUT
             echo "MANUAL_TAG=main" >> $GITHUB_OUTPUT
           fi
+
+      - name: Show GHOST_VERSION
+        run: |
+          echo ${{ steps.versions.outputs.GHOST_VERSION }}
       -
         name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -86,11 +90,10 @@ jobs:
         name: Build and push
         uses: docker/build-push-action@v4
         with:
-          context: ${{ github.workspace }}
-          file: ./Dockerfile
+          context: .
           platforms: ${{ matrix.platform }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          labels: ${{ steps.meta.outputs.labels }}          
           build-args: |
             GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }}

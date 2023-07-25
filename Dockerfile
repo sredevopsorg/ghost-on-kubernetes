@@ -9,7 +9,7 @@ ENV GOSU_VERSION 1.16
 RUN set -eux; \
     # save list of currently installed packages for later so we can clean up
     savedAptMark="$(apt-mark showmanual)"; \
-    apt-get update; \
+    apt-get update && apt-get upgrade -y; \
     apt-get install -y --no-install-recommends ca-certificates gnupg wget; \
     rm -rf /var/lib/apt/lists/*; \
     \
@@ -57,7 +57,7 @@ RUN set -eux; \
 	installCmd='gosu node ghost install "$GHOST_VERSION" --db mysql --dbhost mysql --no-prompt --no-stack --no-setup --dir "$GHOST_INSTALL"'; \
 	if ! eval "$installCmd"; then \
 		aptPurge=1; \
-		apt-get update; \
+		apt-get update && apt-get upgrade -y; \
 		apt-get install -y --no-install-recommends g++ make python3; \
 		eval "$installCmd"; \
 	fi; \
@@ -94,13 +94,14 @@ RUN set -eux; \
 	for package in $packages; do \
 		installCmd='gosu node yarn add "$package" --force'; \
 		if ! eval "$installCmd"; then \
-# must be some non-amd64 architecture pre-built binaries aren't published for, so let's install some build deps and do-it-all-over-again
+			# must be some non-amd64 architecture pre-built binaries aren't published for, so let's install some build deps and do-it-all-over-again
 			aptPurge=1; \
-			apt-get update; \
+			apt-get update && apt-get upgrade -y; \
 			apt-get install -y --no-install-recommends g++ make python3; \
 			case "$package" in \
 				# TODO sharp@*) apt-get install -y --no-install-recommends libvips-dev ;; \
-				sharp@*) echo >&2 "sorry: libvips 8.10 in Debian bullseye is not new enough (8.12.2+) for sharp 0.30 😞"; continue ;; \
+				sharp@*) apt-get install -y --no-install-recommends libvips-dev ;; \
+				# sharp@*) echo >&2 "sorry: libvips 8.10 in Debian bullseye is not new enough (8.12.2+) for sharp 0.30 😞"; continue ;; \
 			esac; \
 			\
 			eval "$installCmd --build-from-source"; \
