@@ -1,60 +1,52 @@
-# Ghost on Kubernetes by SREDevOps.cl
+# Ghost on Kubernetes
 
-[README en castellano](./README.es.md)
+[![Build and push image to DockerHub and GitHub Container Registry](https://github.com/sredevopsdev/ghost-on-kubernetes/actions/workflows/build-custom-image.yaml/badge.svg)](https://github.com/sredevopsdev/ghost-on-kubernetes/actions/workflows/build-custom-image.yaml)
 
-This repository deploys a Ghost CMS on k3s or any Kubernetes distro using kubectl. It's tested using k3s only, the main reason is __storage__, which is simplified with k3s. 
-
-## Notes:
-- _Please review and edit the files in this repository according to your needs._
-- Please note that this is just a suggestion, and you need to modify it to fit your specific needs.
-- Please review and edit the files according to your needs.
-
-## Features
-- Deploys a fully-functioning Ghost CMS on Kubernetes.
-- Supports custom domains and TLS certificates with secrets.
-- Easy to use and maintain.
-
-## Requirements
-- Kubernetes 1.16 or higher.
-- k3s 1.20 or higher.
-- kubectl
-- Very basic knowledge on kubernetes
-- How to encode strings with base64
-
-## Files
-The following files are included in this repository:
-
-- 00-namespace.yaml: Creates a namespace for the Ghost deployment.
-- 01-secrets.yaml: Creates secrets for the Ghost deployment. This file needs to be edited according to the comments inside it.
-- 02-mysql.yaml: Deploys a MySQL database for the Ghost deployment.
-- 04-pvc.yaml: Creates a persistent volume claim for the Ghost deployment.
-- 04-service.yaml: Creates a service for the Ghost deployment.
-- 05-ghost.yaml: Deploys a Ghost pod.
+This repository contains a Helm chart for deploying Ghost on Kubernetes and a Dockerfile for building a custom Ghost image.
 
 ## Installation
-To install Ghost on Kubernetes, follow these steps:
 
-- Clone this repository.
-- Edit 01-secrets.yaml with your own secrets and certificate (I use Cloudflare for DNS, so I use their provided cert and key, google it)
-- In the root directory of the repository, run the following command to deploy the Ghost deployment:
-  ```bash
-    kubectl apply -f .
-  ```
+1. Add the sredevops Helm repository:
 
-The Ghost deployment will be deployed. You can access your Ghost CMS at the default Ghost port, which is 2368.
-Usage
+```bash
+helm repo add sredevops https://sredevopsdev.github.io/ghost-on-kubernetes
+```
 
-## Troubleshooting
-If you are having trouble deploying Ghost on Kubernetes, you can troubleshoot the issue by following these steps:
+2. Install the chart using the values from `./charts/values.yaml`:
 
-Check the logs for the Ghost pod.
-Check the configuration of the files in this repository.
-Create an issue in this repo or search for support in https://foro.sredevops.cl
+```bash
+helm install my-ghost sredevops/ghost-on-kubernetes -f ./charts/values.yaml
+```
 
-## Contributing
-If you would like to contribute to this project, please follow these steps:
+Note: You may need to modify the values in `./charts/values.yaml` to suit your needs.
 
-- Fork the repository.
-- Make your changes to the code.
-- Submit a pull request.
+## Configuration
 
+The following table lists the configurable parameters of the Ghost chart and their default values.
+
+| Parameter                        | Description                         | Default                                                 |
+| ---------------------------------| ----------------------------------- | ------------------------------------------------------- |
+| `mysql.accessMode`               | Access mode for MySQL volume        | `ReadWriteOnce`                                         |
+| `mysql.storage`                  | Size of MySQL volume                | `1Gi`                                                   |
+| `mysql.storageClassName`         | Storage class for MySQL volume      | `local-path`                                            |
+| `ghost.accessModes`              | Access mode for Ghost volume        | `ReadWriteOnce`                                         |
+| `ghost.storage`                  | Size of Ghost volume                | `10Gi`                                                  |
+| `ghost.storageClassName`         | Storage class for Ghost volume      | `local-path`                                            |
+| `ghost.ghostConfigProd.url`      | URL for Ghost production environment| `http://localhost:2368`                                 |
+| `ghost.ghostConfigProd.adminUrl` | URL for Ghost admin panel           | `http://localhost:2368`                                 |
+| `ghost.ghostConfigProd.host`     | Host for Ghost production environment| `0.0.0.0`                                             |
+| `ghost.ghostConfigProd.port`     | Port for Ghost production environment| `2368`                                               |
+| `ghost.ghostConfigProd.mailTransport` | Mail transport for Ghost production environment| `SMTP`                                       |
+| `ghost.ghostConfigProd.mailService` | Mail service for Ghost production environment| `Google`                                         |
+| `ghost.ghostConfigProd.mailHost` | Mail host for Ghost production environment| `smtp.gmail.com`                                   |
+| `ghost.ghostConfigProd.mailPort` | Mail port for Ghost production environment| `587`                                             |
+| `ghost.ghostConfigProd.mailSecureConnection` | Whether to use secure connection for mail in Ghost production environment| `true` |
+| `ghost.ghostConfigProd.mailAuthUser` | Mail authentication user for Ghost production environment| `user@mail.com`                          |
+| `ghost.ghostConfigProd.mailAuthPass` | Mail authentication password for Ghost production environment| `c0ntr4s3n4`                          |
+| `ghost.ghostConfigProd.debug` | Whether to enable debug mode for Ghost production environment| `true`                                         |
+| `ghost.ghostConfigProd.emailAnalytics` | Whether to enable email analytics for Ghost production environment| `false`                             |
+| `ghost.ghostConfigProd.useUpdateCheck` | Whether to enable update check for Ghost production environment| `false`                                 |
+| `ghost.ghostConfigProd.useRpcPing` | Whether to enable RPC ping for Ghost production environment| `false`                                       |
+
+
+For more information on how to configure the chart or you have any questions, please create an issue in this repository.[ https://github.com/sredevopsdev/ghost-on-kubernetes/issues ](https://github.com/sredevopsdev/ghost-on-kubernetes/issues/new)
