@@ -4,12 +4,12 @@ version: "3"
 services:
   ghost:
     image: ghcr.io/sredevopsdev/ghost-on-kubernetes:main
-    command: ["gosu", "node", "node", "current/index.js"]
+    command: ["node", "current/index.js"]
     platform: linux/amd64
     container_name: ghost
     volumes:
       - ./content:/var/lib/ghost/content
-      - ./ghost-local.db:/var/lib/ghost/content/data/ghost-local.db
+      - ./ghost-local2.db:/var/lib/ghost/content/data/ghost-local.db
     environment:
       NODE_ENV: development
       database__client: sqlite3

@@ -23,6 +23,7 @@ spec:
           value: {{ quote .Values.kubernetesClusterDomain }}
         image: {{ .Values.ghostOnKubernetes.ghostOnKubernetes.image.repository }}:{{ .Values.ghostOnKubernetes.ghostOnKubernetes.image.tag }} 
         name: {{ include "ghost-on-kubernetes.fullname" . }}-ghost
+        imagePullPolicy: {{ .Values.ghostOnKubernetes.ghostOnKubernetes.imagePullPolicy }}
         ports: 
         - containerPort: {{ .Values.ghostConfigProd.port }}
           name: http
