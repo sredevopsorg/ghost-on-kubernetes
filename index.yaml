@@ -3,6 +3,18 @@ entries:
   ghost-on-kubernetes:
   - apiVersion: v2
     appVersion: 5.55.1
+    created: "2023-07-25T11:12:41.029823-04:00"
+    description: A Helm chart which deploys Ghost in Kubernetes as statefulsets and
+      services
+    digest: 0768c83f6122baea4fbe3e643d60fca9beb152cbe787c38e477faea2641e747a
+    icon: https://ghost.org/images/logos/ghost-logo-orb.png
+    name: ghost-on-kubernetes
+    type: application
+    urls:
+    - ghost-on-kubernetes-1.1.1.tgz
+    version: 1.1.1
+  - apiVersion: v2
+    appVersion: 5.55.1
     created: "2023-07-25T09:28:57.404522-04:00"
     description: A Helm chart which deploys Ghost in Kubernetes as statefulsets and
       services
@@ -13,4 +25,4 @@ entries:
     urls:
     - ghost-on-kubernetes-1.0.1.tgz
     version: 1.0.1
-generated: "2023-07-25T09:28:57.404577-04:00"
+generated: "2023-07-25T11:12:41.02984-04:00"

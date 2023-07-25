@@ -1,19 +1,19 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: {{ include "ghost-on-kubernetes.fullname" . }}-ghost-on-kubernetes
+  name: {{ include "ghost-on-kubernetes.fullname" . }}-ghost
   labels:
   {{- include "ghost-on-kubernetes.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.ghostOnKubernetes.replicas }}
   selector:
     matchLabels:
-      app: ghost-on-kubernetes
-  serviceName: {{ include "ghost-on-kubernetes.fullname" . }}-ghost-service
+      app: {{ include "ghost-on-kubernetes.fullname" . }}-ghost
+  serviceName: {{ include "ghost-on-kubernetes.fullname" . | trunc 8 | trimSuffix "-" }}-svc
   template:
     metadata:
       labels:
-        app: ghost-on-kubernetes
+        app: {{ include "ghost-on-kubernetes.fullname" . }}-ghost
     spec:
       containers:
       - env:
@@ -21,14 +21,14 @@ spec:
           value: {{ quote .Values.ghostOnKubernetes.ghostOnKubernetes.env.nodeEnv }}
         - name: KUBERNETES_CLUSTER_DOMAIN
           value: {{ quote .Values.kubernetesClusterDomain }}
-        image: {{ .Values.ghostOnKubernetes.ghostOnKubernetes.image.repository }}:{{
-          .Values.ghostOnKubernetes.ghostOnKubernetes.image.tag | default .Chart.AppVersion
-          }}
-        name: ghost-on-kubernetes
-        ports:
-        - containerPort: 2368
-          name: ghost-port
+        image: {{ .Values.ghostOnKubernetes.ghostOnKubernetes.image.repository }}:{{ .Values.ghostOnKubernetes.ghostOnKubernetes.image.tag }} 
+        name: {{ include "ghost-on-kubernetes.fullname" . }}-ghost
+        ports: 
+        - containerPort: {{ .Values.ghostConfigProd.port }}
+          name: http
           protocol: TCP
+
+
         resources: {}
         volumeMounts:
         - mountPath: /var/lib/ghost/content
