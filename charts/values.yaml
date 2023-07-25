@@ -23,6 +23,7 @@ ghostOnKubernetes:
     image:
       repository: ghcr.io/sredevopsdev/ghost-on-kubernetes
       tag: main
+    imagePullPolicy: Always
   replicas: 1
 
 
