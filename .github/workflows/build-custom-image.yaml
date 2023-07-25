@@ -20,6 +20,12 @@ on:
 jobs:
   docker:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - linux/amd64
+          - linux/arm64
     steps:
       -
         name: Checkout
@@ -58,7 +64,7 @@ jobs:
             type=raw,value=latest
           labels: |
             org.opencontainers.image.title=ghost-on-kubernetes
-            org.opencontainers.image.description=Ghost CMS upstream v${{ steps.versions.outputs.GHOST_VERSION }} , with node:18-bookworm and gosu
+            org.opencontainers.image.description=Ghost CMS upstream v5 with node 18-bookworm and gosu
             org.opencontainers.image.vendor=SREDevOps.cl
             org.opencontainers.image.source=https://github.com/sredevopsdev/ghost-on-kubernetes
             org.opencontainers.image.documentation=https://github.com/sredevopsdev/ghost-on-kubernetes
@@ -82,7 +88,7 @@ jobs:
         with:
           context: ${{ github.workspace }}
           file: ./Dockerfile
-          platforms: linux/amd64
+          platforms: ${{ matrix.platform }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
