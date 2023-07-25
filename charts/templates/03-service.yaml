@@ -1,20 +1,20 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: ghost-svc
+  name: {{ include "ghost-on-kubernetes.fullname" . | trunc 8 | trimSuffix "-" }}-svc
   labels:
-    app: ghost-on-kubernetes
+    app: {{ include "ghost-on-kubernetes.fullname" . }}-ghost
   {{- include "ghost-on-kubernetes.labels" . | nindent 4 }}
 spec:
   type: ClusterIP
   selector:
-    app: ghost-on-kubernetes
+    app: {{ include "ghost-on-kubernetes.fullname" . }}-ghost
   {{- include "ghost-on-kubernetes.selectorLabels" . | nindent 4 }}
   ports:
     - port: {{ .Values.ghostConfigProd.port }}
       protocol: TCP
-      targetPort: {{ .Values.ghostConfigProd.port }}
-      name: ghost-svc
+      targetPort: 2368
+      name: {{ include "ghost-on-kubernetes.fullname" . | trunc 8 | trimSuffix "-" }}-svc
 
 ---
 apiVersion: v1
@@ -52,9 +52,9 @@ spec:
       paths:
       - backend:
           service:
-            name: ghost-svc
+            name: {{ include "ghost-on-kubernetes.fullname" . | trunc 8 | trimSuffix "-" }}-svc
             port:
-              number: 2368
+              number: {{ .Values.ghostConfigProd.port }}
         path: /
         pathType: ImplementationSpecific
 ---

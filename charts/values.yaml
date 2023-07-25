@@ -13,6 +13,8 @@ ghostConfigProd:
   mailAuthPass: "c0ntr4s3n4"
   debug: true
   emailAnalytics: false
+  useUpdateCheck: false
+  useRpcPing: false
 
 ghostOnKubernetes:
   ghostOnKubernetes:
@@ -42,10 +44,8 @@ mysqlGhostOnKubernetes:
         cpu: "0"
         memory: "0"
   mysqlPassword: "userdbpassword"
-  mysqlRootHost: "%"
   mysqlRootPassword: "rootpassword"
   mysqlUser: "userdb"
-  mysqlUserHost: "%"
   replicas: 1
   mysqlPort: 3306
 

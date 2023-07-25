@@ -107,6 +107,10 @@ Define the content of config.production.json file
     },
 "debug": "{{ .Values.ghostConfigProd.debug }}",
 "emailAnalytics": "{{ .Values.ghostConfigProd.emailAnalytics }}",
+"privacy": {
+    "useUpdateCheck": "{{ .Values.ghostConfigProd.useUpdateCheck }}",
+    "useRpcPing": "{{ .Values.ghostConfigProd.useRpcPing }}"
+    },
 "backgroundJobs": {
     "emailAnalytics": "{{ .Values.ghostConfigProd.emailAnalytics }}"
     }
