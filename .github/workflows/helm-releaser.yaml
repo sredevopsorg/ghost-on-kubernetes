@@ -13,17 +13,21 @@ jobs:
     # see: https://docs.github.com/en/actions/security-guides/automatic-token-authentication#modifying-the-permissions-for-the-github_token
     permissions:
       contents: write
+      packages: write
+      id-token: write
+      pull-requests: write
+      statuses: write
+      
+
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
 
       - name: Configure Git
         run: |
-          git config user.name "$GITHUB_ACTOR"
-          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ secrets.WF_USER_EMAIL }}"
       - name: Install Helm
         uses: azure/setup-helm@v3
         env:
@@ -31,8 +35,6 @@ jobs:
 
       - name: Run chart-releaser
         uses: helm/chart-releaser-action@v1.5.0
-        with:
-          charts_dir: ghost-on-kubernetes
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
         
