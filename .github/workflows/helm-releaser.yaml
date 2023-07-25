@@ -22,8 +22,8 @@ jobs:
 
       - name: Configure Git
         run: |
-          git config user.name "${{ github.event.commits.author.name }}"
-          git config user.email "${{ github.event.commits.author.email }}"
+          git config user.name "${{ github.actor }}"
+          git config user.email "info@sredevops.cl"
       - name: Install Helm
         uses: azure/setup-helm@v3
 
