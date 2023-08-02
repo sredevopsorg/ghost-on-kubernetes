@@ -111,3 +111,4 @@ config.development.json
 mysql/
 ghost-local.db
 **/**/*local*
+.monokle

@@ -8,13 +8,12 @@ metadata:
 spec:
   type: ClusterIP
   selector:
-    app: {{ include "ghost-on-kubernetes.fullname" . }}-ghost
-  {{- include "ghost-on-kubernetes.selectorLabels" . | nindent 4 }}
-  ports:
+    app: {{ include "ghost-on-kubernetes.fullname" . }}-ghost 
+  ports: 
     - port: {{ .Values.ghostConfigProd.port }}
       protocol: TCP
-      targetPort: 2368
-      name: {{ include "ghost-on-kubernetes.fullname" . | trunc 8 | trimSuffix "-" }}-svc
+      targetPort: {{ .Values.ghostConfigProd.port }}
+      name: http
 
 ---
 apiVersion: v1
@@ -42,7 +41,7 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: ghost-on-kubernetes
+  name: {{ include "ghost-on-kubernetes.fullname" . | trunc 8 | trimSuffix "-" }}-ingress
   labels:
   {{- include "ghost-on-kubernetes.labels" . | nindent 4 }}
 spec:

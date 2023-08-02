@@ -17,6 +17,14 @@ spec:
       terminationGracePeriodSeconds: 30
       containers:
       - name: ghost-on-kubernetes
+        image: ghcr.io/sredevopsdev/ghost-on-kubernetes:main
+        resources:
+          requests:
+            memory: 0Mi
+            cpu: 0m
+          limits:
+            memory: 1Gi
+            cpu: 1000m
         securityContext:
           capabilities:
             drop:
@@ -28,12 +36,11 @@ spec:
               - SETUID
               - SETPCAP
               - NET_BIND_SERVICE
-          runAsUser: 1001
+          runAsUser: 10001
           runAsGroup: 1001
-          fsGroup: 1001
           allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
 
-        image: ghcr.io/sredevopsdev/ghost-on-kubernetes:main
         ports:
         - containerPort: 2368
           name: ghost-on-kubernetes
@@ -48,6 +55,22 @@ spec:
             mountPath: /var/lib/ghost/config.production.json
             subPath: config.production.json
             readOnly: true
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 2368
+          initialDelaySeconds: 30
+          timeoutSeconds: 5
+          periodSeconds: 30
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 2368
+          initialDelaySeconds: 30
+          timeoutSeconds: 5
+          periodSeconds: 30
+          failureThreshold: 3
       volumes:
       - name: ghost-on-kubernetes-volume
         persistentVolumeClaim:

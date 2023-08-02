@@ -29,10 +29,9 @@ spec:
                 - SETUID
                 - SETPCAP
                 - NET_BIND_SERVICE
-
-            runAsUser: 1001
+            readOnlyRootFilesystem: true
+            runAsUser: 10001
             runAsGroup: 1001
-            fsGroup: 1001
             allowPrivilegeEscalation: false
             
           image: docker.io/mysql/mysql-server:8.0.32-1.2.11-server
@@ -50,6 +49,35 @@ spec:
           ports:
             - containerPort: 3306
               protocol: TCP
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - mysqladmin ping -h 
+                - localhost
+                - -u 
+                - root
+                - -p
+                - $MYSQL_ROOT_PASSWORD
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - mysqladmin ping -h 
+                - localhost
+                - -u 
+                - root
+                - -p
+                - $MYSQL_ROOT_PASSWORD
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            
           volumeMounts:
             - name: mysql-ghost-on-kubernetes-pvc
               mountPath: /var/lib/mysql
