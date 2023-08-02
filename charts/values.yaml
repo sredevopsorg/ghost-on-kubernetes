@@ -15,6 +15,7 @@ ghostConfigProd:
   emailAnalytics: false
   useUpdateCheck: false
   useRpcPing: false
+  # This is the secret name for TLS certificate, optional
 
 ghostOnKubernetes:
   ghostOnKubernetes:
@@ -25,30 +26,39 @@ ghostOnKubernetes:
       tag: main
     imagePullPolicy: Always
   replicas: 1
-
-
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 0m
+      memory: 0Mi
 
 kubernetesClusterDomain: cluster.local
 
+# Values used into mysql statefulset
 mysqlGhostOnKubernetes:
+# Database name
   mysqlDatabase: "ghostdb"
+  mysqlUser: "userdb"
+  mysqlPassword: "userdbpassword"
+  mysqlRootPassword: "rootpassword"
   mysqlGhostOnKubernetes:
+# Image used for mysql, Ghost docs recommend to use mysql 8.
     image:
       repository: docker.io/mysql/mysql-server
       tag: 8.0.32-1.2.11-server
-    imagePullPolicy: Always
+    imagePullPolicy: IfNotPresent
     resources:
       limits:
         cpu: 500m
         memory: 512Mi
       requests:
-        cpu: "0"
-        memory: "0"
-  mysqlPassword: "userdbpassword"
-  mysqlRootPassword: "rootpassword"
-  mysqlUser: "userdb"
-  replicas: 1
-  mysqlPort: 3306
+        cpu: 0
+        memory: 0
+  replicas: 1 # Unless you know what you are doing, we recommend to keep this value
+  mysqlPort: 3306 # Port isn't exposed, but it's required for internal operations
+# User and password for database
 
 volumeClaimTemplates:
   mysql: 
@@ -59,3 +69,6 @@ volumeClaimTemplates:
     accessModes: ReadWriteOnce
     storage: 10Gi
     storageClassName: local-path
+
+tlsSecretName: "" 
+ingressHost: "ghost.localhost"

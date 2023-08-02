@@ -47,14 +47,21 @@ metadata:
   {{- include "ghost-on-kubernetes.labels" . | nindent 4 }}
 spec:
   rules:
-  - host: ghost-on-kubernetes.local
+  - host: {{ .Values.ingressHost }} 
     http:
       paths:
-      - backend:
+      - path: /
+        pathType: Prefix
+        backend:
           service:
             name: {{ include "ghost-on-kubernetes.fullname" . | trunc 8 | trimSuffix "-" }}-svc
             port:
               number: {{ .Values.ghostConfigProd.port }}
-        path: /
-        pathType: ImplementationSpecific
----
+
+# Add tls config if tlsSecretName is not empty, else do nothing       
+{{- if .Values.tlsSecretName }}
+  tls:
+  - hosts:
+    - {{ .Values.ingressHost }}
+    secretName: {{ .Values.tlsSecretName }}
+{{- end }}

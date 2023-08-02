@@ -115,4 +115,4 @@ Define the content of config.production.json file
     "emailAnalytics": "{{ .Values.ghostConfigProd.emailAnalytics }}"
     }
 }
-{{- end }}
+{{- end }} 

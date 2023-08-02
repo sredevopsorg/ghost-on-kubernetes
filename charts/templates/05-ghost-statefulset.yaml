@@ -28,9 +28,13 @@ spec:
         - containerPort: {{ .Values.ghostConfigProd.port }}
           name: http
           protocol: TCP
-
-
-        resources: {}
+        resources:
+          requests:
+            cpu: {{ .Values.ghostOnKubernetes.resources.requests.cpu}}
+            memory: {{ .Values.ghostOnKubernetes.resources.requests.memory}}
+          limits:
+            cpu: {{ .Values.ghostOnKubernetes.resources.limits.cpu }}
+            memory: {{ .Values.ghostOnKubernetes.resources.limits.memory }}
         volumeMounts:
         - mountPath: /var/lib/ghost/content
           name: ghost-on-kubernetes-volume
@@ -48,9 +52,10 @@ spec:
       name: ghost-on-kubernetes-volume
     spec:
       accessModes:
-      - ReadWriteOnce
+      - {{ .Values.volumeClaimTemplates.ghost.accessModes }}
       resources:
         requests:
           storage: {{ .Values.volumeClaimTemplates.ghost.storage }}
       storageClassName: {{ .Values.volumeClaimTemplates.ghost.storageClassName }}
       volumeMode: Filesystem
+      
