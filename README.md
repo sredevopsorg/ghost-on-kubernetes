@@ -1,52 +1,112 @@
 # Ghost on Kubernetes
 
-[![Build and push image to DockerHub and GitHub Container Registry](https://github.com/sredevopsdev/ghost-on-kubernetes/actions/workflows/build-custom-image.yaml/badge.svg)](https://github.com/sredevopsdev/ghost-on-kubernetes/actions/workflows/build-custom-image.yaml)
-
-This repository contains a Helm chart for deploying Ghost on Kubernetes and a Dockerfile for building a custom Ghost image.
+This Helm chart deploys Ghost CMS v5 (latest) in Kubernetes as statefulsets with MySQL 8.
 
 ## Installation
 
-1. Add the sredevops Helm repository:
+## 1. Add the sredevops Helm repository
 
-```bash
+```console
 helm repo add sredevops https://sredevopsdev.github.io/ghost-on-kubernetes
 ```
 
-2. Install the chart using the values from `./charts/values.yaml`:
+*Modify the values in `values.yaml` to suit your needs.*
 
-```bash
-helm install my-ghost sredevops/ghost-on-kubernetes -f ./charts/values.yaml
+```yaml
+
+# values.yaml
+
+ghostConfigProd:
+# Add your ghost configuration here, all details can be found: https://ghost.org/docs/concepts/config/
+
+  url: "http://localhost:2368"
+  adminUrl: "http://localhost:2368"
+  host: "0.0.0.0" # We recommend to keep this value, unless you know what you are doing
+  port: 2368
+  mailTransport: SMTP
+  mailService: Google
+  mailHost: smtp.gmail.com
+  mailPort: 587
+  mailSecureConnection: true
+  mailAuthUser: "user@mail.com"
+  mailAuthPass: "c0ntr4s3n4"
+  debug: true
+  emailAnalytics: false
+  useUpdateCheck: false
+  useRpcPing: false
+  # This is the secret name for TLS certificate, optional
+
+ghostOnKubernetes:
+  ghostOnKubernetes:
+    env:
+      nodeEnv: production
+    image:
+      repository: ghcr.io/sredevopsdev/ghost-on-kubernetes
+      tag: main
+    imagePullPolicy: Always
+  replicas: 1
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 0m
+      memory: 0Mi
+
+kubernetesClusterDomain: cluster.local
+
+# Values used into mysql statefulset
+mysqlGhostOnKubernetes:
+# Database name
+  mysqlDatabase: "ghostdb"
+  mysqlUser: "userdb"
+  mysqlPassword: "userdbpassword"
+  mysqlRootPassword: "rootpassword"
+  mysqlGhostOnKubernetes:
+# Image used for mysql, Ghost docs recommend to use mysql 8.
+    image:
+      repository: docker.io/mysql/mysql-server
+      tag: 8.0.32-1.2.11-server
+    imagePullPolicy: IfNotPresent
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 0
+        memory: 0
+  replicas: 1 # Unless you know what you are doing, we recommend to keep this value
+  mysqlPort: 3306 # Port isn't exposed, but it's required for internal operations
+# User and password for database
+
+volumeClaimTemplates:
+  mysql: 
+    accessMode: ReadWriteOnce
+    storage: 1Gi
+    storageClassName: local-path
+  ghost:
+    accessModes: ReadWriteOnce
+    storage: 10Gi
+    storageClassName: local-path
+
+tlsSecretName: "" 
+ingressHost: "ghost.localhost"
+
 ```
 
-Note: You may need to modify the values in `./charts/values.yaml` to suit your needs.
+## 2. Install the chart
 
-## Configuration
+```bash
+helm install my-ghost sredevops/ghost-on-kubernetes --values values.yaml
+```
 
-The following table lists the configurable parameters of the Ghost chart and their default values.
+For more information on how to configure the chart, see the [official documentation](https://sredevopsdev.github.io/ghost-on-kubernetes/).
 
-| Parameter                        | Description                         | Default                                                 |
-| ---------------------------------| ----------------------------------- | ------------------------------------------------------- |
-| `mysql.accessMode`               | Access mode for MySQL volume        | `ReadWriteOnce`                                         |
-| `mysql.storage`                  | Size of MySQL volume                | `1Gi`                                                   |
-| `mysql.storageClassName`         | Storage class for MySQL volume      | `local-path`                                            |
-| `ghost.accessModes`              | Access mode for Ghost volume        | `ReadWriteOnce`                                         |
-| `ghost.storage`                  | Size of Ghost volume                | `10Gi`                                                  |
-| `ghost.storageClassName`         | Storage class for Ghost volume      | `local-path`                                            |
-| `ghost.ghostConfigProd.url`      | URL for Ghost production environment| `http://localhost:2368`                                 |
-| `ghost.ghostConfigProd.adminUrl` | URL for Ghost admin panel           | `http://localhost:2368`                                 |
-| `ghost.ghostConfigProd.host`     | Host for Ghost production environment| `0.0.0.0`                                             |
-| `ghost.ghostConfigProd.port`     | Port for Ghost production environment| `2368`                                               |
-| `ghost.ghostConfigProd.mailTransport` | Mail transport for Ghost production environment| `SMTP`                                       |
-| `ghost.ghostConfigProd.mailService` | Mail service for Ghost production environment| `Google`                                         |
-| `ghost.ghostConfigProd.mailHost` | Mail host for Ghost production environment| `smtp.gmail.com`                                   |
-| `ghost.ghostConfigProd.mailPort` | Mail port for Ghost production environment| `587`                                             |
-| `ghost.ghostConfigProd.mailSecureConnection` | Whether to use secure connection for mail in Ghost production environment| `true` |
-| `ghost.ghostConfigProd.mailAuthUser` | Mail authentication user for Ghost production environment| `user@mail.com`                          |
-| `ghost.ghostConfigProd.mailAuthPass` | Mail authentication password for Ghost production environment| `c0ntr4s3n4`                          |
-| `ghost.ghostConfigProd.debug` | Whether to enable debug mode for Ghost production environment| `true`                                         |
-| `ghost.ghostConfigProd.emailAnalytics` | Whether to enable email analytics for Ghost production environment| `false`                             |
-| `ghost.ghostConfigProd.useUpdateCheck` | Whether to enable update check for Ghost production environment| `false`                                 |
-| `ghost.ghostConfigProd.useRpcPing` | Whether to enable RPC ping for Ghost production environment| `false`                                       |
+## Uninstallation
 
+To uninstall/delete the `my-ghost` deployment:
 
-For more information on how to configure the chart or you have any questions, please create an issue in this repository.[ https://github.com/sredevopsdev/ghost-on-kubernetes/issues ](https://github.com/sredevopsdev/ghost-on-kubernetes/issues/new)
+```console
+helm uninstall my-ghost
+```
+
