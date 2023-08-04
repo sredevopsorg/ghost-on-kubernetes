@@ -41,10 +41,10 @@ metadata:
 spec:
   tls:
   - hosts:
-    - sredevops.cl
-    secretName: sredevops-cl-tls
+    - sredevops.tld
+    secretName: sredevops-tld-tls
   rules:
-  - host: sredevops.cl
+  - host: sredevops.tld
     http:
       paths:
       - path: /
