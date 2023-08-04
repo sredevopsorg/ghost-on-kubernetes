@@ -1,56 +1,56 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: ghost-service
-  namespace: ghost-on-kubernetes
+  name: sredevops-svc
+  namespace: sredevops
   labels:
-    app: ghost-on-kubernetes
+    app: sredevops
 spec:
   ports:
   - port: 2368
     protocol: TCP
     targetPort: 2368
-    name: ghost-service
+    name: sredevops
   type: ClusterIP
   selector:
-    app: ghost-on-kubernetes
+    app: sredevops
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: mysql-ghost-on-kubernetes
-  namespace: ghost-on-kubernetes
+  name: mysql-sredevops
+  namespace: sredevops
   labels:
-    app: mysql-ghost-on-kubernetes
+    app: mysql-sredevops
 spec:
   ports:
     - port: 3306
       protocol: TCP
       targetPort: 3306
-      name: mysql-ghost-on-kubernetes
+      name: mysql-sredevops
   type: ClusterIP
   clusterIP: None
   selector:
-    app: mysql-ghost-on-kubernetes
+    app: mysql-sredevops
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: ghost-on-kubernetes
-  namespace: ghost-on-kubernetes
+  name: sredevops
+  namespace: sredevops
 spec:
   tls:
   - hosts:
-    - ghost-on-kubernetes.local
-    secretName: ghost-on-kubernetes-tls
+    - sredevops.cl
+    secretName: sredevops-cl-tls
   rules:
-  - host: ghost-on-kubernetes.local
+  - host: sredevops.cl
     http:
       paths:
       - path: /
         pathType: ImplementationSpecific
         backend:
           service:
-            name: ghost-service
+            name: sredevops-svc
             port:
               number: 2368

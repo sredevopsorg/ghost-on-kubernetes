@@ -1,44 +1,46 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: mysql-ghost-on-kubernetes
-  namespace: ghost-on-kubernetes
+  name: mysql-sredevops
+  namespace: sredevops
   labels:
-    app: mysql-ghost-on-kubernetes
+    app: mysql-sredevops
 spec:
-  serviceName: mysql-ghost-on-kubernetes
+  serviceName: mysql-sredevops
   replicas: 1
   selector:
     matchLabels:
-      app: mysql-ghost-on-kubernetes
+      app: mysql-sredevops
   template:
     metadata:
       labels:
-        app: mysql-ghost-on-kubernetes
+        app: mysql-sredevops
     spec:
+      nodeSelector:
+        kubernetes.io/arch: amd64
       containers:
-        - name: mysql-ghost-on-kubernetes
+        - name: mysql-sredevops
           securityContext:
-            capabilities:
-              drop:
-                - all
-              add:
-                - CHOWN
-                - DAC_OVERRIDE
-                - SETGID
-                - SETUID
-                - SETPCAP
-                - NET_BIND_SERVICE
-            readOnlyRootFilesystem: true
-            runAsUser: 10001
-            runAsGroup: 1001
+          #   capabilities:
+          #     drop:
+          #       - all
+          #     add:
+          #       - CHOWN
+          #       - DAC_OVERRIDE
+          #       - SETGID
+          #       - SETUID
+          #       - SETPCAP
+          #       - NET_BIND_SERVICE
+          #   readOnlyRootFilesystem: true
+          #   runAsUser: 10001
+          #   runAsGroup: 1001
             allowPrivilegeEscalation: false
             
           image: docker.io/mysql/mysql-server:8.0.32-1.2.11-server
           imagePullPolicy: Always
           envFrom:
             - secretRef:
-                name: mysql-ghost-on-kubernetes
+                name: mysql-sredevops
           resources:
             requests:
               memory: 0Mi
@@ -49,39 +51,46 @@ spec:
           ports:
             - containerPort: 3306
               protocol: TCP
-          livenessProbe:
-            exec:
-              command:
-                - sh
-                - -c
-                - mysqladmin ping -h 
-                - localhost
-                - -u 
-                - root
-                - -p
-                - $MYSQL_ROOT_PASSWORD
-            initialDelaySeconds: 30
-            periodSeconds: 10
-            timeoutSeconds: 5
-          readinessProbe:
-            exec:
-              command:
-                - sh
-                - -c
-                - mysqladmin ping -h 
-                - localhost
-                - -u 
-                - root
-                - -p
-                - $MYSQL_ROOT_PASSWORD
-            initialDelaySeconds: 5
-            periodSeconds: 10
-            timeoutSeconds: 5
+          # livenessProbe:
+          #   exec:
+          #     command:
+          #       - sh
+          #       - -c
+          #       - mysqladmin ping -h 
+          #       - localhost
+          #       - -u 
+          #       - root
+          #       - -p
+          #       - $MYSQL_ROOT_PASSWORD
+          #   initialDelaySeconds: 30
+          #   periodSeconds: 10
+          #   timeoutSeconds: 5
+          # readinessProbe:
+          #   exec:
+          #     command:
+          #       - sh
+          #       - -c
+          #       - mysqladmin ping -h 
+          #       - localhost
+          #       - -u 
+          #       - root
+          #       - -p
+          #       - $MYSQL_ROOT_PASSWORD
+          #   initialDelaySeconds: 5
+          #   periodSeconds: 10
+          #   timeoutSeconds: 5
             
           volumeMounts:
-            - name: mysql-ghost-on-kubernetes-pvc
+            - name: mysql-sredevops-pvc
               mountPath: /var/lib/mysql
-      volumes:
-        - name: mysql-ghost-on-kubernetes-pvc
-          persistentVolumeClaim:
-            claimName: mysql-ghost-on-kubernetes-pvc
+  volumeClaimTemplates:
+  - metadata:
+      name: mysql-sredevops-pvc
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 5Gi
+      storageClassName: local-path
+      volumeMode: Filesystem
+
