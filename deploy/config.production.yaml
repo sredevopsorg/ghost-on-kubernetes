@@ -1,0 +1,56 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ghost-config-prod
+  namespace: sredevops
+type: Opaque
+data: 
+  config.production.json: |
+    {
+      "url": "https://url.cl",
+      "admin": {
+        "url": "https://url.cl"
+      },
+      "server": {
+        "port": 2368,
+        "host": "0.0.0.0"
+      },
+      "mail": {
+        "transport": "SMTP",
+        "options": {
+          "service": "Google",
+          "host": "smtp.gmail.com",
+          "port": 587,
+          "secureConnection": true,
+          "auth": {
+            "user": "user@mail.com",
+            "pass": "pass"
+          }
+        }
+      },
+      "logging": {
+        "transports": [
+          "stdout",
+          "file"
+        ]
+      },
+      "database": {
+        "client": "mysql",
+        "connection": 
+        {
+          "host": "mysql-sredevops",
+          "user": "userdb",
+          "password": "passdb",
+          "database": "db",
+          "port": "3306"
+        }
+      },
+      "debug": true,
+      "process": "local",
+      "paths": {
+        "contentPath": "/var/lib/ghost/content"
+      }
+    }
+
+
+
