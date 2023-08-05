@@ -18,78 +18,83 @@ spec:
       nodeSelector:
         kubernetes.io/arch: amd64
       containers:
-      - name: sredevops
-        image: ghcr.io/sredevopsdev/ghost-on-kubernetes:main
-        imagePullPolicy: Always
+        - name: sredevops
+          image: ghcr.io/sredevopsdev/ghost-on-kubernetes:main
+          imagePullPolicy: Always
+          resources:
+            requests:
+              memory: 1Gi
+              cpu: 1000m
+            limits:
+              memory: 2Gi
+              cpu: 2000m
+          securityContext:
+            # capabilities:
+            #   drop:
+            #     - all
+            #   add:
+            #     - CHOWN
+            #     - DAC_OVERRIDE
+            #     - SETGID
+            #     - SETUID
+            #     - SETPCAP
+            #     - NET_BIND_SERVICE
+            # runAsUser: 10001
+            # runAsGroup: 1001
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+
+          ports:
+            - containerPort: 2368
+              protocol: TCP
+              name: sredevops
+
+          env:
+            - name: NODE_ENV
+              value: production
+          volumeMounts:
+            - name: sredevops-volume
+              mountPath: /var/lib/ghost/content
+            - name: ghost-config-prod
+              mountPath: /var/lib/ghost/config.production.json
+              subPath: config.production.json
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+              readOnly: false
+          # livenessProbe:
+          #   httpGet:
+          #     path: /
+          #     port: 2368
+          #   initialDelaySeconds: 30
+          #   timeoutSeconds: 5
+          #   periodSeconds: 30
+          #   failureThreshold: 3
+          # readinessProbe:
+          #   httpGet:
+          #     path: /
+          #     port: 2368
+          #   initialDelaySeconds: 30
+          #   timeoutSeconds: 5
+          #   periodSeconds: 30
+          #   failureThreshold: 3
+      volumes:
+        - name: sredevops-volume
+          persistentVolumeClaim:
+            claimName: ghost-pvc
+        - name: ghost-config-prod
+          secret:
+            secretName: ghost-config-prod
+        - name: tmp
+          emptyDir: {}
+
+  volumeClaimTemplates:
+    - metadata:
+        name: sredevops-volume
+      spec:
+        accessModes: ["ReadWriteOnce"]
         resources:
           requests:
-            memory: 1Gi
-            cpu: 1000m
-          limits:
-            memory: 2Gi
-            cpu: 2000m
-        securityContext:
-          # capabilities:
-          #   drop:
-          #     - all
-          #   add:
-          #     - CHOWN
-          #     - DAC_OVERRIDE
-          #     - SETGID
-          #     - SETUID
-          #     - SETPCAP
-          #     - NET_BIND_SERVICE
-          # runAsUser: 10001
-          # runAsGroup: 1001
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: true
-
-        ports: 
-          - containerPort: 2368
-            protocol: TCP
-            name: sredevops
-
-        env:
-          - name: NODE_ENV
-            value: production
-        volumeMounts:
-          - name: sredevops-volume
-            mountPath: /var/lib/ghost/content
-          - name:  ghost-config-prod
-            mountPath: /var/lib/ghost/config.production.json
-            subPath: config.production.json
-            readOnly: true
-        # livenessProbe:
-        #   httpGet:
-        #     path: /
-        #     port: 2368
-        #   initialDelaySeconds: 30
-        #   timeoutSeconds: 5
-        #   periodSeconds: 30
-        #   failureThreshold: 3
-        # readinessProbe:
-        #   httpGet:
-        #     path: /
-        #     port: 2368
-        #   initialDelaySeconds: 30
-        #   timeoutSeconds: 5
-        #   periodSeconds: 30
-        #   failureThreshold: 3
-      volumes:
-      - name: sredevops-volume
-        persistentVolumeClaim:
-          claimName: ghost-pvc
-      - name: ghost-config-prod
-        secret:
-          secretName: ghost-config-prod
-  volumeClaimTemplates:
-  - metadata:
-      name: sredevops-volume
-    spec:
-      accessModes: [ "ReadWriteOnce" ]
-      resources:
-        requests:
-          storage: 10Gi
-      storageClassName: local-path
-      volumeMode: Filesystem
-
+            storage: 10Gi
+        storageClassName: local-path
+        volumeMode: Filesystem
