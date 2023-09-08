@@ -1,0 +1,88 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "ghost-on-kubernetes.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ include "ghost-on-kubernetes.fullname" . }}  
+spec:
+  ports:
+    - port: {{ .Values.ghostConfigProd.port }}
+      protocol: TCP
+      targetPort: 2368
+  type: ClusterIP
+  selector:
+    app: {{ include "ghost-on-kubernetes.fullname" . }}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "ghost-on-kubernetes.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels: 
+    app: {{ include "ghost-on-kubernetes.fullname" . }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ include "ghost-on-kubernetes.fullname" . }}
+  serviceName: {{ include "ghost-on-kubernetes.fullname" . }}
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: {{ include "ghost-on-kubernetes.fullname" . }}
+    spec:
+      terminationGracePeriodSeconds: 30
+      nodeSelector:
+        kubernetes.io/arch: amd64
+      containers:
+        - name: {{ include "ghost-on-kubernetes.fullname" . }}
+          image: {{ .Values.ghostStatefulset.image }}:{{ .Values.ghostStatefulset.tag }}
+          imagePullPolicy: Always
+          resources:
+            requests:
+              memory: "{{ .Values.ghostStatefulset.resources.requests.memory }}"
+              cpu: "{{ .Values.ghostStatefulset.resources.requests.cpu }}"
+            limits:
+              memory: "{{ .Values.ghostStatefulset.resources.limits.memory }}"
+              cpu: "{{ .Values.ghostStatefulset.resources.limits.cpu }}"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+          ports:
+            - containerPort: 2368
+              protocol: TCP
+          env:
+            - name: NODE_ENV
+              value: production
+          volumeMounts:
+            - name: {{ include "ghost-on-kubernetes.fullname" . }}-ghost
+              mountPath: /var/lib/ghost/content
+            - name: ghost-config-prod
+              mountPath: /var/lib/ghost/config.production.json
+              subPath: config.production.json
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+              readOnly: false
+      volumes:
+        - name: ghost-config-prod
+          secret:
+            secretName: {{ include "ghost-on-kubernetes.fullname" . }}-config
+        - name: tmp
+          emptyDir: {}
+        - name: {{ include "ghost-on-kubernetes.fullname" . }}-ghost
+          persistentVolumeClaim:
+            claimName: {{ include "ghost-on-kubernetes.fullname" . }}-ghost
+  volumeClaimTemplates:
+    - metadata:
+        name: {{ include "ghost-on-kubernetes.fullname" . }}-ghost
+        namespace: {{ .Release.Namespace }}
+      spec:
+        accessModes:
+          - "{{ .Values.volumeClaimTemplates.ghost.accessModes }}"
+        resources:
+          requests:
+            storage: "{{ .Values.volumeClaimTemplates.ghost.storage }}"
+        storageClassName: {{ .Values.volumeClaimTemplates.ghost.storageClassName }}
+        volumeMode: Filesystem

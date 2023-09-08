@@ -1,0 +1,91 @@
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: false
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+ghostConfigProd:
+  # Add your ghost configuration here, all details can be found: https://ghost.org/docs/concepts/config/
+  url: https://yourdomain.com
+  adminUrl: https://yourdomain.com
+  port: 2368
+  mailTransport: SMTP
+  mailService: Google
+  mailHost: smtp.gmail.com
+  mailPort: 587
+  mailSecureConnection: true
+  mailAuthUser: user@mail.com
+  mailAuthPass: c0ntr4s3n4
+  debug: true
+  emailAnalytics: false
+  useUpdateCheck: false
+  useRpcPing: false
+
+kubernetesClusterDomain: cluster.local
+
+ghostStatefulset:
+  image: ghcr.io/sredevopsdev/ghost-on-kubernetes
+  tag: main
+  imagePullPolicy: Always
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 0m
+      memory: 0Mi
+
+# Values used into mysql statefulset
+mysqlStatefulset:
+  database: ghostdb
+  user: "userdb"
+  password: "userdbpassword"
+  rootPassword: "rootpassword"
+  port: 3306 # Port isn't exposed, but it's required for internal operations
+  image: docker.io/mysql/mysql-server
+  tag: 8.0.32-1.2.11-server
+  imagePullPolicy: IfNotPresent
+  replicas: 1 # Unless you know what you are doing, we recommend to keep this value
+
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 0Mi
+      memory: 0Mi
+# User and password for database
+
+volumeClaimTemplates:
+  mysql:
+    accessMode: ReadWriteOnce
+    storage: 1Gi
+    storageClassName: local-path
+  ghost:
+    accessModes: ReadWriteOnce
+    storage: 5Gi
+    storageClassName: local-path
+
+ingress:
+  enabled: false
+  className: "traefik"
+  annotations:
+    {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local

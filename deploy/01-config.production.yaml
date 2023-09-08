@@ -1,0 +1,54 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ghost-config-prod
+  namespace: ghostk3s
+type: Opaque
+data:
+  # Convert your config.production.sample.json to base64
+  config.production.sample.json: |
+    {
+    "url": "http://localhost:2368",
+    "admin": {
+      "url": "http://localhost:2368"
+    },
+    "server": {
+      "port": 2368,
+      "host": "0.0.0.0"
+    },
+    "mail": {
+      "transport": "SMTP",
+      "options": {
+        "service": "Google",
+        "host": "smtp.gmail.com",
+        "port": 587,
+        "secure": true,
+        "auth": {
+          "user": "user@mail.com",
+          "pass": "pass"
+        }
+      }
+    },
+    "logging": {
+      "transports": [
+        "stdout",
+        "file"
+      ]
+    },
+    "database": {
+      "client": "mysql",
+      "connection": 
+      {
+        "host": "mysql-ghostk3s",
+        "user": "userdb",
+        "password": "passdb",
+        "database": "db",
+        "port": "3306"
+      }
+    },
+    "debug": true,
+    "process": "local",
+    "paths": {
+      "contentPath": "/var/lib/ghost/content"
+      }
+    }

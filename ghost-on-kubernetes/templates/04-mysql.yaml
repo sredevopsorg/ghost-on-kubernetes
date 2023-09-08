@@ -1,0 +1,89 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "ghost-on-kubernetes.fullname" . }}-mysql
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ include "ghost-on-kubernetes.fullname" . }}-mysql
+    {{ include "ghost-on-kubernetes.labels" . | nindent 4 }}
+spec:
+  ports:
+    - port: {{ .Values.mysqlStatefulset.port }}
+      protocol: TCP
+      targetPort: 3306
+  type: ClusterIP
+  clusterIP: None
+  selector:
+    app: {{ include "ghost-on-kubernetes.fullname" . }}-mysql
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "ghost-on-kubernetes.fullname" . }}-mysql
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ include "ghost-on-kubernetes.fullname" . }}-mysql
+    {{ include "ghost-on-kubernetes.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ include "ghost-on-kubernetes.fullname" . }}-mysql
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "ghost-on-kubernetes.fullname" . }}-mysql
+  template:
+    metadata:
+      labels:
+        app: {{ include "ghost-on-kubernetes.fullname" . }}-mysql
+        {{ include "ghost-on-kubernetes.labels" . | nindent 8 }}
+    spec:
+      nodeSelector:
+        kubernetes.io/arch: amd64
+      containers:
+        - name: {{ include "ghost-on-kubernetes.fullname" . }}-mysql
+          securityContext:
+            #   capabilities:
+            #     drop:
+            #       - all
+            #     add:
+            #       - CHOWN
+            #       - DAC_OVERRIDE
+            #       - SETGID
+            #       - SETUID
+            #       - SETPCAP
+            #       - NET_BIND_SERVICE
+            #   readOnlyRootFilesystem: true
+            #   runAsUser: 10001
+            #   runAsGroup: 1001
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+
+          image: {{ .Values.mysqlStatefulset.image }}:{{ .Values.mysqlStatefulset.tag }}
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - secretRef:
+                name: {{ include "ghost-on-kubernetes.fullname" . }}-mysql
+          resources:
+            requests:
+              memory: {{ .Values.mysqlStatefulset.resources.requests.memory }}
+              cpu: {{ .Values.mysqlStatefulset.resources.requests.cpu }}
+            limits:
+              memory: {{ .Values.mysqlStatefulset.resources.limits.memory }}
+              cpu: {{ .Values.mysqlStatefulset.resources.limits.cpu }}
+          ports:
+            - containerPort: 3306
+              protocol: TCP
+
+          volumeMounts:
+            - name: {{ include "ghost-on-kubernetes.fullname" . }}-mysql-pvc
+              mountPath: /var/lib/mysql
+  volumeClaimTemplates:
+    - metadata:
+        name: {{ include "ghost-on-kubernetes.fullname" . }}-mysql-pvc
+        namespace: {{ .Release.Namespace }}
+      spec:
+        accessModes: ["{{ .Values.volumeClaimTemplates.mysql.accessMode }}"]
+        resources:
+          requests:
+            storage: {{ .Values.volumeClaimTemplates.mysql.storage }}
+        storageClassName: {{ .Values.volumeClaimTemplates.mysql.storageClassName }}
+        volumeMode: Filesystem

@@ -1,0 +1,33 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ghostk3s
+  namespace: ghostk3s
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - ghostk3s.org
+        - www.ghostk3s.org
+      secretName: ghostk3s-org-tls
+  rules:
+    - host: ghostk3s.org
+      http:
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: ghostk3s-svc
+                port:
+                  name: ghostk3s
+    - host: www.ghostk3s.org
+      http:
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: ghostk3s-svc
+                port:
+                  name: ghostk3s
