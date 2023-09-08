@@ -22,6 +22,58 @@ git checkout -b my-branch
 
 - deploy/00-namespace.yaml
 - deploy/01-config.production.yaml # Check config.production.sample.json for more details
+
+```yaml
+config.production.sample.json: |
+{
+  "url": "http://localhost:2368",
+  "admin": {
+    "url": "http://localhost:2368"
+  },
+  "server": {
+    "port": 2368,
+    "host": "0.0.0.0"
+  },
+  "mail": {
+    "transport": "SMTP",
+    "options": {
+      "service": "Google",
+      "host": "smtp.gmail.com",
+      "port": 587,
+      "secure": true,
+      "auth": {
+        "user": "user@mail.com",
+        "pass": "pass"
+      }
+    }
+  },
+  "logging": {
+    "transports": [
+      "stdout",
+      "file"
+    ]
+  },
+  "database": {
+    "client": "mysql",
+    "connection": 
+    {
+      "host": "mysql-ghostk3s", # Same as service name
+      "user": "userdb", # Same as in secret
+      "password": "passdb", # Same as in secret
+      "database": "db", # Same as in secret
+      "port": "3306"
+    }
+  },
+  "debug": true,
+  "process": "local",
+  "paths": {
+    "contentPath": "/var/lib/ghost/content"
+  }
+}
+
+
+```
+
 - deploy/01-secrets.yaml
 - deploy/02-pv.yaml
 - deploy/03-ingress.yaml
@@ -53,7 +105,7 @@ kubectl apply -f deploy/05-ghost-deployment.yaml
 
 ```bash
 # Create a port-forward to your Ghost service
-kubectl -n ghostk3s port-forward svc/ghost 2368:2368 & \
+kubectl -n ghostk3s port-forward svc/ghostk3s 2368:2368 &
 
 ```
 
