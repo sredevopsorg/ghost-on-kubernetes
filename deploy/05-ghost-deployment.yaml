@@ -54,10 +54,12 @@ spec:
           volumeMounts:
             - name: ghostk3s-static-ghost
               mountPath: /var/lib/ghost/content
+
             - name: ghost-config-prod
               mountPath: /var/lib/ghost/config.production.json
               subPath: config.production.json
               readOnly: true
+
             - name: tmp
               mountPath: /tmp
               readOnly: false
@@ -70,6 +72,8 @@ spec:
         - name: ghost-config-prod
           secret:
             secretName: ghost-config-prod
+
         - name: tmp
-          emptyDir: {}
-          readOnly: false
+          emptyDir:
+            medium: ""
+            sizeLimit: "512Mi"
