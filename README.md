@@ -1,112 +1,65 @@
-# Ghost on Kubernetes
+# Ghost on Kubernetes by [SREDevOps](https://sredevops.org)
 
-This Helm chart deploys Ghost CMS v5 (latest) in Kubernetes as statefulsets with MySQL 8.
+[![Build and push image to DockerHub and GitHub Container Registry](https://github.com/sredevopsdev/ghost-on-kubernetes/actions/workflows/build-custom-image.yaml/badge.svg)](https://github.com/sredevopsdev/ghost-on-kubernetes/actions/workflows/build-custom-image.yaml) 
+
+This repo deploys Ghost CMS v5.xx.x @TryGhost (upstream) in Kubernetes as deployments and statefulsets with MySQL 8.
 
 ## Installation
 
-## 1. Add the sredevops Helm repository
-
-```console
-helm repo add sredevops https://sredevopsdev.github.io/ghost-on-kubernetes
-```
-
-*Modify the values in `values.yaml` to suit your needs.*
-
-```yaml
-
-# values.yaml
-
-ghostConfigProd:
-# Add your ghost configuration here, all details can be found: https://ghost.org/docs/concepts/config/
-
-  url: "http://localhost:2368"
-  adminUrl: "http://localhost:2368"
-  host: "0.0.0.0" # We recommend to keep this value, unless you know what you are doing
-  port: 2368
-  mailTransport: SMTP
-  mailService: Google
-  mailHost: smtp.gmail.com
-  mailPort: 587
-  mailSecureConnection: true
-  mailAuthUser: "user@mail.com"
-  mailAuthPass: "c0ntr4s3n4"
-  debug: true
-  emailAnalytics: false
-  useUpdateCheck: false
-  useRpcPing: false
-  # This is the secret name for TLS certificate, optional
-
-ghostOnKubernetes:
-  ghostOnKubernetes:
-    env:
-      nodeEnv: production
-    image:
-      repository: ghcr.io/sredevopsdev/ghost-on-kubernetes
-      tag: main
-    imagePullPolicy: Always
-  replicas: 1
-  resources:
-    limits:
-      cpu: 1000m
-      memory: 1Gi
-    requests:
-      cpu: 0m
-      memory: 0Mi
-
-kubernetesClusterDomain: cluster.local
-
-# Values used into mysql statefulset
-mysqlGhostOnKubernetes:
-# Database name
-  mysqlDatabase: "ghostdb"
-  mysqlUser: "userdb"
-  mysqlPassword: "userdbpassword"
-  mysqlRootPassword: "rootpassword"
-  mysqlGhostOnKubernetes:
-# Image used for mysql, Ghost docs recommend to use mysql 8.
-    image:
-      repository: docker.io/mysql/mysql-server
-      tag: 8.0.32-1.2.11-server
-    imagePullPolicy: IfNotPresent
-    resources:
-      limits:
-        cpu: 500m
-        memory: 512Mi
-      requests:
-        cpu: 0
-        memory: 0
-  replicas: 1 # Unless you know what you are doing, we recommend to keep this value
-  mysqlPort: 3306 # Port isn't exposed, but it's required for internal operations
-# User and password for database
-
-volumeClaimTemplates:
-  mysql: 
-    accessMode: ReadWriteOnce
-    storage: 1Gi
-    storageClassName: local-path
-  ghost:
-    accessModes: ReadWriteOnce
-    storage: 10Gi
-    storageClassName: local-path
-
-tlsSecretName: "" 
-ingressHost: "ghost.localhost"
-
-```
-
-## 2. Install the chart
+## 1. Clone the repository
 
 ```bash
-helm install my-ghost sredevops/ghost-on-kubernetes --values values.yaml
+# Clone the repository
+git clone https://github.com/sredevopsdev/ghost-on-kubernetes.git
+# Change directory
+cd ghost-on-kubernetes
+# Checkout to your local branch (optional)
+git checkout -b my-branch
+
 ```
 
-For more information on how to configure the chart, see the [official documentation](https://sredevopsdev.github.io/ghost-on-kubernetes/).
+## 2. Review the default values and make changes as per your requirements, if any into the following files
 
-## Uninstallation
+- deploy/00-namespace.yaml
+- deploy/01-config.production.yaml # Check config.production.sample.json for more details
+- deploy/01-secrets.yaml
+- deploy/02-pv.yaml
+- deploy/03-ingress.yaml
+- deploy/03-service.yaml
+- deploy/04-mysql.yaml
+- deploy/05-ghost-deployment.yaml
 
-To uninstall/delete the `my-ghost` deployment:
+## 3. Apply your manifests
 
-```console
-helm uninstall my-ghost
+```bash
+# Create the namespace
+kubectl apply -f deploy/00-namespace.yaml
+# Create the secrets
+kubectl apply -f deploy/01-secrets.yaml
+kubectl apply -f deploy/01-config.production.yaml
+# Create the persistent volume
+kubectl apply -f deploy/02-pv.yaml
+# Create the ingress
+kubectl apply -f deploy/03-ingress.yaml
+# Create the services
+kubectl apply -f deploy/03-service.yaml
+# Create the MySQL database
+kubectl apply -f deploy/04-mysql.yaml
+# Create the Ghost deployment
+kubectl apply -f deploy/05-ghost-deployment.yaml
 ```
 
+## 4. Access your Ghost CMS
+
+```bash
+# Create a port-forward to your Ghost service
+kubectl -n ghostk3s port-forward svc/ghost 2368:2368 & \
+
+```
+
+## 5. Open your browser and access the Ghost CMS
+
+[http://localhost:2368](http://localhost:2368)
+
+## 6. Login to your Ghost CMS
+[http://localhost:2368/ghost](http://localhost:2368/ghost)
