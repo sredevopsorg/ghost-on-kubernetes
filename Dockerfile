@@ -2,7 +2,7 @@
 # https://github.com/nodejs/Release (looking for "LTS")
 # https://github.com/TryGhost/Ghost/blob/v4.1.2/package.json#L38
 
-FROM node:18.18.0-bookworm-slim
+FROM node:18.18.1-bookworm-slim
 LABEL org.opencontainers.image.source="https://github.com/sredevopsdev/ghost-on-kubernetes"
 
 ENV DEBIAN_FRONTEND=noninteractive
