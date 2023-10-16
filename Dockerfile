@@ -42,7 +42,7 @@ ENV NODE_ENV production
 
 ENV GHOST_CLI_VERSION 1.25.1
 RUN set -eux; \
-	npm install -g "ghost-cli@$GHOST_CLI_VERSION"; \
+	npm install -g "ghost-cli@latest"; \
 	npm cache clean --force
 
 ARG GHOST_VERSION 
@@ -123,11 +123,13 @@ RUN set -eux; \
 	npm cache clean --force; \
 	rm -rv /tmp/yarn* /tmp/v8*
 
+# Adds git, bash, ca-certificates and nano
+RUN apt-get update && apt-get install -y git nano bash ca-certificates && apt-get clean && rm -rf /var/lib/apt/lists/* && apt-get autoclean -y && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
 
 WORKDIR $GHOST_INSTALL
 VOLUME $GHOST_CONTENT
 
-COPY --chmod=0777 docker-entrypoint.sh /usr/local/bin/
+COPY docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 ENV PATH $PATH:/usr/local/bin:$GHOST_INSTALL/current/node_modules/.bin
 ENTRYPOINT ["docker-entrypoint.sh"]

@@ -7,8 +7,9 @@ metadata:
     app: ghostk3s
 spec:
   storageClassName: default
+  volumeMode: Filesystem
   accessModes:
-    - ReadWriteOnce
+  - ReadWriteOnce
   resources:
     requests:
-      storage: 10Gi
+      storage: 5Gi

@@ -18,62 +18,62 @@ spec:
       nodeSelector:
         kubernetes.io/arch: amd64
       containers:
-        - name: ghostk3s
-          image: ghcr.io/sredevopsdev/ghost-on-kubernetes:main
-          imagePullPolicy: Always
-          resources:
-            requests:
-              memory: 1Gi
-              cpu: 1000m
-            limits:
-              memory: 2Gi
-              cpu: 2000m
-          securityContext:
-            # capabilities:
-            #   drop:
-            #     - all
-            #   add:
-            #     - CHOWN
-            #     - DAC_OVERRIDE
-            #     - SETGID
-            #     - SETUID
-            #     - SETPCAP
-            #     - NET_BIND_SERVICE
-            # runAsUser: 10001
-            # runAsGroup: 1001
-            allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: true
+      - name: ghostk3s
+        image: ghcr.io/sredevopsdev/ghost-on-kubernetes:main
+        imagePullPolicy: Always
+        resources:
+          requests:
+            memory: 1Gi
+            cpu: 1000m
+          limits:
+            memory: 2Gi
+            cpu: 2000m
+        securityContext:
+          # capabilities:
+          #   drop:
+          #     - all
+          #   add:
+          #     - CHOWN
+          #     - DAC_OVERRIDE
+          #     - SETGID
+          #     - SETUID
+          #     - SETPCAP
+          #     - NET_BIND_SERVICE
+          # runAsUser: 10001
+          # runAsGroup: 1001
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
 
-          ports:
-            - containerPort: 2368
-              protocol: TCP
-              name: ghostk3s
-          env:
-            - name: NODE_ENV
-              value: production
-          volumeMounts:
-            - name: ghostk3s-static-ghost
-              mountPath: /var/lib/ghost/content
-
-            - name: ghost-config-prod
-              mountPath: /var/lib/ghost/config.production.json
-              subPath: config.production.json
-              readOnly: true
-
-            - name: tmp
-              mountPath: /tmp
-              readOnly: false
-
-      volumes:
+        ports:
+        - containerPort: 2368
+          protocol: TCP
+          name: ghk3s
+        env:
+        - name: NODE_ENV
+          value: production
+        volumeMounts:
         - name: ghostk3s-static-ghost
-          persistentVolumeClaim:
-            claimName: ghostk3s-static-ghost
+          mountPath: /var/lib/ghost/content
 
         - name: ghost-config-prod
-          secret:
-            secretName: ghost-config-prod
+          mountPath: /var/lib/ghost/config.production.json
+          subPath: config.production.json
+          readOnly: true
 
         - name: tmp
-          emptyDir:
-            medium: ""
-            sizeLimit: "512Mi"
+          mountPath: /tmp
+          readOnly: false
+
+      volumes:
+      - name: ghostk3s-static-ghost
+        persistentVolumeClaim:
+          claimName: ghostk3s-static-ghost
+
+      - name: ghost-config-prod
+        secret:
+          secretName: ghost-config-prod
+
+      - name: tmp
+        emptyDir:
+          medium: ""
+          sizeLimit: "256Mi"

@@ -19,67 +19,49 @@ spec:
       nodeSelector:
         kubernetes.io/arch: amd64
       containers:
-        - name: mysql-ghostk3s
-          securityContext:
-            #   capabilities:
-            #     drop:
-            #       - all
-            #     add:
-            #       - CHOWN
-            #       - DAC_OVERRIDE
-            #       - SETGID
-            #       - SETUID
-            #       - SETPCAP
-            #       - NET_BIND_SERVICE
-            #   readOnlyRootFilesystem: true
-            #   runAsUser: 10001
-            #   runAsGroup: 1001
-            allowPrivilegeEscalation: false
-          image: docker.io/mysql/mysql-server:8.0.32-1.2.11-server
-          imagePullPolicy: Always
-          envFrom:
-            - secretRef:
-                name: mysql-ghostk3s
-          resources:
-            requests:
-              memory: 0Mi
-              cpu: 0m
-            limits:
-              memory: 512Mi
-              cpu: 500m
-          ports:
-            - containerPort: 3306
-              protocol: TCP
-          livenessProbe:
-            exec:
-              command:
-                - /bin/sh
-                - -c
-                - mysqladmin ping -h 127.0.0.1 -u root -p${MYSQL_ROOT_PASSWORD}
-            initialDelaySeconds: 30
-            periodSeconds: 10
-            timeoutSeconds: 5
-            failureThreshold: 3
-          readinessProbe:
-            exec:
-              command:
-                - /bin/sh
-                - -c
-                - mysql -h 127.0.0.1 -u root -p${MYSQL_ROOT_PASSWORD} -e "SELECT 1"
-            initialDelaySeconds: 30
-            periodSeconds: 10
-            timeoutSeconds: 5
-            failureThreshold: 3
-          volumeMounts:
-            - name: mysql-ghostk3s-claim
-              mountPath: /var/lib/mysql
-              readOnly: false
-  volumeClaimTemplates:
-    - metadata:
-        name: mysql-ghostk3s-claim
-      spec:
-        accessModes: ["ReadWriteOnce"]
-        storageClassName: "default"
+      - name: mysql-ghostk3s
+        securityContext:
+          #   capabilities:
+          #     drop:
+          #       - all
+          #     add:
+          #       - CHOWN
+          #       - DAC_OVERRIDE
+          #       - SETGID
+          #       - SETUID
+          #       - SETPCAP
+          #       - NET_BIND_SERVICE
+          #   readOnlyRootFilesystem: true
+          #   runAsUser: 10001
+          #   runAsGroup: 1001
+          allowPrivilegeEscalation: false
+        image: docker.io/mysql/mysql-server:8.0.32-1.2.11-server
+        imagePullPolicy: IfNotPresent
+        envFrom:
+        - secretRef:
+            name: mysql-ghostk3s
         resources:
           requests:
-            storage: 1Gi
+            memory: 256Mi
+            cpu: 500m
+          limits:
+            memory: 1024Mi
+            cpu: 800m
+        ports:
+        - containerPort: 3306
+          protocol: TCP
+          name: mysqlgh
+
+        volumeMounts:
+        - name: mysql-ghostk3s-claim
+          mountPath: /var/lib/mysql
+          readOnly: false
+  volumeClaimTemplates:
+  - metadata:
+      name: mysql-ghostk3s-claim
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: ""
+      resources:
+        requests:
+          storage: 2Gi
