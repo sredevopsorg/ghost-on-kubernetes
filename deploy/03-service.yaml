@@ -7,10 +7,10 @@ metadata:
     app: ghostk3s
 spec:
   ports:
-    - port: 2368
-      protocol: TCP
-      targetPort: 2368
-      name: ghostk3s
+  - port: 2368
+    protocol: TCP
+    targetPort: 2368
+    name: ghk3s
   type: ClusterIP
   selector:
     app: ghostk3s
@@ -24,10 +24,10 @@ metadata:
     app: mysql-ghostk3s
 spec:
   ports:
-    - port: 3306
-      protocol: TCP
-      targetPort: 3306
-      name: mysql-ghostk3s
+  - port: 3306
+    protocol: TCP
+    targetPort: 3306
+    name: mysqlgh
   type: ClusterIP
   clusterIP: None
   selector:

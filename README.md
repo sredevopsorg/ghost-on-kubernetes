@@ -75,6 +75,21 @@ config.production.sample.json: |
 ```
 
 - deploy/01-secrets.yaml
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysql-ghostk3s
+  namespace: ghostk3s
+type: Opaque
+stringData:
+  MYSQL_DATABASE: mysql-db-name # Same as in config.production.json
+  MYSQL_USER: mysql-db-user # Same as in config.production.json
+  MYSQL_PASSWORD: mysql-db-password # Same as in config.production.json
+  MYSQL_ROOT_PASSWORD: mysql-db-root-password # Same as in config.production.json
+```
+
 - deploy/02-pv.yaml
 - deploy/03-ingress.yaml
 - deploy/03-service.yaml
