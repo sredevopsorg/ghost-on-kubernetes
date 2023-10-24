@@ -56,12 +56,15 @@ spec:
         - name: mysql-ghostk3s-claim
           mountPath: /var/lib/mysql
           readOnly: false
+
   volumeClaimTemplates:
   - metadata:
       name: mysql-ghostk3s-claim
+      namespace: ghostk3s
     spec:
-      accessModes: ["ReadWriteOnce"]
-      storageClassName: ""
+      accessModes: ["ReadWriteMany"]
+      storageClassName: "longhorn-rwx"
       resources:
         requests:
           storage: 2Gi
+
