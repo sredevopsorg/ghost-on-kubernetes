@@ -17,8 +17,9 @@ RUN apt-get update && apt-get upgrade --no-install-recommends -y && apt-get inst
 
 ENV NODE_ENV production 
 
-RUN npm install -g "ghost-cli@latest" && \
-    npm cache clean 
+RUN npm install -g npm@10.2.1 || true && \
+    npm install -g "ghost-cli@latest" && \
+    npm cache clean --force
 
 ARG GHOST_VERSION
 ENV GHOST_VERSION $GHOST_VERSION 
