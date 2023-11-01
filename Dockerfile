@@ -6,16 +6,19 @@ FROM node:hydrogen-bookworm-slim
 
 ENV DEBIAN_FRONTEND noninteractive
 
-RUN apt-get update && apt-get upgrade --no-install-recommends -y && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get upgrade --no-install-recommends -y && apt-get install --no-install-recommends -y \
     ca-certificates \
-    && apt-get clean && rm -rf /var/lib/apt/lists/* \
+    git \
+    nano \
+    openssh-client \
+    && apt-get clean -y || true && rm -rf /var/lib/apt/lists/* \
     && apt-get autoclean -y && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/* /var/apt/cache/* 
 
 ENV NODE_ENV production 
 
 RUN npm install -g "ghost-cli@latest" && \
-    npm cache clean --force
+    npm cache clean 
 
 ARG GHOST_VERSION
 ENV GHOST_VERSION $GHOST_VERSION 
