@@ -10,14 +10,13 @@ RUN apt-get update && apt-get upgrade --no-install-recommends -y && apt-get inst
     ca-certificates \
     git \
     nano \
-    openssh-client \
     && apt-get clean -y || true && rm -rf /var/lib/apt/lists/* \
     && apt-get autoclean -y && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/* /var/apt/cache/* 
 
 ENV NODE_ENV production 
 
-RUN npm install -g npm@10.2.1 || true && \
+RUN npm install -g npm@latest || true && \
     npm install -g "ghost-cli@latest" && \
     npm cache clean --force
 
@@ -57,8 +56,6 @@ WORKDIR $GHOST_INSTALL
 VOLUME $GHOST_CONTENT
 
 COPY entrypoint.sh /usr/local/bin/
-# RUN chmod +x /usr/local/bin/entrypoint.sh
-# ENV PATH $PATH:/usr/local/bin:$GHOST_INSTALL/current/node_modules/.bin
 ENTRYPOINT ["entrypoint.sh"]
 
 EXPOSE 2368
