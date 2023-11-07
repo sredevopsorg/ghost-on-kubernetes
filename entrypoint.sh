@@ -1,5 +1,5 @@
 #!/bin/bash
-set -ex
+set -e
 
 # allow the container to be started with `--user`
 if [[ "$*" == node*current/index.js* ]] && [ "$(id -u)" = '0' ]; then

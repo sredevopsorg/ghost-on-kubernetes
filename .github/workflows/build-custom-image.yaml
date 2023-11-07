@@ -4,11 +4,14 @@ on:
   push:
     tags:
       - 'v*'
+    branches:
+      - main
+     
   workflow_dispatch:
     inputs:
       manual-tag:
         description: 'Manual Tag'
-        required: true
+        required: false
         default: 'main'
         type: string
       ghost_version:
@@ -43,12 +46,12 @@ jobs:
         env:
           GITHUB_EVENT_NAME: ${{ github.event_name }}
         run: |
-          if [ ${{ env.GITHUB_EVENT_NAME  }} == workflow_dispatch ]; then
+          if [ ${{ env.GITHUB_EVENT_NAME }} == workflow_dispatch ]; then
             echo "GHOST_VERSION=${{ github.event.inputs.ghost_version }}" >> $GITHUB_OUTPUT
             echo "MANUAL_TAG=${{ github.event.inputs.manual-tag }}" >> $GITHUB_OUTPUT
           else
             echo "GHOST_VERSION=$(curl -s https://api.github.com/repos/tryghost/ghost/releases/latest | jq '.name' | sed 's/\"//g')" >> $GITHUB_OUTPUT
-            echo "MANUAL_TAG=main" >> $GITHUB_OUTPUT
+            echo "MANUAL_TAG=auto" >> $GITHUB_OUTPUT
           fi
 
       - name: Show GHOST_VERSION
@@ -67,11 +70,12 @@ jobs:
             type=ref,event=tag
             type=raw,value=${{ steps.versions.outputs.MANUAL_TAG }}
             type=raw,value=latest
+            
           labels: |
             org.opencontainers.image.title=ghost-on-kubernetes
-            org.opencontainers.image.description=Ghost CMS upstream v5 with node 18-bookworm and gosu
+            org.opencontainers.image.description=Ghost CMS upstream v5 (latest release), with node 18-lts, without gosu, updated dependencies
             org.opencontainers.image.vendor=https://sredevops.org
-            org.opencontainers.image.source=https://github.com/sredevopsdev/ghost-on-kubernetes
+            org.opencontainers.image.source=https://github.com/sredevopsdev/ghost-on-kubernetes.git
             org.opencontainers.image.documentation=https://github.com/sredevopsdev/ghost-on-kubernetes/blob/main/README.md
       -
         name: Login to DockerHub
