@@ -8,7 +8,6 @@ ENV DEBIAN_FRONTEND noninteractive
 
 RUN apt-get update && apt-get upgrade --no-install-recommends -y && apt-get install --no-install-recommends -y \
     ca-certificates \
-    git \
     nano \
     && apt-get clean -y || true && rm -rf /var/lib/apt/lists/* \
     && apt-get autoclean -y && apt-get autoremove -y \
@@ -16,9 +15,9 @@ RUN apt-get update && apt-get upgrade --no-install-recommends -y && apt-get inst
 
 ENV NODE_ENV production 
 
-RUN npm install -g npm@latest || true && \
+RUN npm install -g npm@latest && \
     npm install -g "ghost-cli@latest" && \
-    npm cache clean --force
+    npm cache clean --force 
 
 ARG GHOST_VERSION
 ENV GHOST_VERSION $GHOST_VERSION 
