@@ -49,7 +49,7 @@ RUN mv "$GHOST_CONTENT" "$GHOST_INSTALL/content.orig" && \
     mkdir -p "$GHOST_CONTENT" && \
     chown node:node "$GHOST_CONTENT" && \
     chmod 1777 "$GHOST_CONTENT" && \
-    rm -Rf /home/node/.ghost /home/node/.yarn-cache /home/node/.cache /home/node/.config /home/node/.local || true 
+    rm -rf /home/node || true 
 
 USER node
 
