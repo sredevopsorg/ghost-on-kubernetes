@@ -11,13 +11,13 @@ on:
     inputs:
       manual-tag:
         description: 'Manual Tag'
-        required: false
+        required: true
         default: 'main'
         type: string
       ghost_version:
         description: 'Ghost version'
         required: true
-        default: '5.66.0'
+        default: '5.73.2'
         type: string
 
 jobs:
@@ -31,6 +31,9 @@ jobs:
       -
         name: Set up QEMU
         uses: docker/setup-qemu-action@v3
+        with:
+          platforms: linux/amd64
+
 
       -
         name: Set up Docker Buildx
@@ -51,12 +54,13 @@ jobs:
             echo "MANUAL_TAG=${{ github.event.inputs.manual-tag }}" >> $GITHUB_OUTPUT
           else
             echo "GHOST_VERSION=$(curl -s https://api.github.com/repos/tryghost/ghost/releases/latest | jq '.name' | sed 's/\"//g')" >> $GITHUB_OUTPUT
-            echo "MANUAL_TAG=auto" >> $GITHUB_OUTPUT
+            echo "MANUAL_TAG=main" >> $GITHUB_OUTPUT
           fi
 
       - name: Show GHOST_VERSION
         run: |
-          echo ${{ steps.versions.outputs.GHOST_VERSION }}
+          echo ${{ steps.versions.outputs.GHOST_VERSION }} &&
+          echo ${{ steps.versions.outputs.MANUAL_TAG }}
       -
         name: Docker meta
         id: meta
@@ -69,14 +73,17 @@ jobs:
             type=ref,event=branch
             type=ref,event=tag
             type=raw,value=${{ steps.versions.outputs.MANUAL_TAG }}
-            type=raw,value=latest
             
           labels: |
             org.opencontainers.image.title=ghost-on-kubernetes
-            org.opencontainers.image.description=Ghost CMS upstream v5 (latest release), with node 18-lts, without gosu, updated dependencies
+            org.opencontainers.image.description=Ghost CMS v5 (latest release from @TryGhost), on node 18-lts, no gosu, updated npm, yarn, and ghost-cli
             org.opencontainers.image.vendor=https://sredevops.org
             org.opencontainers.image.source=https://github.com/sredevopsdev/ghost-on-kubernetes.git
             org.opencontainers.image.documentation=https://github.com/sredevopsdev/ghost-on-kubernetes/blob/main/README.md
+            org.opencontainers.image.licenses=MIT
+            org.opencontainers.image.version=${{ steps.versions.outputs.GHOST_VERSION }}
+            org.opencontainers.image.url=https://github.com/sredevopsdev/ghost-on-kubernetes/pkgs/container/ghost-on-kubernetes
+
       -
         name: Login to DockerHub
         uses: docker/login-action@v3

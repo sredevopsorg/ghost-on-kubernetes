@@ -2,7 +2,7 @@
 # https://github.com/nodejs/Release (looking for "LTS")
 # https://github.com/TryGhost/Ghost/blob/v4.1.2/package.json#L38
 
-FROM node:hydrogen-bookworm-slim 
+FROM node:hydrogen-bookworm-slim
 
 ENV DEBIAN_FRONTEND noninteractive
 
@@ -15,7 +15,8 @@ RUN apt-get update && apt-get upgrade --no-install-recommends -y && apt-get inst
 
 ENV NODE_ENV production 
 
-RUN npm install -g npm@latest && \
+RUN npm install -g "npm@latest" && \
+    npm install -g "yarn@latest" || true && \
     npm install -g "ghost-cli@latest" && \
     npm cache clean --force 
 
@@ -47,7 +48,8 @@ USER root
 RUN mv "$GHOST_CONTENT" "$GHOST_INSTALL/content.orig" && \
     mkdir -p "$GHOST_CONTENT" && \
     chown node:node "$GHOST_CONTENT" && \
-    chmod 1777 "$GHOST_CONTENT" 
+    chmod 1777 "$GHOST_CONTENT" && \
+    rm -rf /home/node/* || true 
 
 USER node
 
