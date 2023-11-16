@@ -6,7 +6,6 @@ on:
       - 'v*'
     branches:
       - main
-     
   workflow_dispatch:
     inputs:
       manual-tag:
@@ -33,7 +32,6 @@ jobs:
         uses: docker/setup-qemu-action@v3
         with:
           platforms: linux/amd64
-
 
       -
         name: Set up Docker Buildx

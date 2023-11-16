@@ -9,14 +9,13 @@ ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update && apt-get upgrade --no-install-recommends -y && apt-get install --no-install-recommends -y \
     ca-certificates \
     nano \
-    && apt-get clean -y || true && rm -rf /var/lib/apt/lists/* \
+    zlib1g \  
     && apt-get autoclean -y && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/* /var/apt/cache/* 
 
 ENV NODE_ENV production 
 
 RUN npm install -g "npm@latest" && \
-    npm install -g "yarn@latest" || true && \
     npm install -g "ghost-cli@latest" && \
     npm cache clean --force 
 
@@ -49,7 +48,8 @@ RUN mv "$GHOST_CONTENT" "$GHOST_INSTALL/content.orig" && \
     mkdir -p "$GHOST_CONTENT" && \
     chown node:node "$GHOST_CONTENT" && \
     chmod 1777 "$GHOST_CONTENT" && \
-    rm -rf /home/node/* || true 
+    rm -rf /home/node/* || true && \
+    rm -rf /root/* || true 
 
 USER node
 
