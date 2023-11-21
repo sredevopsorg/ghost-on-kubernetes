@@ -71,10 +71,11 @@ jobs:
             type=ref,event=branch
             type=ref,event=tag
             type=raw,value=${{ steps.versions.outputs.MANUAL_TAG }}
-            
+            type=raw,value=v${{ steps.versions.outputs.GHOST_VERSION }}
+            type=raw,value=latest
           labels: |
             org.opencontainers.image.title=ghost-on-kubernetes
-            org.opencontainers.image.description=Ghost CMS v5 (latest release from @TryGhost), on node 18-lts, no gosu, updated npm, yarn, and ghost-cli
+            org.opencontainers.image.description=Ghost CMS v5 (latest release from @TryGhost), on node 18-lts, no gosu, updated npm and ghost-cli
             org.opencontainers.image.vendor=https://sredevops.org
             org.opencontainers.image.source=https://github.com/sredevopsdev/ghost-on-kubernetes.git
             org.opencontainers.image.documentation=https://github.com/sredevopsdev/ghost-on-kubernetes/blob/main/README.md

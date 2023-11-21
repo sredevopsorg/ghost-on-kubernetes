@@ -7,3 +7,5 @@ Dockerfile
 .npmrc
 # Ignore everything containing local on the file name
 **/*local*
+deploy/*
+.github/*
