@@ -4,14 +4,17 @@
 
 FROM node:hydrogen-bookworm-slim
 
+LABEL opencontainers.image.description="Ghost CMS v5 (latest release from @TryGhost) by SREDevOps.org on node hydrogen-bookworm-slim, no gosu, updated npm and ghost-cli"
+
 ENV DEBIAN_FRONTEND noninteractive
 
-RUN apt-get update && apt-get upgrade --no-install-recommends -y && apt-get install --no-install-recommends -y \
+RUN apt-get update && apt-get upgrade --no-install-recommends -y && \
+    apt-get install --no-install-recommends -y \
     ca-certificates \
     nano \
     zlib1g \  
-    && apt-get autoclean -y && apt-get autoremove -y \
-    && rm -rf /var/lib/apt/lists/* /var/apt/cache/* 
+    && apt-get autoclean -y && apt-get autoremove -y && \
+    rm -rf /var/lib/apt/lists/* /var/apt/cache/* 
 
 ENV NODE_ENV production 
 
@@ -31,7 +34,7 @@ RUN mkdir -p "$GHOST_INSTALL" && \
     chown node:node "$GHOST_CONTENT" && \
     chmod 1777 "$GHOST_CONTENT"
 
-WORKDIR ${GHOST_INSTALL} 
+WORKDIR $GHOST_INSTALL
 USER node
 
 RUN rm -Rf "$GHOST_INSTALL"/* && \

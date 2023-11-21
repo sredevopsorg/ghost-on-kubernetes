@@ -6,10 +6,10 @@ metadata:
   labels:
     app: ghostk3s
 spec:
-  storageClassName: "longhorn-rwx"
+  storageClassName: default # Change this to your storageClassName
   volumeMode: Filesystem
   accessModes:
-  - ReadWriteMany
+  - ReadWriteOnce # Change this to your accessModes
   resources:
     requests:
       storage: 5Gi

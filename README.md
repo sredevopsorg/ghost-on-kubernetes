@@ -1,8 +1,17 @@
 # Ghost on Kubernetes by [SREDevOps](https://sredevops.org)
 
-[![Build and push image to DockerHub and GitHub Container Registry](https://github.com/sredevopsdev/ghost-on-kubernetes/actions/workflows/build-custom-image.yaml/badge.svg)](https://github.com/sredevopsdev/ghost-on-kubernetes/actions/workflows/build-custom-image.yaml) 
+[![Build and push image to DockerHub and GitHub Container Registry](https://github.com/sredevopsdev/ghost-on-kubernetes/actions/workflows/build-custom-image.yaml/badge.svg)](https://github.com/sredevopsdev/ghost-on-kubernetes/actions/workflows/build-custom-image.yaml)
 
-This repo deploys Ghost CMS v5.xx.x @TryGhost (upstream) in Kubernetes as deployments and statefulsets with MySQL 8.
+This repo deploys a clean Ghost CMS v5.xx.x from [@TryGhost (upstream)](https://github.com/TryGhost/Ghost) in Kubernetes, as a Deployment using our [custom image](https://github.com/sredevopsdev/ghost-on-kubernetes/blob/main/Dockerfile) built based on the ["official" Ghost 5 debian image](https://github.com/docker-library/ghost/blob/master/5/debian/Dockerfile), but with some modifications:
+
+- We use the official Node 18 Hydrogen bookworm slim image as base.
+- Removed gosu, we use the default user (node) to run Ghost.
+- Modified the entrypoint to run as node user, so we can run the pod as non-root.
+- Update every possible dependencies in the base image to minimize vulnerabilities.
+- We update npm and ghost-cli to the latest versions on every build.
+- We use the latest version of Ghost 5.
+
+> *_Note: At this time, we dropped support for arm64 and armv7l, but we will add it back soon. Pull requests are welcome._*  
 
 ## Installation
 
@@ -26,20 +35,20 @@ git checkout -b my-branch
 ```yaml
 config.production.sample.json: |
 {
-  "url": "http://localhost:2368",
+  "url": "http://localhost:2368", # Change the url as per your requirements
   "admin": {
-    "url": "http://localhost:2368"
+    "url": "http://localhost:2368" # Change the url as per your requirements
   },
   "server": {
     "port": 2368,
     "host": "0.0.0.0"
   },
   "mail": {
-    "transport": "SMTP",
+    "transport": "SMTP", # Or use Mailgun, etc.
     "options": {
       "service": "Google",
       "host": "smtp.gmail.com",
-      "port": 587,
+      "port": 465,
       "secure": true,
       "auth": {
         "user": "user@mail.com",
@@ -49,8 +58,7 @@ config.production.sample.json: |
   },
   "logging": {
     "transports": [
-      "stdout",
-      "file"
+      "stdout"
     ]
   },
   "database": {
@@ -90,8 +98,8 @@ stringData:
   MYSQL_ROOT_PASSWORD: mysql-db-root-password # Same as in config.production.json
 ```
 
-- deploy/02-pv.yaml
-- deploy/03-ingress.yaml
+- deploy/02-pvc.yaml # Change the storageClassName as per your requirements
+- deploy/03-ingress.yaml # Change the hosts as per your requirements
 - deploy/03-service.yaml
 - deploy/04-mysql.yaml
 - deploy/05-ghost-deployment.yaml
@@ -105,7 +113,7 @@ kubectl apply -f deploy/00-namespace.yaml
 kubectl apply -f deploy/01-secrets.yaml
 kubectl apply -f deploy/01-config.production.yaml
 # Create the persistent volume
-kubectl apply -f deploy/02-pv.yaml
+kubectl apply -f deploy/02-pvc.yaml
 # Create the ingress
 kubectl apply -f deploy/03-ingress.yaml
 # Create the services
@@ -119,8 +127,9 @@ kubectl apply -f deploy/05-ghost-deployment.yaml
 ## 4. Access your Ghost CMS
 
 ```bash
-# Create a port-forward to your Ghost service
-kubectl -n ghostk3s port-forward svc/ghostk3s 2368:2368 &
+# Get the ingress IP address
+kubectl get ing -n ghostk3s -o wide 
+
 
 ```
 
@@ -129,4 +138,5 @@ kubectl -n ghostk3s port-forward svc/ghostk3s 2368:2368 &
 [http://localhost:2368](http://localhost:2368)
 
 ## 6. Login to your Ghost CMS
+
 [http://localhost:2368/ghost](http://localhost:2368/ghost)
