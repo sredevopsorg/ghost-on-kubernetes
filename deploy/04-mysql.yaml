@@ -16,8 +16,6 @@ spec:
       labels:
         app: mysql-ghostk3s
     spec:
-      nodeSelector:
-        kubernetes.io/arch: amd64
       containers:
       - name: mysql-ghostk3s
         securityContext:
@@ -35,15 +33,15 @@ spec:
           #   runAsUser: 10001
           #   runAsGroup: 1001
           allowPrivilegeEscalation: false
-        image: docker.io/mysql/mysql-server:8.0.32-1.2.11-server
+        image: docker.io/mysql:8.2
         imagePullPolicy: IfNotPresent
         envFrom:
         - secretRef:
             name: mysql-ghostk3s
         resources:
           requests:
-            memory: 256Mi
-            cpu: 500m
+            memory: 0M
+            cpu: 0m
           limits:
             memory: 1024Mi
             cpu: 800m
@@ -55,6 +53,7 @@ spec:
         volumeMounts:
         - name: mysql-ghostk3s-claim
           mountPath: /var/lib/mysql
+          subPath: data-mounted
           readOnly: false
 
   volumeClaimTemplates:
@@ -63,8 +62,8 @@ spec:
       namespace: ghostk3s
     spec:
       accessModes: ["ReadWriteMany"]
-      storageClassName: "longhorn-rwx"
+      storageClassName: "longhorn-rwx" # Change this to the storage class you want to use
       resources:
         requests:
-          storage: 2Gi
+          storage: 1Gi # Change this to the size you want to use
 
