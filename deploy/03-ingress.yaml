@@ -6,22 +6,22 @@ metadata:
 spec:
   ingressClassName: traefik
   tls:
-  - hosts:
-    - tests.yourdomain.com
-    # Optional:
-    # - www.tests.yourdomain.com
-    secretName: yourdomain-com-tls
+    - hosts:
+        - tests.yourdomain.com
+      # Optional:
+      # - www.tests.yourdomain.com
+      secretName: yourdomain-com-tls
   rules:
-  - host: tests.yourdomain.com
-    http:
-      paths:
-      - path: /
-        pathType: ImplementationSpecific
-        backend:
-          service:
-            name: ghostk3s-svc
-            port:
-              name: ghk3s
+    - host: tests.yourdomain.com
+      http:
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: ghostk3s-svc
+                port:
+                  name: ghk3s
   # Optional:
   # - host: www.tests.yourdomain.com
   #   http:
@@ -33,4 +33,5 @@ spec:
   #           name: ghostk3s-svc
   #           port:
   #             name: ghk3s
+
 

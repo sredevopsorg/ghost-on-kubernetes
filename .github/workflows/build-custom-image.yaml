@@ -23,10 +23,19 @@ jobs:
   docker:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+      packages: write
+      id-token: write # needed for signing the images with GitHub OIDC Token
+
+
     steps:
       -
         name: Checkout
         uses: actions/checkout@v4
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3.1.1
       -
         name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -98,8 +107,17 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       -
+        name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: quay.io
+          username: ${{ secrets.QUAY_USER }}
+          password: ${{ secrets.QUAY_PASS }}
+
+      -
         name: Build and push
         uses: docker/build-push-action@v5
+        id: build-and-push
         with:
           context: .
           platforms: linux/amd64
@@ -109,3 +127,10 @@ jobs:
           build-args: |
             GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }}
 
+      - name: Sign the images with GitHub OIDC Token
+        id: sign
+        continue-on-error: true
+        env:
+          DIGEST: ${{ steps.build-and-push.outputs.digest }}
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: cosign sign --yes "${TAGS}@${DIGEST}"
