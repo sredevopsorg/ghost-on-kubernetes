@@ -1,12 +1,11 @@
 apiVersion: apps/v1
-kind: StatefulSet
+kind: Deployment
 metadata:
   name: mysql-ghostk3s
   namespace: ghostk3s
   labels:
     app: mysql-ghostk3s
 spec:
-  serviceName: mysql-ghostk3s
   replicas: 1
   selector:
     matchLabels:
@@ -15,55 +14,42 @@ spec:
     metadata:
       labels:
         app: mysql-ghostk3s
+      annotations:
+        container.apparmor.security.beta.kubernetes.io/mysql-ghostk3s: runtime/default
     spec:
       containers:
-      - name: mysql-ghostk3s
-        securityContext:
-          #   capabilities:
-          #     drop:
-          #       - all
-          #     add:
-          #       - CHOWN
-          #       - DAC_OVERRIDE
-          #       - SETGID
-          #       - SETUID
-          #       - SETPCAP
-          #       - NET_BIND_SERVICE
-          #   readOnlyRootFilesystem: true
-          #   runAsUser: 10001
-          #   runAsGroup: 1001
-          allowPrivilegeEscalation: false
-        image: docker.io/mysql:8.2
-        imagePullPolicy: IfNotPresent
-        envFrom:
-        - secretRef:
-            name: mysql-ghostk3s
-        resources:
-          requests:
-            memory: 0M
-            cpu: 0m
-          limits:
-            memory: 1024Mi
-            cpu: 800m
-        ports:
-        - containerPort: 3306
-          protocol: TCP
-          name: mysqlgh
-
-        volumeMounts:
-        - name: mysql-ghostk3s-claim
-          mountPath: /var/lib/mysql
-          subPath: data-mounted
-          readOnly: false
-
-  volumeClaimTemplates:
-  - metadata:
-      name: mysql-ghostk3s-claim
-      namespace: ghostk3s
-    spec:
-      accessModes: ["ReadWriteMany"]
-      storageClassName: "longhorn-rwx" # Change this to the storage class you want to use
-      resources:
-        requests:
-          storage: 1Gi # Change this to the size you want to use
+        - name: mysql-ghostk3s
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+          image: docker.io/mysql:8.2
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - secretRef:
+                name: mysql-ghostk3s
+          resources:
+            requests:
+              memory: 16Mi
+              cpu: "0"
+            limits:
+              memory: 1Gi
+              cpu: 800m
+          ports:
+            - containerPort: 3306
+              protocol: TCP
+              name: mysqlgh
+          volumeMounts:
+            - name: mysql-ghostk3s-claim
+              mountPath: /var/lib/mysql
+              subPath: data-mounted
+      automountServiceAccountToken: false
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+  strategy: {}
 
