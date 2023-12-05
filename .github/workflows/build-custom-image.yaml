@@ -4,8 +4,8 @@ on:
   push:
     tags:
       - 'v*'
-    branches:
-      - main
+    # branches:
+    #   - main
   workflow_dispatch:
     inputs:
       manual-tag:
@@ -74,17 +74,19 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            docker.io/${{ secrets.DOCKER_USER }}/${{ github.event.repository.name }}
             ghcr.io/${{ github.repository }}
+            quay.io/${{ github.env.QUAY_USER }}/${{ github.event.repository.name }}
+            # docker.io/${{ secrets.DOCKER_USER }}/${{ github.event.repository.name }}
           tags: |
             type=ref,event=branch
             type=ref,event=tag
             type=raw,value=${{ steps.versions.outputs.MANUAL_TAG }}
             type=raw,value=v${{ steps.versions.outputs.GHOST_VERSION }}
             type=raw,value=latest
+            type=sha,format=long
           labels: |
             org.opencontainers.image.title=ghost-on-kubernetes
-            org.opencontainers.image.description=Ghost CMS v5 (latest release from @TryGhost), on node 18-lts, no gosu, updated npm and ghost-cli
+            org.opencontainers.image.description="Ghost CMS v5 (latest release from @TryGhost), on node 18-lts, no gosu, updated npm and ghost-cli"
             org.opencontainers.image.vendor=https://sredevops.org
             org.opencontainers.image.source=https://github.com/sredevopsdev/ghost-on-kubernetes.git
             org.opencontainers.image.documentation=https://github.com/sredevopsdev/ghost-on-kubernetes/blob/main/README.md
@@ -92,13 +94,13 @@ jobs:
             org.opencontainers.image.version=${{ steps.versions.outputs.GHOST_VERSION }}
             org.opencontainers.image.url=https://github.com/sredevopsdev/ghost-on-kubernetes/pkgs/container/ghost-on-kubernetes
 
-      -
-        name: Login to DockerHub
-        uses: docker/login-action@v3
-        with:
-          registry: docker.io
-          username: ${{ secrets.DOCKER_USER }}
-          password: ${{ secrets.DOCKER_PASS }}
+      # -
+      #   name: Login to DockerHub
+      #   uses: docker/login-action@v3
+      #   with:
+      #     registry: docker.io
+      #     username: ${{ secrets.DOCKER_USER }}
+      #     password: ${{ secrets.DOCKER_PASS }}
       -
         name: Login to GitHub Container Registry
         uses: docker/login-action@v3
@@ -107,7 +109,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       -
-        name: Login to GitHub Container Registry
+        name: Login to Quay Container Registry
         uses: docker/login-action@v3
         with:
           registry: quay.io
@@ -127,10 +129,16 @@ jobs:
           build-args: |
             GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }}
 
+
+
       - name: Sign the images with GitHub OIDC Token
         id: sign
         continue-on-error: true
         env:
           DIGEST: ${{ steps.build-and-push.outputs.digest }}
           TAGS: ${{ steps.meta.outputs.tags }}
-        run: cosign sign --yes "${TAGS}@${DIGEST}"
+        run: |
+          for t in $TAGS; do 
+            echo "Signing $t" 
+            cosign sign "$t"@${DIGEST} --yes --verbose 
+          done
