@@ -4,7 +4,7 @@ metadata:
   name: ghostk3s
   namespace: ghostk3s
 spec:
-  ingressClassName: traefik
+  ingressClassName: traefik # or nginx, caddy, etc
   tls:
     - hosts:
         - tests.yourdomain.com

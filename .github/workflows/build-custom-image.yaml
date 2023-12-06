@@ -18,7 +18,8 @@ on:
         required: true
         default: '5.73.2'
         type: string
-
+env:
+  QUAY_USER: ${{ vars.QUAY_USER }}
 jobs:
   docker:
     runs-on: ubuntu-latest
@@ -75,8 +76,8 @@ jobs:
         with:
           images: |
             ghcr.io/${{ github.repository }}
-            quay.io/${{ github.env.QUAY_USER }}/${{ github.event.repository.name }}
-            # docker.io/${{ secrets.DOCKER_USER }}/${{ github.event.repository.name }}
+            quay.io/${{ vars.QUAY_USER }}/${{ github.event.repository.name }}
+            docker.io/${{ vars.DOCKER_USER }}/${{ github.event.repository.name }}
           tags: |
             type=ref,event=branch
             type=ref,event=tag
@@ -86,7 +87,7 @@ jobs:
             type=sha,format=long
           labels: |
             org.opencontainers.image.title=ghost-on-kubernetes
-            org.opencontainers.image.description="Ghost CMS v5 (latest release from @TryGhost), on node 18-lts, no gosu, updated npm and ghost-cli"
+            org.opencontainers.image.description='Ghost CMS v5 (latest release from @TryGhost), on node 18-lts, no gosu, updated npm and ghost-cli'
             org.opencontainers.image.vendor=https://sredevops.org
             org.opencontainers.image.source=https://github.com/sredevopsdev/ghost-on-kubernetes.git
             org.opencontainers.image.documentation=https://github.com/sredevopsdev/ghost-on-kubernetes/blob/main/README.md
@@ -94,13 +95,13 @@ jobs:
             org.opencontainers.image.version=${{ steps.versions.outputs.GHOST_VERSION }}
             org.opencontainers.image.url=https://github.com/sredevopsdev/ghost-on-kubernetes/pkgs/container/ghost-on-kubernetes
 
-      # -
-      #   name: Login to DockerHub
-      #   uses: docker/login-action@v3
-      #   with:
-      #     registry: docker.io
-      #     username: ${{ secrets.DOCKER_USER }}
-      #     password: ${{ secrets.DOCKER_PASS }}
+      -
+        name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          registry: docker.io
+          username: ${{ vars.DOCKER_USER }}
+          password: ${{ secrets.DOCKER_PASS }}
       -
         name: Login to GitHub Container Registry
         uses: docker/login-action@v3
@@ -111,9 +112,10 @@ jobs:
       -
         name: Login to Quay Container Registry
         uses: docker/login-action@v3
+        continue-on-error: true
         with:
           registry: quay.io
-          username: ${{ secrets.QUAY_USER }}
+          username: ${{ vars.QUAY_USER }}  
           password: ${{ secrets.QUAY_PASS }}
 
       -
@@ -138,7 +140,7 @@ jobs:
           DIGEST: ${{ steps.build-and-push.outputs.digest }}
           TAGS: ${{ steps.meta.outputs.tags }}
         run: |
-          for t in $TAGS; do 
-            echo "Signing $t" 
-            cosign sign "$t"@${DIGEST} --yes --verbose 
-          done
+          echo "DIGEST=${{ steps.build-and-push.outputs.digest }}" >> $GITHUB_ENV
+          echo "TAGS=${{ steps.meta.outputs.tags }}" >> $GITHUB_ENV
+          cosign sign --yes $DIGEST $TAGS
+
