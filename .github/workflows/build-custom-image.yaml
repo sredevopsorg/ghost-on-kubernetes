@@ -16,10 +16,9 @@ on:
       ghost_version:
         description: 'Ghost version'
         required: true
-        default: '5.73.2'
+        default: '5.75.1'
         type: string
-env:
-  QUAY_USER: ${{ vars.QUAY_USER }}
+
 jobs:
   docker:
     runs-on: ubuntu-latest
@@ -28,6 +27,7 @@ jobs:
       contents: read
       packages: write
       id-token: write # needed for signing the images with GitHub OIDC Token
+      
 
 
     steps:
@@ -74,10 +74,11 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: |
-            ghcr.io/${{ github.repository }}
-            quay.io/${{ vars.QUAY_USER }}/${{ github.event.repository.name }}
-            docker.io/${{ vars.DOCKER_USER }}/${{ github.event.repository.name }}
+          images: ghcr.io/${{ github.repository }}
+
+            # ghcr.io/${{ github.repository }}
+            # quay.io/${{ vars.QUAY_USER }}/${{ github.event.repository.name }}
+            # docker.io/${{ vars.DOCKER_USER }}/${{ github.event.repository.name }}
           tags: |
             type=ref,event=branch
             type=ref,event=tag
@@ -94,14 +95,14 @@ jobs:
             org.opencontainers.image.licenses=MIT
             org.opencontainers.image.version=${{ steps.versions.outputs.GHOST_VERSION }}
             org.opencontainers.image.url=https://github.com/sredevopsdev/ghost-on-kubernetes/pkgs/container/ghost-on-kubernetes
-
-      -
-        name: Login to DockerHub
-        uses: docker/login-action@v3
-        with:
-          registry: docker.io
-          username: ${{ vars.DOCKER_USER }}
-          password: ${{ secrets.DOCKER_PASS }}
+          
+      # -
+      #   name: Login to DockerHub
+      #   uses: docker/login-action@v3
+      #   with:
+      #     registry: docker.io
+      #     username: ${{ vars.DOCKER_USER }}
+      #     password: ${{ secrets.DOCKER_PASS }}
       -
         name: Login to GitHub Container Registry
         uses: docker/login-action@v3
@@ -109,14 +110,14 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      -
-        name: Login to Quay Container Registry
-        uses: docker/login-action@v3
-        continue-on-error: true
-        with:
-          registry: quay.io
-          username: ${{ vars.QUAY_USER }}  
-          password: ${{ secrets.QUAY_PASS }}
+      # -
+      #   name: Login to Quay Container Registry
+      #   uses: docker/login-action@v3
+      #   continue-on-error: true
+      #   with:
+      #     registry: quay.io
+      #     username: ${{ vars.QUAY_USER }}  
+      #     password: ${{ secrets.QUAY_PASS }}
 
       -
         name: Build and push
@@ -133,14 +134,26 @@ jobs:
 
 
 
-      - name: Sign the images with GitHub OIDC Token
+      - name: Sign the images with GitHub
         id: sign
         continue-on-error: true
         env:
           DIGEST: ${{ steps.build-and-push.outputs.digest }}
           TAGS: ${{ steps.meta.outputs.tags }}
+        run: cosign sign --yes --verbose "${TAGS}@${DIGEST}"
+
+      - name: Sign the images with GitHub 2
+        id: sign2
+        continue-on-error: true
+        if: ${{ steps.sign.outcome }} == 'failure'
+        env:
+          DIGEST: ${{ steps.build-and-push.outputs.digest }}
+          TAGS: ${{ steps.meta.outputs.tags }}
         run: |
-          echo "DIGEST=${{ steps.build-and-push.outputs.digest }}" >> $GITHUB_ENV
-          echo "TAGS=${{ steps.meta.outputs.tags }}" >> $GITHUB_ENV
-          cosign sign --yes $DIGEST $TAGS
+          # Look for the main and latest tag and sign them with the GitHub OIDC Token
+          for tag in ${{ steps.meta.outputs.tags }}; do
+            if [[ $tag == *main* ]] || [[ $tag == *latest* ]]; then
+              cosign sign --yes --verbose "${tag}@${DIGEST}"
+            fi
+          done
 
