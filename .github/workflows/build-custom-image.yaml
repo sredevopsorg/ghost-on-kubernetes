@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: read
+      contents: write
       packages: write
       id-token: write # needed for signing the images with GitHub OIDC Token
       
@@ -79,12 +79,12 @@ jobs:
             # quay.io/${{ vars.QUAY_USER }}/${{ github.event.repository.name }}
             # docker.io/${{ vars.DOCKER_USER }}/${{ github.event.repository.name }}
           context: workflow
-          # tags: |
-          #   type=sha,format=long
-          #   type=ref,event=branch
-          #   type=ref,event=tag
-          #   type=ref,event=push
-          #   # type=raw,value=latest
+          tags: |
+            type=sha,format=long
+            type=ref,event=branch
+#            type=ref,event=tag
+#            type=ref,event=push
+#            type=raw,value=latest
 #            type=raw,value=${{ steps.versions.outputs.MANUAL_TAG }}
 #            type=raw,value=v${{ steps.versions.outputs.GHOST_VERSION }}
           labels: |
@@ -128,9 +128,10 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}          
+          labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }}
+            GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }} 
+
 
 
 
@@ -140,20 +141,20 @@ jobs:
         env:
           DIGEST: ${{ steps.build-and-push.outputs.digest }}
           TAGS: ${{ steps.meta.outputs.tags }}
-        run: cosign sign --yes --verbose "${TAGS}@${DIGEST}"
+        run: cosign sign --yes "${TAGS}@${DIGEST}"
 
-      - name: Sign the images with GitHub 2
-        id: sign2
-        continue-on-error: true
-        if: ${{ steps.sign.outcome }} == 'failure'
-        env:
-          DIGEST: ${{ steps.build-and-push.outputs.digest }}
-          TAGS: ${{ steps.meta.outputs.tags }}
-        run: |
-          # Look for the main and latest tag and sign them with the GitHub OIDC Token
-          for tag in ${{ steps.meta.outputs.tags }}; do
-            if [[ $tag == *main* ]] || [[ $tag == *latest* ]]; then
-              cosign sign --yes --verbose "${tag}@${DIGEST}"
-            fi
-          done
+      # - name: Sign the images with GitHub 2
+      #   id: sign2
+      #   continue-on-error: true
+      #   if: ${{ steps.sign.outcome }} == 'failure'
+      #   env:
+      #     DIGEST: ${{ steps.build-and-push.outputs.digest }}
+      #     TAGS: ${{ steps.meta.outputs.tags }}
+      #   run: |
+      #     # Look for the main and latest tag and sign them with the GitHub OIDC Token
+      #     for tag in ${{ steps.meta.outputs.tags }}; do
+      #       if [[ $tag == *main* ]] || [[ $tag == *latest* ]]; then
+      #         cosign sign --yes --verbose "${tag}@${DIGEST}"
+      #       fi
+      #     done
 
