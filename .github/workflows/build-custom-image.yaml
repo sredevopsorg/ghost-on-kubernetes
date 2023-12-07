@@ -78,7 +78,7 @@ jobs:
             # ghcr.io/${{ github.repository }}
             # quay.io/${{ vars.QUAY_USER }}/${{ github.event.repository.name }}
             # docker.io/${{ vars.DOCKER_USER }}/${{ github.event.repository.name }}
-          context: workflow
+          context: git
           tags: |
             type=sha,format=long
             type=ref,event=branch
