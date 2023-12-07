@@ -5,7 +5,7 @@ metadata:
   namespace: ghostk3s
 type: Opaque
 stringData:
-  config.production.json: |
+  config.production.json: |-
     {
       "url": "https://tests.yourdomain.com",
       "admin": {
@@ -48,6 +48,9 @@ stringData:
       "process": "local",
       "paths": {
         "contentPath": "/var/lib/ghost/content"
-      }
+      },
+      "enableDeveloperExperiments": {
+        "enableDeveloperExperiments": true
+        }
     }
     
