@@ -78,18 +78,18 @@ jobs:
             # ghcr.io/${{ github.repository }}
             # quay.io/${{ vars.QUAY_USER }}/${{ github.event.repository.name }}
             # docker.io/${{ vars.DOCKER_USER }}/${{ github.event.repository.name }}
-          context: workflow
+          context: git
           tags: |
-            type=ref,event=branch
             type=sha,format=long
+            type=ref,event=branch
             type=ref,event=tag
-            type=raw,value=latest
+#            type=raw,value=latest
 #            type=ref,event=push
 #            type=raw,value=${{ steps.versions.outputs.MANUAL_TAG }}
 #            type=raw,value=v${{ steps.versions.outputs.GHOST_VERSION }}
           labels: |
             org.opencontainers.image.title=ghost-on-kubernetes
-            org.opencontainers.image.description=eploy a full Ghost CMS v5 (latest release from @TryGhost), on node 18-lts, no gosu, updated npm and ghost-cli on any Kubernetes (k3s, GKE, AKS, etc) production-ready, using our custom image with enhanced specs.
+            org.opencontainers.image.description=Deploy a full Ghost CMS v5 (latest release from @TryGhost), on node 18-lts, no gosu, updated npm and ghost-cli on any Kubernetes (k3s, GKE, AKS, etc) production-ready, using our custom image with enhanced specs.
             org.opencontainers.image.vendor=https://sredevops.org
             org.opencontainers.image.source=https://github.com/sredevopsdev/ghost-on-kubernetes
             org.opencontainers.image.documentation=https://github.com/sredevopsdev/ghost-on-kubernetes/blob/main/README.md
@@ -141,20 +141,27 @@ jobs:
         env:
           DIGEST: ${{ steps.build-and-push.outputs.digest }}
           TAGS: ${{ steps.meta.outputs.tags }}
-        run: cosign sign --yes "${TAGS}@${DIGEST}"
+        run: |
+          echo "DIGEST: $DIGEST"
+          echo "--- end digests ---"
+          echo "TAGS: $TAGS"
+          echo "--- end tags ---"
+          cosign sign --yes --verbose "${TAGS}@${DIGEST}"
 
-      # - name: Sign the images with GitHub 2
-      #   id: sign2
-      #   continue-on-error: true
-      #   if: ${{ steps.sign.outcome }} == 'failure'
-      #   env:
-      #     DIGEST: ${{ steps.build-and-push.outputs.digest }}
-      #     TAGS: ${{ steps.meta.outputs.tags }}
-      #   run: |
-      #     # Look for the main and latest tag and sign them with the GitHub OIDC Token
-      #     for tag in ${{ steps.meta.outputs.tags }}; do
-      #       if [[ $tag == *main* ]] || [[ $tag == *latest* ]]; then
-      #         cosign sign --yes --verbose "${tag}@${DIGEST}"
-      #       fi
-      #     done
+      - name: Sign the images with GitHub 2
+        id: sign2
+        continue-on-error: true
+        if: ${{ steps.sign.outcome }} == 'failure'
+        env:
+          DIGEST: ${{ steps.build-and-push.outputs.digest }}
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          # Look for the main and latest tag and sign them with the GitHub OIDC Token
+          for tag in ${{ steps.meta.outputs.tags }}; do
+            if [[ $tag == *main* ]] || [[ $tag == *latest* ]]; then
+              cosign sign --yes --verbose "${tag}@${DIGEST}"
+            else
+              echo "Skipping signing of ${tag} tag"
+            fi
+          done
 
