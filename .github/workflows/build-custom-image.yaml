@@ -140,7 +140,7 @@ jobs:
         continue-on-error: true
         env:
           DIGEST: ${{ steps.build-and-push.outputs.digest }}
-          TAGS: ${{ steps.build-and-push.outputs.metadata.tags }}
+          TAGS: ${{ steps.meta.outputs.tags }}
         run: cosign sign --yes "${TAGS}@${DIGEST}"
 
       # - name: Sign the images with GitHub 2
