@@ -4,8 +4,8 @@ on:
   push:
     tags:
       - 'v*'
-    branches:
-      - main
+    # branches:
+    #   - main
   workflow_dispatch:
     inputs:
       manual-tag:
@@ -34,11 +34,7 @@ jobs:
       -
         name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Install Cosign
-        uses: sigstore/cosign-installer@v3.2.0
       -
         name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -83,28 +79,15 @@ jobs:
           #   name=name/foo
           #   name=ghcr.io/name/bar
           images: |
-            name=ghcr.io/${{ github.repository }}
-#           ghcr.io/${{ github.repository }}
-#           quay.io/${{ vars.QUAY_USER }}/${{ github.event.repository.name }}
-#           docker.io/${{ vars.DOCKER_USER }}/${{ github.event.repository.name }}
-          flavor: |
-            latest=auto
-            prefix=
-            suffix=
+            ghcr.io/${{ github.repository }}
+            quay.io/${{ vars.QUAY_USER }}/${{ github.event.repository.name }}
+            docker.io/${{ vars.DOCKER_USER }}/${{ github.event.repository.name }}
           tags: |
             type=ref,event=branch
             type=ref,event=tag
-            type=sha,format=long
-#            type=schedule
-#            type=semver,pattern={{version}}
-#            type=semver,pattern={{major}}.{{minor}}
-#            type=semver,pattern={{major}}
-#            type=ref,event=branch
-#            type=ref,event=pr
-#            type=sha
-#            type=ref,event=push
-#            type=raw,value=${{ steps.versions.outputs.MANUAL_TAG }}
-#            type=raw,value=v${{ steps.versions.outputs.GHOST_VERSION }}
+            type=raw,value=${{ steps.versions.outputs.MANUAL_TAG }}
+            type=raw,value=v${{ steps.versions.outputs.GHOST_VERSION }}
+            type=raw,value=latest
           labels: |
             org.opencontainers.image.title=ghost-on-kubernetes
             org.opencontainers.image.description=Deploy a full Ghost CMS v5 (latest release from @TryGhost), on node 18-lts, no gosu, updated npm and ghost-cli on any Kubernetes (k3s, GKE, AKS, etc) production-ready, using our custom image with enhanced specs.
@@ -114,13 +97,13 @@ jobs:
             org.opencontainers.image.licenses=MIT
             org.opencontainers.image.url=https://github.com/sredevopsdev/ghost-on-kubernetes/pkgs/container/ghost-on-kubernetes
           
-      # -
-      #   name: Login to DockerHub
-      #   uses: docker/login-action@v3
-      #   with:
-      #     registry: docker.io
-      #     username: ${{ vars.DOCKER_USER }}
-      #     password: ${{ secrets.DOCKER_PASS }}
+      -
+        name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          registry: docker.io
+          username: ${{ vars.DOCKER_USER }}
+          password: ${{ secrets.DOCKER_PASS }}
       -
         name: Login to GitHub Container Registry
         uses: docker/login-action@v3
@@ -128,14 +111,14 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      # -
-      #   name: Login to Quay Container Registry
-      #   uses: docker/login-action@v3
-      #   continue-on-error: true
-      #   with:
-      #     registry: quay.io
-      #     username: ${{ vars.QUAY_USER }}  
-      #     password: ${{ secrets.QUAY_PASS }}
+      -
+        name: Login to Quay Container Registry
+        uses: docker/login-action@v3
+        continue-on-error: true
+        with:
+          registry: quay.io
+          username: ${{ vars.QUAY_USER }}  
+          password: ${{ secrets.QUAY_PASS }}
 
       -
         name: Build and push
@@ -149,40 +132,3 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }} 
-
-
-      - name: Sign the images with GitHub
-        id: sign
-        continue-on-error: true
-        env:
-          DIGEST: ${{ steps.build-and-push.outputs.digest }}
-          TAGS: ${{ steps.meta.outputs.tags }}
-        run: |
-          echo "DIGEST: $DIGEST"
-          echo "--- end digests ---"
-          echo "TAGS: $TAGS"
-          echo "--- end tags ---"
-          cosign sign --yes --verbose "${TAGS}@${DIGEST}"
-
-      - name: Sign the images with GitHub 2
-        id: sign2
-        continue-on-error: true
-        if: ${{ steps.sign.outcome }} == 'failure'
-        env:
-          DIGEST: ${{ steps.build-and-push.outputs.digest }}
-          TAGS: ${{ steps.meta.outputs.tags }}
-        run: |
-          # Look for the main, latest, and sha tags and sign them with cosign
-          echo "DIGEST: $DIGEST"
-          echo "--- end digests ---"
-          echo "TAGS: $TAGS"
-          echo "--- end tags ---"
-          for TAG in $TAGS ; do
-            if [[ $TAG == *"main"* ]] || [[ $TAG == *"latest"* ]] || [[ $TAG == *"sha"* ]]; then
-              cosign sign --yes --verbose "${TAG}@${DIGEST}" || echo "Failed to sign \"${TAG}@${DIGEST}\""
-            else
-              echo "Skipping tag ${TAG}"
-            fi
-          done
-
-          
