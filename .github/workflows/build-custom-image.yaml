@@ -4,8 +4,8 @@ on:
   push:
     tags:
       - 'v*'
-    # branches:
-    #   - main
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       manual-tag:
@@ -74,16 +74,18 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository }}
-
+          images: |
+            name=ghcr.io/${{ github.repository }},enabled=true
             # ghcr.io/${{ github.repository }}
             # quay.io/${{ vars.QUAY_USER }}/${{ github.event.repository.name }}
             # docker.io/${{ vars.DOCKER_USER }}/${{ github.event.repository.name }}
-          tags: |
-            type=sha,format=long
-            type=ref,event=branch
-            type=ref,event=tag
-            type=raw,value=latest
+          context: workflow
+          # tags: |
+          #   type=sha,format=long
+          #   type=ref,event=branch
+          #   type=ref,event=tag
+          #   type=ref,event=push
+          #   # type=raw,value=latest
 #            type=raw,value=${{ steps.versions.outputs.MANUAL_TAG }}
 #            type=raw,value=v${{ steps.versions.outputs.GHOST_VERSION }}
           labels: |
