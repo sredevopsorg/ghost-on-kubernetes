@@ -12,6 +12,13 @@ This repo deploys a clean Ghost CMS v5.xx.x from [@TryGhost (upstream)](https://
 - We use the latest version of Ghost 5.
 
 > *_Note: At this time, we dropped support for arm64 and armv7l, but we will add it back soon. Pull requests are welcome._*  
+## Star History
+
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=sredevopsdev/ghost-on-kubernetes&type=Date&theme=dark" />
+    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=sredevopsdev/ghost-on-kubernetes&type=Date" />
+    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=sredevopsdev/ghost-on-kubernetes&type=Date" height="300px" />
+  </picture>
 
 ## Installation
 
