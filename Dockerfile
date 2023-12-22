@@ -3,8 +3,7 @@
 # https://github.com/TryGhost/Ghost/blob/v4.1.2/package.json#L38
 
 FROM node:hydrogen-bookworm-slim
-
-LABEL opencontainers.image.description="Ghost CMS v5 (latest release from @TryGhost) by SREDevOps.org on node hydrogen-bookworm-slim, no gosu, updated npm and ghost-cli"
+LABEL org.opencontainers.image.description="Ghost CMS v5 (latest release from @TryGhost) by SREDevOps.org (@sredevopsdev) on node hydrogen-bookworm-slim, no gosu, updated npm and ghost-cli"
 
 ENV DEBIAN_FRONTEND noninteractive
 
@@ -50,10 +49,7 @@ USER root
 RUN mv "$GHOST_CONTENT" "$GHOST_INSTALL/content.orig" && \
     mkdir -p "$GHOST_CONTENT" && \
     chown node:node "$GHOST_CONTENT" && \
-    chmod 1777 "$GHOST_CONTENT" && \
-    rm -rf /home/node/* || true && \
-    rm -rf /root/* || true 
-
+    chmod 1777 "$GHOST_CONTENT"
 USER node
 
 WORKDIR $GHOST_INSTALL
