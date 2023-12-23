@@ -1,18 +1,11 @@
-# https://docs.ghost.org/faq/node-versions/
-# https://github.com/nodejs/Release (looking for "LTS")
-# https://github.com/TryGhost/Ghost/blob/v4.1.2/package.json#L38
-
-LABEL org.opencontainers.image.description="Ghost CMS v5 (latest release from @TryGhost) by SREDevOps.org (@sredevopsdev) on node hydrogen-bookworm-slim, no gosu, updated npm and ghost-cli"
 FROM node:hydrogen-bookworm-slim
+
+LABEL org.opencontainers.image.description 'Ghost CMS v5 (latest release from @TryGhost) by SREDevOps.org (@sredevopsdev) on node hydrogen-bookworm-slim, no gosu, updated npm and ghost-cli'
 
 ENV DEBIAN_FRONTEND noninteractive
 
 RUN apt-get update && apt-get upgrade --no-install-recommends -y && \
-    apt-get install --no-install-recommends -y \
-    ca-certificates \
-    nano \
-    zlib1g \
-    && apt-get autoclean -y && apt-get autoremove -y && rm -rf /var/lib/apt/lists/* /var/apt/cache/* 
+    apt-get install --no-install-recommends -y ca-certificates && apt-get autoclean -y && apt-get autoremove -y 
 
 ENV NODE_ENV production 
 
@@ -32,8 +25,8 @@ RUN mkdir -p "$GHOST_INSTALL" && \
     chown node:node "$GHOST_CONTENT" && \
     chmod 1777 "$GHOST_CONTENT"
 
-WORKDIR $GHOST_INSTALL
 USER node
+WORKDIR $GHOST_INSTALL
 
 RUN rm -Rf "$GHOST_INSTALL"/* && \
     ghost install "$GHOST_VERSION" --db mysql --dbhost mysql --no-prompt --no-stack --no-setup --dir "$GHOST_INSTALL" 
