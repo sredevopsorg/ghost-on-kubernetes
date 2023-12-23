@@ -10,13 +10,13 @@ on:
     inputs:
       manual-tag:
         description: 'Manual Tag'
-        required: true
+        required: false
         default: 'main'
         type: string
       ghost_version:
         description: 'Ghost version'
-        required: true
-        default: '5.75.1'
+        required: false
+        default: '5.75.2'
         type: string
 
 jobs:
@@ -24,11 +24,9 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: read
+      contents: write
       packages: write
       id-token: write # needed for signing the images with GitHub OIDC Token
-      
-
 
     steps:
       -
@@ -72,15 +70,9 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          # images: |
-          #   name/foo
-          #   ghcr.io/name/bar
-          #   # or
-          #   name=name/foo
-          #   name=ghcr.io/name/bar
           images: |
             ghcr.io/${{ github.repository }}
-            quay.io/${{ vars.QUAY_USER }}/${{ github.event.repository.name }}
+            quay.io/${{ vars.QUAY_ORG }}/${{ github.event.repository.name }}
             docker.io/${{ vars.DOCKER_USER }}/${{ github.event.repository.name }}
           tags: |
             type=ref,event=branch
