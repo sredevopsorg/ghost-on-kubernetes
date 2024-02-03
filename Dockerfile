@@ -1,4 +1,4 @@
-FROM node:hydrogen-bookworm-slim
+FROM node:18.19.0-slim
 
 LABEL org.opencontainers.image.description 'Ghost CMS v5 (latest release from @TryGhost) by SREDevOps.org (@sredevopsdev) on node hydrogen-bookworm-slim, no gosu, updated npm and ghost-cli'
 
