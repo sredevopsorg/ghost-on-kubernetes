@@ -1,17 +1,18 @@
-FROM node:18.19.1-slim
+FROM node:hydrogen-slim
 
 LABEL org.opencontainers.image.description 'Ghost CMS v5 (latest release from @TryGhost) by SREDevOps.org (@sredevopsdev) on node hydrogen-bookworm-slim, no gosu, updated npm and ghost-cli'
 
 ENV DEBIAN_FRONTEND noninteractive
 
-RUN apt-get update && apt-get upgrade --no-install-recommends -y && \
-    apt-get install --no-install-recommends -y ca-certificates && apt-get autoclean -y && apt-get autoremove -y 
+#RUN apt-get update && apt-get upgrade --no-install-recommends -y && \
+#    apt-get install --no-install-recommends -y ca-certificates && apt-get autoclean -y && apt-get autoremove -y 
 
 ENV NODE_ENV production 
 
-RUN npm install -g "npm@latest" && \
-    npm install -g "ghost-cli@latest" && \
-    npm cache clean --force 
+# RUN npm install -g "npm@latest" && \
+RUN npm install -g "ghost-cli@latest" && \
+    npm cache clean --force || true && \
+    yarn cache clean || true
 
 ARG GHOST_VERSION
 ENV GHOST_VERSION $GHOST_VERSION 
@@ -35,6 +36,7 @@ RUN ghost config --no-prompt --ip '::' --port 2368 --url 'http://localhost:2368'
     ghost config paths.contentPath "$GHOST_CONTENT" && \
     ln -s config.production.json "$GHOST_INSTALL/config.development.json" && \
     readlink -f "$GHOST_INSTALL/config.development.json" 
+
 
 USER root
 
