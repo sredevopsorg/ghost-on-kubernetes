@@ -9,9 +9,10 @@ This repo deploys a clean Ghost CMS v5.xx.x from [@TryGhost (upstream)](https://
 - Modified the entrypoint to run as node user, so we can run the pod as non-root.
 - Update every possible dependencies in the base image to minimize vulnerabilities.
 - We update npm and ghost-cli to the latest versions on every build.
-- We use the latest version of Ghost 5.
+- We use the latest version of Ghost 5 (at the time of build the image)
 
-> *_Note: At this time, we dropped support for arm64 and armv7l, but we will add it back soon. Pull requests are welcome._*  
+> *_Note for ARM users 📌: At this time, we dropped support for arm64 and armv7l [(link to discussion)](https://github.com/sredevopsdev/ghost-on-kubernetes/issues/73#issuecomment-1933939315), but we will add it back soon. Pull requests are welcome._* 
+
 ## Star History
 
   <picture>
