@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql-ghost-k8s
+  namespace: ghost-k8s
+  labels:
+    app: mysql-ghost-k8s
+    app.kubernetes.io/name: mysql-ghost-k8s
+    app.kubernetes.io/instance: ghost-k8s
+    app.kubernetes.io/version: "5.6"
+    app.kubernetes.io/component: database
+    app.kubernetes.io/part-of: ghost-k8s
+spec:
+  serviceName: service-mysql-ghost-k8s
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql-ghost-k8s
+  template:
+    metadata:
+      labels:
+        app: mysql-ghost-k8s
+        app.kubernetes.io/name: mysql-ghost-k8s
+        app.kubernetes.io/instance: ghost-k8s
+        app.kubernetes.io/version: "5.6"
+        app.kubernetes.io/component: database
+      annotations:
+        container.apparmor.security.beta.kubernetes.io/mysql-ghost-k8s: runtime/default
+    spec:
+      initContainers:
+      - name: mysql-ghost-k8s-init
+        securityContext:
+          allowPrivilegeEscalation: false
+          privileged: false
+          readOnlyRootFilesystem: false
+          runAsNonRoot: false
+        image: docker.io/busybox:stable-musl
+        imagePullPolicy: Always
+        command: ['sh', '-c', 'chown -R 999:999 /mnt/mysql || true'] 
+        volumeMounts:
+        - name: mysql-ghost-k8s-volume
+          mountPath: /mnt/mysql
+          subPath: mysql-empty-dir
+
+
+      containers:
+      - name: mysql-ghost-k8s
+        securityContext:
+          allowPrivilegeEscalation: false
+          privileged: false
+          readOnlyRootFilesystem: false
+        image: docker.io/mysql:8.2
+        imagePullPolicy: Always
+        envFrom:
+        - secretRef:
+            name: mysql-ghost-k8s
+        resources:
+          requests:
+            memory: 100Mi
+            cpu: 100m
+          limits:
+            memory: 1Gi
+            cpu: 1000m
+        ports:
+        - containerPort: 3306
+          protocol: TCP
+          name: mysqlgh
+        volumeMounts:
+        - name: mysql-ghost-k8s-volume
+          mountPath: /var/lib/mysql
+          subPath: mysql-empty-dir
+      automountServiceAccountToken: false
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+      - name: mysql-ghost-k8s-volume
+        persistentVolumeClaim:
+          claimName: mysql-ghost-k8s

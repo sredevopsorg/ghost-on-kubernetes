@@ -1,15 +1,20 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: ghostk3s-static-ghost
-  namespace: ghostk3s
+  name: ghost-k8s-static-ghost
+  namespace: ghost-k8s
   labels:
-    app: ghostk3s
+    app: ghost-k8s
+    app.kubernetes.io/name: ghost-k8s
+    app.kubernetes.io/instance: ghost-k8s
+    app.kubernetes.io/version: "5.6"
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/part-of: ghost-k8s
 spec:
-  storageClassName: longhorn # Change this to your storageClassName
+  storageClassName: local-path # Change this to your storageClassName
   volumeMode: Filesystem
   accessModes:
-    - ReadWriteOnce # Change this to your accessModes
+  - ReadWriteOnce # Change this to your accessModes if needed
   resources:
     requests:
       storage: 5Gi
@@ -17,15 +22,21 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: mysql-ghostk3s
-  namespace: ghostk3s
+  name: mysql-ghost-k8s
+  namespace: ghost-k8s
   labels:
-    app: mysql-ghostk3s
+    app: mysql-ghost-k8s
+    app.kubernetes.io/name: mysql-ghost-k8s
+    app.kubernetes.io/instance: ghost-k8s
+    app.kubernetes.io/version: "5.6"
+    app.kubernetes.io/component: database-storage
+    app.kubernetes.io/part-of: ghost-k8s
+
 spec:
-  storageClassName: longhorn # Change this to your storageClassName
+  storageClassName: local-path # Change this to your storageClassName
   volumeMode: Filesystem
   accessModes:
-    - ReadWriteOnce # Change this to your accessModes
+  - ReadWriteOnce # Change this to ReadWriteOnce if you are not using a distributed storage system
   resources:
     requests:
       storage: 1Gi

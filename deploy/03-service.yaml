@@ -1,38 +1,48 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: ghostk3s
-  namespace: ghostk3s
+  name: service-ghost-k8s
+  namespace: ghost-k8s
   labels:
-    app: ghostk3s
+    app: ghost-k8s
+    app.kubernetes.io/name: ghost-k8s
+    app.kubernetes.io/instance: ghost-k8s
+    app.kubernetes.io/version: "5.6"
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/part-of: ghost-k8s
+
 spec:
   ports:
-    - port: 2368
-      protocol: TCP
-      targetPort: 2368
-      name: ghk3s
+  - port: 2368
+    protocol: TCP
+    targetPort: 2368
+    name: ghk3s
   type: ClusterIP
   selector:
-    app: ghostk3s
-
+    app: ghost-k8s
 
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: mysql-ghostk3s
-  namespace: ghostk3s
+  name: service-mysql-ghost-k8s
+  namespace: ghost-k8s
   labels:
-    app: mysql-ghostk3s
+    app: service-mysql-ghost-k8s
+    app.kubernetes.io/name: service-mysql-ghost-k8s
+    app.kubernetes.io/instance: ghost-k8s
+    app.kubernetes.io/version: "5.6"
+    app.kubernetes.io/component: database
+    app.kubernetes.io/part-of: ghost-k8s
 spec:
   ports:
-    - port: 3306
-      protocol: TCP
-      targetPort: 3306
-      name: mysqlgh
+  - port: 3306
+    protocol: TCP
+    targetPort: 3306
+    name: mysqlgh
   type: ClusterIP
   clusterIP: None
   selector:
-    app: mysql-ghostk3s
+    app: mysql-ghost-k8s
 
 

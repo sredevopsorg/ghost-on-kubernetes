@@ -84,10 +84,10 @@ jobs:
             org.opencontainers.image.title=ghost-on-kubernetes
             org.opencontainers.image.description=Deploy a full Ghost CMS v5 (latest release from @TryGhost), on node 18-lts, no gosu, updated npm and ghost-cli on any Kubernetes (k3s, GKE, AKS, etc) production-ready, using our custom image with enhanced specs.
             org.opencontainers.image.vendor=https://sredevops.org
-            org.opencontainers.image.source=https://github.com/sredevopsdev/ghost-on-kubernetes
-            org.opencontainers.image.documentation=https://github.com/sredevopsdev/ghost-on-kubernetes/blob/main/README.md
+            org.opencontainers.image.source=https://github.com/sredevopsorg/ghost-on-kubernetes
+            org.opencontainers.image.documentation=https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/README.md
             org.opencontainers.image.licenses=MIT
-            org.opencontainers.image.url=https://github.com/sredevopsdev/ghost-on-kubernetes/pkgs/container/ghost-on-kubernetes
+            org.opencontainers.image.url=https://github.com/sredevopsorg/ghost-on-kubernetes/pkgs/container/ghost-on-kubernetes
           
       -
         name: Login to DockerHub

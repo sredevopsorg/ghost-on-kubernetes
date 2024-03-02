@@ -2,14 +2,14 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: ghost-config-prod
-  namespace: ghostk3s
+  namespace: ghost-k8s
 type: Opaque
 stringData:
   config.production.json: |-
     {
-      "url": "https://tests.yourdomain.com",
+      "url": "http://localhost:2368",
       "admin": {
-        "url": "https://tests.yourdomain.com"
+        "url": "http://localhost:2368"
       },
       "server": {
         "port": 2368,
@@ -37,7 +37,7 @@ stringData:
         "client": "mysql",
         "connection": 
         {
-          "host": "mysql-ghostk3s",
+          "host": "service-mysql-ghost-k8s",
           "user": "mysql-db-user",
           "password": "mysql-db-password",
           "database": "mysql-db-name",
@@ -48,9 +48,5 @@ stringData:
       "process": "local",
       "paths": {
         "contentPath": "/var/lib/ghost/content"
-      },
-      "enableDeveloperExperiments": {
-        "enableDeveloperExperiments": true
-        }
+      }
     }
-    

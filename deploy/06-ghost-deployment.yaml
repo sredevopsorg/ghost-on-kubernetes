@@ -1,0 +1,141 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ghost-k8s
+  namespace: ghost-k8s
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ghost-k8s
+      app.kubernetes.io/name: ghost-k8s
+      app.kubernetes.io/instance: ghost-k8s
+      app.kubernetes.io/version: "5.6"
+      app.kubernetes.io/component: frontend
+      app.kubernetes.io/part-of: ghost-k8s
+
+  template:
+    metadata:
+      namespace: ghost-k8s
+      labels:
+        app: ghost-k8s
+        app.kubernetes.io/name: ghost-k8s
+        app.kubernetes.io/instance: ghost-k8s
+        app.kubernetes.io/version: "5.6"
+        app.kubernetes.io/component: frontend
+        app.kubernetes.io/part-of: ghost-k8s
+    spec:
+      volumes:
+      - name: ghost-k8s-static-ghost
+        persistentVolumeClaim:
+          claimName: ghost-k8s-static-ghost
+
+      - name: ghost-config-prod
+        secret:
+          secretName: ghost-config-prod
+          defaultMode: 420
+
+      - name: tmp
+        emptyDir:
+          sizeLimit: 64Mi
+
+      initContainers:
+      - name: ghost-k8s-init
+        image: docker.io/busybox:stable-musl
+        command:
+        - /bin/sh
+        - -c
+        - chown -Rf 1000:1000 /var/lib/ghost/content || true
+
+        volumeMounts:
+        - name: ghost-k8s-static-ghost
+          mountPath: /var/lib/ghost/content
+
+
+      containers:
+      - name: ghost-k8s
+        image: ghcr.io/sredevopsorg/ghost-on-kubernetes:main
+        ports:
+        - name: ghk3s
+          containerPort: 2368
+          protocol: TCP
+
+        # readinessProbe:
+        #   initialDelaySeconds: 30
+        #   periodSeconds: 10
+        #   timeoutSeconds: 3
+        #   successThreshold: 1
+        #   failureThreshold: 6
+        #   httpGet:
+        #     path: /ghost/api/v4/admin/site/
+        #     port: ghk3s
+        #     httpHeaders:
+        #     - name: X-Forwarded-Proto
+        #       value: https
+        #     - name: Host
+        #       value: tests.yourdomain.com
+        # livenessProbe:
+        #   httpGet:
+        #     path: /ghost/api/v4/admin/site/
+        #     port: ghk3s
+        #     httpHeaders:
+        #     - name: X-Forwarded-Proto
+        #       value: https
+        #     - name: Host
+        #       value: tests.yourdomain.com
+        #   periodSeconds: 3600
+        #   timeoutSeconds: 3
+        #   successThreshold: 1
+        #   failureThreshold: 1
+        #   initialDelaySeconds: 60
+
+        env:
+        - name: NODE_ENV
+          value: production
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+          requests:
+            cpu: 100m
+            memory: 100Mi
+
+        volumeMounts:
+        - name: ghost-k8s-static-ghost
+          mountPath: /var/lib/ghost/content
+        - name: ghost-config-prod
+          readOnly: true
+          mountPath: /var/lib/ghost/config.production.json
+          subPath: config.production.json
+        - name: tmp # This is the temporary volume mount to allow loading themes
+          mountPath: /tmp
+          readOnly: false
+        imagePullPolicy: Always
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 1000
+
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 15
+      dnsPolicy: ClusterFirst
+      # Optional: Uncomment the following to specify node selectors
+      # affinity:
+      #   nodeAffinity:
+      #     requiredDuringSchedulingIgnoredDuringExecution:
+      #       nodeSelectorTerms:
+      #         - matchExpressions:
+      #             - key: static
+      #               operator: In
+      #               values:
+      #                 - "true"
+
+
+      securityContext: {}
+      schedulerName: default-scheduler
+  strategy:
+    type: Recreate
+  revisionHistoryLimit: 1
+  progressDeadlineSeconds: 600
+
