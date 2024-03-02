@@ -1,6 +1,6 @@
 FROM node:hydrogen-slim
 
-LABEL org.opencontainers.image.description 'Ghost CMS v5 (latest release from @TryGhost) by SREDevOps.org (@sredevopsdev) on node hydrogen-bookworm-slim, no gosu, updated npm and ghost-cli'
+LABEL org.opencontainers.image.description 'Ghost CMS v5 (latest release from @TryGhost) by SREDevOps.org (@sredevopsorg) on node hydrogen-bookworm-slim, no gosu, updated npm and ghost-cli'
 
 ENV DEBIAN_FRONTEND noninteractive
 

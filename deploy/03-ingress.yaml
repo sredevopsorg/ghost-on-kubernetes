@@ -1,27 +1,27 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: ghostk3s
-  namespace: ghostk3s
+  name: ghost-k8s
+  namespace: ghost-k8s
 spec:
   ingressClassName: traefik # or nginx, caddy, etc
   tls:
-    - hosts:
-        - tests.yourdomain.com
-      # Optional:
-      # - www.tests.yourdomain.com
-      secretName: yourdomain-com-tls
+  - hosts:
+    - tests.yourdomain.com
+    # Optional:
+    # - www.tests.yourdomain.com
+    secretName: yourdomain-com-tls
   rules:
-    - host: tests.yourdomain.com
-      http:
-        paths:
-          - path: /
-            pathType: ImplementationSpecific
-            backend:
-              service:
-                name: ghostk3s-svc
-                port:
-                  name: ghk3s
+  - host: tests.yourdomain.com
+    http:
+      paths:
+      - path: /
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: ghost-k8s-svc
+            port:
+              name: ghk3s
   # Optional:
   # - host: www.tests.yourdomain.com
   #   http:
@@ -30,7 +30,7 @@ spec:
   #       pathType: ImplementationSpecific
   #       backend:
   #         service:
-  #           name: ghostk3s-svc
+  #           name: ghost-k8s-svc
   #           port:
   #             name: ghk3s
 

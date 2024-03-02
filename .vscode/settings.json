@@ -1,0 +1,5 @@
+{
+  "yaml.schemas": {
+    "kubernetes://schema/apps/v1@deployment": "file:///Users/ngeorger/sredevops/ghost-on-kubernetes-new/deploy/05-ghost-deployment.yaml"
+  }
+}

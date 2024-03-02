@@ -2,55 +2,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: ghost-config-prod
-  namespace: ghostk3s
+  namespace: ghost-k8s
 type: Opaque
 stringData:
-  config.production.json: |-
-    {
-      "url": "https://tests.yourdomain.com",
-      "admin": {
-        "url": "https://tests.yourdomain.com"
-      },
-      "server": {
-        "port": 2368,
-        "host": "0.0.0.0"
-      },
-      "mail": {
-        "transport": "SMTP",
-        "options": {
-          "service": "Google",
-          "host": "smtp.gmail.com",
-          "port": 465,
-          "secure": true,
-          "auth": {
-            "user": "user@server.com",
-            "pass": "passsword"
-          }
-        }
-      },
-      "logging": {
-        "transports": [
-          "stdout"
-        ]
-      },
-      "database": {
-        "client": "mysql",
-        "connection": 
-        {
-          "host": "mysql-ghostk3s",
-          "user": "mysql-db-user",
-          "password": "mysql-db-password",
-          "database": "mysql-db-name",
-          "port": "3306"
-        }
-      },
-      "debug": true,
-      "process": "local",
-      "paths": {
-        "contentPath": "/var/lib/ghost/content"
-      },
-      "enableDeveloperExperiments": {
-        "enableDeveloperExperiments": true
-        }
-    }
-    
+  config.production.json: "{\n  \"url\": \"https://tests.yourdomain.com\",\n  \"admin\": {\n    \"url\": \"https://tests.yourdomain.com\"\n  },\n  \"server\": {\n    \"port\": 2368,\n    \"host\": \"0.0.0.0\"\n  },\n  \"mail\": {\n    \"transport\": \"SMTP\",\n    \"options\": {\n      \"service\": \"Google\",\n      \"host\": \"smtp.gmail.com\",\n      \"port\": 465,\n      \"secure\": true,\n      \"auth\": {\n        \"user\": \"user@server.com\",\n        \"pass\": \"passsword\"\n      }\n    }\n  },\n  \"logging\": {\n    \"transports\": [\n      \"stdout\"\n    ]\n  },\n  \"database\": {\n    \"client\": \"mysql\",\n    \"connection\": \n    {\n      \"host\": \"mysql-ghost-k8s\",\n      \"user\": \"mysql-db-user\",\n      \"password\": \"mysql-db-password\",\n      \"database\": \"mysql-db-name\",\n      \"port\": \"3306\"\n    }\n  },\n  \"debug\": true,\n  \"process\": \"local\",\n  \"paths\": {\n    \"contentPath\": \"/var/lib/ghost/content\"\n  },\n  \"enableDeveloperExperiments\": {\n    \"enableDeveloperExperiments\": true\n    }\n}\n        #magic___^_^___line"

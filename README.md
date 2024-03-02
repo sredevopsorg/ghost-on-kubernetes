@@ -1,8 +1,8 @@
 # Ghost on Kubernetes by [SREDevOps](https://sredevops.org)
 
-[![Build and push image to DockerHub and GitHub Container Registry](https://github.com/sredevopsdev/ghost-on-kubernetes/actions/workflows/build-custom-image.yaml/badge.svg)](https://github.com/sredevopsdev/ghost-on-kubernetes/actions/workflows/build-custom-image.yaml)
+[![Build and push image to DockerHub and GitHub Container Registry](https://github.com/sredevopsorg/ghost-on-kubernetes/actions/workflows/build-custom-image.yaml/badge.svg)](https://github.com/sredevopsorg/ghost-on-kubernetes/actions/workflows/build-custom-image.yaml)
 
-This repo deploys a clean Ghost CMS v5.xx.x from [@TryGhost (upstream)](https://github.com/TryGhost/Ghost) in Kubernetes, as a Deployment using our [custom image](https://github.com/sredevopsdev/ghost-on-kubernetes/blob/main/Dockerfile) built based on the ["official" Ghost 5 debian image](https://github.com/docker-library/ghost/blob/master/5/debian/Dockerfile), but with some modifications:
+This repo deploys a clean Ghost CMS v5.xx.x from [@TryGhost (upstream)](https://github.com/TryGhost/Ghost) in Kubernetes, as a Deployment using our [custom image](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/Dockerfile) built based on the ["official" Ghost 5 debian image](https://github.com/docker-library/ghost/blob/master/5/debian/Dockerfile), but with some modifications:
 
 - We use the official Node 18 Hydrogen bookworm slim image as base.
 - Removed gosu, we use the default user (node) to run Ghost.
@@ -11,14 +11,14 @@ This repo deploys a clean Ghost CMS v5.xx.x from [@TryGhost (upstream)](https://
 - We update npm and ghost-cli to the latest versions on every build.
 - We use the latest version of Ghost 5 (at the time of build the image)
 
-> *_Note for ARM users 📌: At this time, we dropped support for arm64 and armv7l [(link to discussion)](https://github.com/sredevopsdev/ghost-on-kubernetes/issues/73#issuecomment-1933939315), but we will add it back soon. Pull requests are welcome._* 
+> *_Note for ARM users 📌: At this time, we dropped support for arm64 and armv7l [(link to discussion)](https://github.com/sredevopsorg/ghost-on-kubernetes/issues/73#issuecomment-1933939315), but we will add it back soon. Pull requests are welcome._* 
 
 ## Star History
 
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=sredevopsdev/ghost-on-kubernetes&type=Date&theme=dark" />
-    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=sredevopsdev/ghost-on-kubernetes&type=Date" />
-    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=sredevopsdev/ghost-on-kubernetes&type=Date" height="300px" />
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=sredevopsorg/ghost-on-kubernetes&type=Date&theme=dark" />
+    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=sredevopsorg/ghost-on-kubernetes&type=Date" />
+    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=sredevopsorg/ghost-on-kubernetes&type=Date" height="300px" />
   </picture>
 
 ## Installation
@@ -27,7 +27,7 @@ This repo deploys a clean Ghost CMS v5.xx.x from [@TryGhost (upstream)](https://
 
 ```bash
 # Clone the repository
-git clone https://github.com/sredevopsdev/ghost-on-kubernetes.git
+git clone https://github.com/sredevopsorg/ghost-on-kubernetes.git
 # Change directory
 cd ghost-on-kubernetes
 # Checkout to your local branch (optional)
@@ -73,7 +73,7 @@ config.production.sample.json: |
     "client": "mysql",
     "connection": 
     {
-      "host": "mysql-ghostk3s", # Same as service name
+      "host": "mysql-ghost-k8s", # Same as service name
       "user": "userdb", # Same as in secret
       "password": "passdb", # Same as in secret
       "database": "db", # Same as in secret
@@ -96,8 +96,8 @@ config.production.sample.json: |
 apiVersion: v1
 kind: Secret
 metadata:
-  name: mysql-ghostk3s
-  namespace: ghostk3s
+  name: mysql-ghost-k8s
+  namespace: ghost-k8s
 type: Opaque
 stringData:
   MYSQL_DATABASE: mysql-db-name # Same as in config.production.json
@@ -136,7 +136,7 @@ kubectl apply -f deploy/05-ghost-deployment.yaml
 
 ```bash
 # Get the ingress IP address
-kubectl get ing -n ghostk3s -o wide 
+kubectl get ing -n ghost-k8s -o wide 
 
 
 ```
