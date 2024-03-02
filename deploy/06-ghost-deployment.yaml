@@ -19,21 +19,29 @@ spec:
       namespace: ghost-k8s
       labels:
         app: ghost-k8s
+        app.kubernetes.io/name: ghost-k8s
+        app.kubernetes.io/instance: ghost-k8s
+        app.kubernetes.io/version: "5.6"
+        app.kubernetes.io/component: frontend
+        app.kubernetes.io/part-of: ghost-k8s
     spec:
       volumes:
       - name: ghost-k8s-static-ghost
         persistentVolumeClaim:
           claimName: ghost-k8s-static-ghost
+
       - name: ghost-config-prod
         secret:
           secretName: ghost-config-prod
           defaultMode: 420
+
       - name: tmp
         emptyDir:
           sizeLimit: 64Mi
+
       initContainers:
       - name: ghost-k8s-init
-        image: busybox:latest
+        image: docker.io/busybox:stable-musl
         command:
         - /bin/sh
         - -c
@@ -52,34 +60,34 @@ spec:
           containerPort: 2368
           protocol: TCP
 
-        readinessProbe:
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 3
-          successThreshold: 1
-          failureThreshold: 6
-          httpGet:
-            path: /ghost/api/v4/admin/site/
-            port: ghk3s
-            httpHeaders:
-            - name: X-Forwarded-Proto
-              value: https
-            - name: Host
-              value: tests.yourdomain.com
-        livenessProbe:
-          httpGet:
-            path: /ghost/api/v4/admin/site/
-            port: ghk3s
-            httpHeaders:
-            - name: X-Forwarded-Proto
-              value: https
-            - name: Host
-              value: tests.yourdomain.com
-          periodSeconds: 3600
-          timeoutSeconds: 3
-          successThreshold: 1
-          failureThreshold: 1
-          initialDelaySeconds: 60
+        # readinessProbe:
+        #   initialDelaySeconds: 30
+        #   periodSeconds: 10
+        #   timeoutSeconds: 3
+        #   successThreshold: 1
+        #   failureThreshold: 6
+        #   httpGet:
+        #     path: /ghost/api/v4/admin/site/
+        #     port: ghk3s
+        #     httpHeaders:
+        #     - name: X-Forwarded-Proto
+        #       value: https
+        #     - name: Host
+        #       value: tests.yourdomain.com
+        # livenessProbe:
+        #   httpGet:
+        #     path: /ghost/api/v4/admin/site/
+        #     port: ghk3s
+        #     httpHeaders:
+        #     - name: X-Forwarded-Proto
+        #       value: https
+        #     - name: Host
+        #       value: tests.yourdomain.com
+        #   periodSeconds: 3600
+        #   timeoutSeconds: 3
+        #   successThreshold: 1
+        #   failureThreshold: 1
+        #   initialDelaySeconds: 60
 
         env:
         - name: NODE_ENV
@@ -89,8 +97,9 @@ spec:
             cpu: 1000m
             memory: 1Gi
           requests:
-            cpu: 0m
+            cpu: 100m
             memory: 100Mi
+
         volumeMounts:
         - name: ghost-k8s-static-ghost
           mountPath: /var/lib/ghost/content
@@ -107,8 +116,9 @@ spec:
           allowPrivilegeEscalation: false
           runAsNonRoot: true
           runAsUser: 1000
+
       restartPolicy: Always
-      terminationGracePeriodSeconds: 30
+      terminationGracePeriodSeconds: 15
       dnsPolicy: ClusterFirst
       # Optional: Uncomment the following to specify node selectors
       # affinity:
@@ -125,11 +135,7 @@ spec:
       securityContext: {}
       schedulerName: default-scheduler
   strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 1
-      maxSurge: 3
-
-  revisionHistoryLimit: 3
+    type: Recreate
+  revisionHistoryLimit: 1
   progressDeadlineSeconds: 600
 

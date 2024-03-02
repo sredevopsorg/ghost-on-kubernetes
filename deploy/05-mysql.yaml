@@ -11,7 +11,7 @@ metadata:
     app.kubernetes.io/component: database
     app.kubernetes.io/part-of: ghost-k8s
 spec:
-  serviceName: "mysql-service"
+  serviceName: service-mysql-ghost-k8s
   replicas: 1
   selector:
     matchLabels:
@@ -27,6 +27,22 @@ spec:
       annotations:
         container.apparmor.security.beta.kubernetes.io/mysql-ghost-k8s: runtime/default
     spec:
+      initContainers:
+      - name: mysql-ghost-k8s-init
+        securityContext:
+          allowPrivilegeEscalation: false
+          privileged: false
+          readOnlyRootFilesystem: false
+          runAsNonRoot: false
+        image: docker.io/busybox:stable-musl
+        imagePullPolicy: Always
+        command: ['sh', '-c', 'chown -R 999:999 /mnt/mysql || true'] 
+        volumeMounts:
+        - name: mysql-ghost-k8s-volume
+          mountPath: /mnt/mysql
+          subPath: mysql-empty-dir
+
+
       containers:
       - name: mysql-ghost-k8s
         securityContext:

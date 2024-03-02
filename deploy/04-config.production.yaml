@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ghost-config-prod
+  namespace: ghost-k8s
+type: Opaque
+stringData:
+  config.production.json: |-
+    {
+      "url": "http://localhost:2368",
+      "admin": {
+        "url": "http://localhost:2368"
+      },
+      "server": {
+        "port": 2368,
+        "host": "0.0.0.0"
+      },
+      "mail": {
+        "transport": "SMTP",
+        "options": {
+          "service": "Google",
+          "host": "smtp.gmail.com",
+          "port": 465,
+          "secure": true,
+          "auth": {
+            "user": "user@server.com",
+            "pass": "passsword"
+          }
+        }
+      },
+      "logging": {
+        "transports": [
+          "stdout"
+        ]
+      },
+      "database": {
+        "client": "mysql",
+        "connection": 
+        {
+          "host": "mysql-ghost-k8s",
+          "user": "mysql-db-user",
+          "password": "mysql-db-password",
+          "database": "mysql-db-name",
+          "port": "3306"
+        }
+      },
+      "debug": true,
+      "process": "local",
+      "paths": {
+        "contentPath": "/var/lib/ghost/content"
+      }
+    }

@@ -8,12 +8,10 @@ metadata:
     app.kubernetes.io/name: ghost-k8s
     app.kubernetes.io/instance: ghost-k8s
     app.kubernetes.io/version: "5.6"
-    app.kubernetes.io/component: frontend-storage
+    app.kubernetes.io/component: frontend
     app.kubernetes.io/part-of: ghost-k8s
-
-
 spec:
-  storageClassName: longhorn # Change this to your storageClassName
+  storageClassName: local-path # Change this to your storageClassName
   volumeMode: Filesystem
   accessModes:
   - ReadWriteOnce # Change this to your accessModes if needed
@@ -35,10 +33,10 @@ metadata:
     app.kubernetes.io/part-of: ghost-k8s
 
 spec:
-  storageClassName: longhorn # Change this to your storageClassName
+  storageClassName: local-path # Change this to your storageClassName
   volumeMode: Filesystem
   accessModes:
-  - ReadWriteMany # Change this to ReadWriteOnce if you are not using a distributed storage system
+  - ReadWriteOnce # Change this to ReadWriteOnce if you are not using a distributed storage system
   resources:
     requests:
       storage: 1Gi
