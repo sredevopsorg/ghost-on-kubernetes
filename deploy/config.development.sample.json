@@ -29,7 +29,7 @@
     "client": "mysql",
     "connection": 
     {
-      "host": "mysql-ghost-k8s",
+      "host": "service-mysql-ghost-k8s",
       "user": "mysql-db-user",
       "password": "mysql-db-password",
       "database": "mysql-db-name",
