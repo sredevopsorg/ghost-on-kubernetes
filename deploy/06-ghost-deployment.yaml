@@ -67,7 +67,7 @@ spec:
         - |
           set -ex
           chown -Rf 1000:1000 /var/lib/ghost/content
-          git clone https://github.com/TryGhost/Source /var/lib/ghost/content/themes/source --depth 1
+          git clone https://github.com/TryGhost/Source /var/lib/ghost/content/themes/source --depth 1 || true
 
         volumeMounts:
         - name: ghost-k8s-static-ghost
