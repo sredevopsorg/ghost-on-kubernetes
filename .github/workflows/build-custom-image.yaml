@@ -6,6 +6,9 @@ on:
       - 'v*'
     # branches:
     #   - main
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       manual-tag:
@@ -16,7 +19,7 @@ on:
       ghost_version:
         description: 'Ghost version'
         required: false
-        default: '5.75.2'
+        default: '5.80.0'
         type: string
 
 jobs:
@@ -92,6 +95,7 @@ jobs:
       -
         name: Login to DockerHub
         uses: docker/login-action@v3
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         with:
           registry: docker.io
           username: ${{ vars.DOCKER_USER }}
@@ -99,6 +103,7 @@ jobs:
       -
         name: Login to GitHub Container Registry
         uses: docker/login-action@v3
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -107,6 +112,7 @@ jobs:
         name: Login to Quay Container Registry
         uses: docker/login-action@v3
         continue-on-error: true
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         with:
           registry: quay.io
           username: ${{ vars.QUAY_USER }}  
@@ -116,6 +122,7 @@ jobs:
         name: Build and push
         uses: docker/build-push-action@v5
         id: build-and-push
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         with:
           context: .
           platforms: linux/amd64
@@ -124,3 +131,18 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }} 
+
+
+      -
+        name: Build pull request
+        uses: docker/build-push-action@v5
+        id: build-pr
+        if: github.event_name == 'pull_request'
+        with:
+          context: .
+          platforms: linux/amd64
+          push: false
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }}

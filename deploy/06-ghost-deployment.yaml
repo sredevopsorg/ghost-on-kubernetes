@@ -10,7 +10,7 @@ spec:
       app: ghost-k8s
       app.kubernetes.io/name: ghost-k8s
       app.kubernetes.io/instance: ghost-k8s
-      app.kubernetes.io/version: "5.6"
+      app.kubernetes.io/version: "5.8"
       app.kubernetes.io/component: frontend
       app.kubernetes.io/part-of: ghost-k8s
 
@@ -21,7 +21,7 @@ spec:
         app: ghost-k8s
         app.kubernetes.io/name: ghost-k8s
         app.kubernetes.io/instance: ghost-k8s
-        app.kubernetes.io/version: "5.6"
+        app.kubernetes.io/version: "5.8"
         app.kubernetes.io/component: frontend
         app.kubernetes.io/part-of: ghost-k8s
     spec:
@@ -41,20 +41,43 @@ spec:
 
       initContainers:
       - name: ghost-k8s-init
-        image: docker.io/busybox:stable-musl
+        image: bitnami/git:latest
+        env:
+        - name: GHOST_INSTALL
+          value: /var/lib/ghost
+        - name: GHOST_CONTENT
+          value: /var/lib/ghost/content
+        - name: NODE_ENV
+          value: production
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          # runAsNonRoot: true
+          # runAsUser: 1000
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+          requests:
+            cpu: 100m
+            memory: 128Mi
         command:
-        - /bin/sh
+        - /bin/bash
         - -c
-        - chown -Rf 1000:1000 /var/lib/ghost/content || true
+        - |
+          set -ex
+          chown -Rf 1000:1000 /var/lib/ghost/content
+          git clone https://github.com/TryGhost/Source /var/lib/ghost/content/themes/source --depth 1
 
         volumeMounts:
         - name: ghost-k8s-static-ghost
           mountPath: /var/lib/ghost/content
+          readOnly: false
 
 
       containers:
       - name: ghost-k8s
-        image: ghcr.io/sredevopsorg/ghost-on-kubernetes:main
+        image: ghcr.io/sredevopsorg/ghost-on-kubernetes:distroless
         ports:
         - name: ghk3s
           containerPort: 2368
