@@ -113,3 +113,4 @@ ghost-local.db
 **/**/*local*
 .monokle
 .monokle
+docker-compose.yml

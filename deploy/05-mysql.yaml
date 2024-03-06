@@ -32,11 +32,16 @@ spec:
         securityContext:
           allowPrivilegeEscalation: false
           privileged: false
-          readOnlyRootFilesystem: false
+          readOnlyRootFilesystem: true
           runAsNonRoot: false
         image: docker.io/busybox:stable-musl
         imagePullPolicy: Always
-        command: ['sh', '-c', 'chown -R 999:999 /mnt/mysql || true'] 
+        command:
+        - /bin/sh
+        - -c
+        - |
+          set -ex
+          chown -R 999:999 /mnt/mysql || true
         volumeMounts:
         - name: mysql-ghost-k8s-volume
           mountPath: /mnt/mysql
@@ -48,7 +53,10 @@ spec:
         securityContext:
           allowPrivilegeEscalation: false
           privileged: false
-          readOnlyRootFilesystem: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 999
+
         image: docker.io/mysql:8.2
         imagePullPolicy: Always
         envFrom:
@@ -69,6 +77,12 @@ spec:
         - name: mysql-ghost-k8s-volume
           mountPath: /var/lib/mysql
           subPath: mysql-empty-dir
+        - name: mysql-ghost-k8s-tmp
+          mountPath: /tmp
+          readOnly: false
+        - name: mysql-ghost-k8s-socket
+          mountPath: /var/run/mysqld
+          readOnly: false
       automountServiceAccountToken: false
       securityContext:
         seccompProfile:
@@ -77,3 +91,9 @@ spec:
       - name: mysql-ghost-k8s-volume
         persistentVolumeClaim:
           claimName: mysql-ghost-k8s
+      - name: mysql-ghost-k8s-tmp
+        emptyDir:
+          sizeLimit: 128Mi
+      - name: mysql-ghost-k8s-socket
+        emptyDir:
+          sizeLimit: 128Mi
