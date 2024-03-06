@@ -37,7 +37,7 @@ RUN mv -v $GHOST_CONTENT $GHOST_CONTENT_ORIGINAL && \
 
 USER node
 
-FROM gcr.io/distroless/nodejs18-debian12:debug-nonroot
+FROM gcr.io/distroless/nodejs18-debian12:latest
 
 ENV GHOST_INSTALL /var/lib/ghost
 ENV GHOST_CONTENT /var/lib/ghost/content
