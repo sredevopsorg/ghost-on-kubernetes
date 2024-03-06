@@ -31,9 +31,12 @@ USER root
 
 RUN mv -v $GHOST_CONTENT $GHOST_CONTENT_ORIGINAL && \
     mkdir -pv $GHOST_CONTENT && \
-    cp -R $GHOST_CONTENT_ORIGINAL/themes $GHOST_CONTENT/ && \
-    chown node:node $GHOST_CONTENT && \
+    chown -R node:node $GHOST_INSTALL && \
     chmod 1777 $GHOST_CONTENT
+
+    # cp -R $GHOST_CONTENT_ORIGINAL/themes $GHOST_CONTENT/ && \
+    # chown node:node $GHOST_CONTENT && \
+    # chmod 1777 $GHOST_CONTENT
 
 USER node
 

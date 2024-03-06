@@ -13,7 +13,6 @@ spec:
       app.kubernetes.io/version: "5.8"
       app.kubernetes.io/component: frontend
       app.kubernetes.io/part-of: ghost-k8s
-
   template:
     metadata:
       namespace: ghost-k8s
@@ -53,7 +52,6 @@ spec:
           readOnlyRootFilesystem: true
           allowPrivilegeEscalation: false
           # runAsNonRoot: true
-          # runAsUser: 1000
         resources:
           limits:
             cpu: 1000m
@@ -66,18 +64,24 @@ spec:
         - -c
         - |
           set -ex
-          chown -Rf 1000:1000 /var/lib/ghost/content
-          git clone https://github.com/TryGhost/Source /var/lib/ghost/content/themes/source --depth 1 || true
+          # Assure ownership of the ghost installation for the user node
+          chown -R 1000:1000 $GHOST_CONTENT || true
+          # Check if $GHOST_CONTENT/themes/source exists, if it doesn't exist clone it and then set the ownership
+          if [ ! -d "$GHOST_CONTENT/themes/source" ]; then
+            git clone https://github.com/TryGhost/Source $GHOST_CONTENT/themes/source --single-branch --branch=main --depth=1
+            chown -R 1000:1000 $GHOST_CONTENT/themes/source
+          fi
+          
 
         volumeMounts:
         - name: ghost-k8s-static-ghost
           mountPath: /var/lib/ghost/content
           readOnly: false
 
-
       containers:
       - name: ghost-k8s
         image: ghcr.io/sredevopsorg/ghost-on-kubernetes:distroless
+        imagePullPolicy: Always
         ports:
         - name: ghk3s
           containerPort: 2368
@@ -133,7 +137,6 @@ spec:
         - name: tmp # This is the temporary volume mount to allow loading themes
           mountPath: /tmp
           readOnly: false
-        imagePullPolicy: Always
         securityContext:
           readOnlyRootFilesystem: true
           allowPrivilegeEscalation: false

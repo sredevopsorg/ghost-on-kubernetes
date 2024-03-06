@@ -20,6 +20,7 @@ spec:
   type: ClusterIP
   selector:
     app: ghost-k8s
+    app.kubernetes.io/name: ghost-k8s
 
 ---
 apiVersion: v1
@@ -44,5 +45,6 @@ spec:
   clusterIP: None
   selector:
     app: mysql-ghost-k8s
+    app.kubernetes.io/name: mysql-ghost-k8s
 
 
