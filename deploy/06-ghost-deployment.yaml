@@ -45,8 +45,8 @@ spec:
           # runAsNonRoot: true
         resources:
           limits:
-            cpu: 1000m
-            memory: 1Gi
+            cpu: 300m
+            memory: 256Mi
           requests:
             cpu: 100m
             memory: 128Mi
@@ -74,7 +74,7 @@ spec:
           fi
 
           # Assure ownership of the ghost installation for the user node
-          # chown -R 1000:1000 $GHOST_CONTENT
+          chown -R 1000:1000 $GHOST_CONTENT || true
           echo "Assured ownership of the ghost installation"
           exit 0
 
@@ -92,20 +92,6 @@ spec:
           containerPort: 2368
           protocol: TCP
 
-        # readinessProbe:
-        #   initialDelaySeconds: 30
-        #   periodSeconds: 10
-        #   timeoutSeconds: 3
-        #   successThreshold: 1
-        #   failureThreshold: 6
-        #   httpGet:
-        #     path: /ghost/api/v4/admin/site/
-        #     port: ghk3s
-        #     httpHeaders:
-        #     - name: X-Forwarded-Proto
-        #       value: https
-        #     - name: Host
-        #       value: tests.yourdomain.com
         # livenessProbe:
         #   httpGet:
         #     path: /ghost/api/v4/admin/site/

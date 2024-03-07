@@ -4,8 +4,6 @@ on:
   push:
     tags:
       - 'v*'
-    # branches:
-    #   - main
   pull_request:
     branches:
       - main
@@ -35,6 +33,8 @@ jobs:
       -
         name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
       -
         name: Set up QEMU
@@ -82,10 +82,10 @@ jobs:
             type=ref,event=tag
             type=raw,value=${{ steps.versions.outputs.MANUAL_TAG }}
             type=raw,value=v${{ steps.versions.outputs.GHOST_VERSION }}
-            type=raw,value=latest
+            type=ref,event=branch,ref=main
           labels: |
             org.opencontainers.image.title=ghost-on-kubernetes
-            org.opencontainers.image.description=Deploy a full Ghost CMS v5 (latest release from @TryGhost), on node 18-lts, no gosu, updated npm and ghost-cli on any Kubernetes (k3s, GKE, AKS, etc) production-ready, using our custom image with enhanced specs.
+            org.opencontainers.image.description=Deploy a full Ghost CMS v5 (latest release from @TryGhost), distroless for any Kubernetes (k3s, GKE, AKS, etc) production-ready, using our custom image with enhanced specs.
             org.opencontainers.image.vendor=https://sredevops.org
             org.opencontainers.image.source=https://github.com/sredevopsorg/ghost-on-kubernetes
             org.opencontainers.image.documentation=https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/README.md
