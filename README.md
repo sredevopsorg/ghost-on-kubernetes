@@ -4,9 +4,25 @@
 
 This repo deploys a clean Ghost CMS v5.xx.x from [@TryGhost (upstream)](https://github.com/TryGhost/Ghost) in Kubernetes, as a Deployment using our [custom image](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/Dockerfile) built based on the ["official" Ghost 5 debian image](https://github.com/docker-library/ghost/blob/master/5/debian/Dockerfile), but with some modifications:
 
-- We use the official Node 18 Hydrogen bookworm slim image as base.
-- Removed gosu, we use the default user (node) to run Ghost.
-- Modified the entrypoint to run as node user, so we can run the pod as non-root.
+## Recent Changes
+
+We've made some significant updates to improve the security and efficiency of our Ghost deployment on Kubernetes:
+
+1. **Distroless Base Image**: The Ghost container image is now based on a Distroless base image. This reduces the attack surface by eliminating unnecessary components like shell, package managers, and utilities that aren't needed for our application to run. The image is also built using a multi-stage build process, which makes the final image smaller and more secure.
+
+2. **MySQL StatefulSet**: We've changed the MySQL deployment back to a StatefulSet. This provides stable network identifiers and persistent storage, which are important for databases like MySQL that need to maintain state.
+
+3. **Non-Root User**: By default, the Ghost container now runs as a non-root user. This is a best practice for security, as it reduces the potential damage if the container is compromised. The Ghost application is started with an init container, which performs necessary setup tasks before the main Ghost container starts.
+
+Please refer to the updated `06-ghost-deployment.yaml` file for the implementation details of these changes.
+
+## Features
+
+- We use the official Node 18 Hydrogen bookworm slim image as build environment.
+- Introduced a multi-stage build to compile the image.
+- [distroless node 18 debian 12](https://github.com/GoogleContainerTools/distroless/blob/main/README.md) as the final image.
+- Removed gosu, we use the default user node.
+- ~~Modified the entrypoint to run as node user, so we can run the pod as non-root.~~ DELETED ENTRYPOINT
 - Update every possible dependencies in the base image to minimize vulnerabilities.
 - We update npm and ghost-cli to the latest versions on every build.
 - We use the latest version of Ghost 5 (at the time of build the image)
