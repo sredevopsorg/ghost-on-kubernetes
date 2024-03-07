@@ -24,6 +24,7 @@ spec:
         app.kubernetes.io/component: frontend
         app.kubernetes.io/part-of: ghost-k8s
     spec:
+      automountServiceAccountToken: false # Disable automounting of service account token
       volumes:
       - name: ghost-k8s-static-ghost
         persistentVolumeClaim:
@@ -40,7 +41,7 @@ spec:
 
       initContainers:
       - name: ghost-k8s-init
-        image: bitnami/git:latest
+        image: docker.io/bitnami/git:2
         env:
         - name: GHOST_INSTALL
           value: /var/lib/ghost
@@ -64,14 +65,26 @@ spec:
         - -c
         - |
           set -ex
-          # Assure ownership of the ghost installation for the user node
-          chown -R 1000:1000 $GHOST_CONTENT || true
           # Check if $GHOST_CONTENT/themes/source exists, if it doesn't exist clone it and then set the ownership
           if [ ! -d "$GHOST_CONTENT/themes/source" ]; then
             git clone https://github.com/TryGhost/Source $GHOST_CONTENT/themes/source --single-branch --branch=main --depth=1
             chown -R 1000:1000 $GHOST_CONTENT/themes/source
+            echo "Cloned Source theme"
+          else
+            echo "Source theme already exists"
           fi
-          
+          # Check if $GHOST_CONTENT/themes/casper exists, if it doesn't exist clone it and then set the ownership
+          if [ ! -d "$GHOST_CONTENT/themes/casper" ]; then
+            git clone https://github.com/TryGhost/Casper $GHOST_CONTENT/themes/casper --single-branch --branch=main --depth=1
+            chown -R 1000:1000 $GHOST_CONTENT/themes/casper
+            echo "Cloned Casper theme"
+          else
+            echo "Casper theme already exists"
+          fi
+          # Assure ownership of the ghost installation for the user node
+          chown -R 1000:1000 $GHOST_CONTENT
+          echo "Assured ownership of the ghost installation"
+          exit 0
 
         volumeMounts:
         - name: ghost-k8s-static-ghost
@@ -162,6 +175,5 @@ spec:
       schedulerName: default-scheduler
   strategy:
     type: Recreate
-  revisionHistoryLimit: 1
+  revisionHistoryLimit: 2
   progressDeadlineSeconds: 600
-
