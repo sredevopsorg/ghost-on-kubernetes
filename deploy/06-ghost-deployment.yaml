@@ -8,23 +8,13 @@ spec:
   selector:
     matchLabels:
       app: ghost-k8s
-      app.kubernetes.io/name: ghost-k8s
-      app.kubernetes.io/instance: ghost-k8s
-      app.kubernetes.io/version: "5.6"
-      app.kubernetes.io/component: frontend
-      app.kubernetes.io/part-of: ghost-k8s
-
   template:
     metadata:
       namespace: ghost-k8s
       labels:
         app: ghost-k8s
-        app.kubernetes.io/name: ghost-k8s
-        app.kubernetes.io/instance: ghost-k8s
-        app.kubernetes.io/version: "5.6"
-        app.kubernetes.io/component: frontend
-        app.kubernetes.io/part-of: ghost-k8s
     spec:
+      automountServiceAccountToken: false # Disable automounting of service account token
       volumes:
       - name: ghost-k8s-static-ghost
         persistentVolumeClaim:
@@ -41,39 +31,67 @@ spec:
 
       initContainers:
       - name: ghost-k8s-init
-        image: docker.io/busybox:stable-musl
+        image: docker.io/bitnami/git:2
+        env:
+        - name: GHOST_INSTALL
+          value: /var/lib/ghost
+        - name: GHOST_CONTENT
+          value: /var/lib/ghost/content
+        - name: NODE_ENV
+          value: production
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          # runAsNonRoot: true
+        resources:
+          limits:
+            cpu: 300m
+            memory: 256Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
         command:
-        - /bin/sh
+        - /bin/bash
         - -c
-        - chown -Rf 1000:1000 /var/lib/ghost/content || true
+        - |
+          set -e
+          # Check if $GHOST_CONTENT/themes/source exists, if it doesn't exist clone it and then set the ownership
+          if [ ! -d "$GHOST_CONTENT/themes/source/" ]; then
+            echo "Source theme already exists"
+          else
+            git clone https://github.com/TryGhost/Source $GHOST_CONTENT/themes/source --single-branch --branch=main --depth=1
+            chown -R 1000:1000 $GHOST_CONTENT/themes/source
+            echo "Cloned Source theme"
+          fi
+
+          # Check if $GHOST_CONTENT/themes/casper exists, if it doesn't exist clone it and then set the ownership
+          if [ ! -d "$GHOST_CONTENT/themes/casper/" ]; then
+            echo "Casper theme already exists"
+          else
+            git clone https://github.com/TryGhost/Casper $GHOST_CONTENT/themes/casper --single-branch --branch=main --depth=1
+            chown -R 1000:1000 $GHOST_CONTENT/themes/casper
+            echo "Cloned Casper theme"
+          fi
+
+          # Assure ownership of the ghost installation for the user node
+          chown -R 1000:1000 $GHOST_CONTENT || true
+          echo "Assured ownership of the ghost installation"
+          exit 0
 
         volumeMounts:
         - name: ghost-k8s-static-ghost
           mountPath: /var/lib/ghost/content
-
+          readOnly: false
 
       containers:
       - name: ghost-k8s
-        image: ghcr.io/sredevopsorg/ghost-on-kubernetes:main
+        image: ghcr.io/sredevopsorg/ghost-on-kubernetes:distroless
+        imagePullPolicy: Always
         ports:
         - name: ghk3s
           containerPort: 2368
           protocol: TCP
 
-        # readinessProbe:
-        #   initialDelaySeconds: 30
-        #   periodSeconds: 10
-        #   timeoutSeconds: 3
-        #   successThreshold: 1
-        #   failureThreshold: 6
-        #   httpGet:
-        #     path: /ghost/api/v4/admin/site/
-        #     port: ghk3s
-        #     httpHeaders:
-        #     - name: X-Forwarded-Proto
-        #       value: https
-        #     - name: Host
-        #       value: tests.yourdomain.com
         # livenessProbe:
         #   httpGet:
         #     path: /ghost/api/v4/admin/site/
@@ -110,7 +128,6 @@ spec:
         - name: tmp # This is the temporary volume mount to allow loading themes
           mountPath: /tmp
           readOnly: false
-        imagePullPolicy: Always
         securityContext:
           readOnlyRootFilesystem: true
           allowPrivilegeEscalation: false
@@ -136,6 +153,5 @@ spec:
       schedulerName: default-scheduler
   strategy:
     type: Recreate
-  revisionHistoryLimit: 1
+  revisionHistoryLimit: 2
   progressDeadlineSeconds: 600
-

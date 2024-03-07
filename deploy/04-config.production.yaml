@@ -22,6 +22,7 @@ stringData:
           "host": "smtp.gmail.com",
           "port": 465,
           "secure": true,
+          "from": "user@server.com",
           "auth": {
             "user": "user@server.com",
             "pass": "passsword"
