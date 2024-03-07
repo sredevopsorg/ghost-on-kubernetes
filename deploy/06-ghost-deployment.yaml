@@ -8,21 +8,11 @@ spec:
   selector:
     matchLabels:
       app: ghost-k8s
-      app.kubernetes.io/name: ghost-k8s
-      app.kubernetes.io/instance: ghost-k8s
-      app.kubernetes.io/version: "5.8"
-      app.kubernetes.io/component: frontend
-      app.kubernetes.io/part-of: ghost-k8s
   template:
     metadata:
       namespace: ghost-k8s
       labels:
         app: ghost-k8s
-        app.kubernetes.io/name: ghost-k8s
-        app.kubernetes.io/instance: ghost-k8s
-        app.kubernetes.io/version: "5.8"
-        app.kubernetes.io/component: frontend
-        app.kubernetes.io/part-of: ghost-k8s
     spec:
       automountServiceAccountToken: false # Disable automounting of service account token
       volumes:
@@ -64,25 +54,27 @@ spec:
         - /bin/bash
         - -c
         - |
-          set -ex
+          set -e
           # Check if $GHOST_CONTENT/themes/source exists, if it doesn't exist clone it and then set the ownership
-          if [ ! -d "$GHOST_CONTENT/themes/source" ]; then
+          if [ ! -d "$GHOST_CONTENT/themes/source/" ]; then
+            echo "Source theme already exists"
+          else
             git clone https://github.com/TryGhost/Source $GHOST_CONTENT/themes/source --single-branch --branch=main --depth=1
             chown -R 1000:1000 $GHOST_CONTENT/themes/source
             echo "Cloned Source theme"
-          else
-            echo "Source theme already exists"
           fi
+
           # Check if $GHOST_CONTENT/themes/casper exists, if it doesn't exist clone it and then set the ownership
-          if [ ! -d "$GHOST_CONTENT/themes/casper" ]; then
+          if [ ! -d "$GHOST_CONTENT/themes/casper/" ]; then
+            echo "Casper theme already exists"
+          else
             git clone https://github.com/TryGhost/Casper $GHOST_CONTENT/themes/casper --single-branch --branch=main --depth=1
             chown -R 1000:1000 $GHOST_CONTENT/themes/casper
             echo "Cloned Casper theme"
-          else
-            echo "Casper theme already exists"
           fi
+
           # Assure ownership of the ghost installation for the user node
-          chown -R 1000:1000 $GHOST_CONTENT
+          # chown -R 1000:1000 $GHOST_CONTENT
           echo "Assured ownership of the ghost installation"
           exit 0
 
