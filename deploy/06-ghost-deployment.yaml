@@ -85,12 +85,14 @@ spec:
 
       containers:
       - name: ghost-k8s
-        image: ghcr.io/sredevopsorg/ghost-on-kubernetes:distroless
+        image: ghcr.io/sredevopsorg/ghost-on-kubernetes:main
         imagePullPolicy: Always
         ports:
         - name: ghk3s
           containerPort: 2368
           protocol: TCP
+
+        # You should uncomment the following lines in production. Change the values according to your environment.
 
         # livenessProbe:
         #   httpGet:
