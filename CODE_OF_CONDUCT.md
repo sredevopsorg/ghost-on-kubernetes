@@ -12,9 +12,9 @@ Entendemos el comportamiento inaceptable, principalmente como la negación de la
 
 Invitamos a todos los que participan en ElClaustro.cl a ayudarnos a crear experiencias seguras y positivas para todos.
 
-## 2. Ciudadanía [fuente/cultura/tecnología] abierta
+## 2. Ciudadanía y cultura abierta
 
-Un objetivo complementario de este Código de conducta es aumentar la ciudadanía [fuente/cultura/tecnología] abierta al alentar a los participantes a reconocer y fortalecer las relaciones entre nuestras acciones y sus efectos en nuestra comunidad.
+Un objetivo complementario de este Código de conducta es aumentar la ciudadanía y cultura abierta al alentar a los participantes a reconocer y fortalecer las relaciones entre nuestras acciones y sus efectos en nuestra comunidad.
 
 Las comunidades reflejan las sociedades en las que existen y la acción positiva es esencial para contrarrestar las muchas formas de desigualdad y abusos de poder que existen en la sociedad.
 
@@ -61,7 +61,7 @@ Si un miembro de la comunidad se involucra en un comportamiento inaceptable, los
 
 ## 7. Directrices para la presentación de informes
 
-Si está sujeto o es testigo de un comportamiento inaceptable, o si tiene alguna otra inquietud, notifique a un organizador de la comunidad lo antes posible. La vía formal es a través de un correo a <info@elclaustro.cl>.
+Si está sujeto o es testigo de un comportamiento inaceptable, o si tiene alguna otra inquietud, notifique a un organizador de la comunidad lo antes posible. La vía formal es a través de un correo a <info@sredevops.org>.
 
 Además, los organizadores de la comunidad están disponibles para ayudar a los miembros de la comunidad a involucrarse con las fuerzas del orden locales o para ayudar a que aquellos que experimentan un comportamiento inaceptable se sientan seguros. En el contexto de los eventos presenciales, los organizadores también proporcionarán acompañantes según lo desee la persona que experimenta angustia.
 
@@ -77,7 +77,7 @@ Este código de conducta y sus procedimientos relacionados también se aplican a
 
 ## 10. Información de contacto
 
-<info@elclaustro.cl>
+<info@sredevops.org>
 
 ## 11. Licencia y atribución
 
