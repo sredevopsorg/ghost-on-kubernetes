@@ -17,7 +17,7 @@ on:
       ghost_version:
         description: 'Ghost version'
         required: false
-        default: '5.80.0'
+        default: '5.80.2'
         type: string
 
 jobs:
@@ -149,6 +149,17 @@ jobs:
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
           DIGEST: ${{ steps.build-and-push.outputs.digest }}
 
+      - name: Sign the images with GitHub OIDC Token
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        env:
+          DIGEST: ${{ steps.build-and-push.outputs.digest }}
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          images=""
+          for tag in ${TAGS}; do
+            images+="${tag}@${DIGEST} "
+          done
+          cosign sign --yes ${images}
       -
         name: Build pull request
         uses: docker/build-push-action@v5
