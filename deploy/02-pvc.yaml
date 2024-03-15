@@ -17,7 +17,7 @@ spec:
   - ReadWriteMany # Change this to your accessModes if needed
   resources:
     requests:
-      storage: 5Gi
+      storage: 2Gi
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim

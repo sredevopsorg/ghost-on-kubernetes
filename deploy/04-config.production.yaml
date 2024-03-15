@@ -17,12 +17,12 @@ stringData:
       },
       "mail": {
         "transport": "SMTP",
+        "from": "user@server.com",
         "options": {
           "service": "Google",
           "host": "smtp.gmail.com",
           "port": 465,
           "secure": true,
-          "from": "user@server.com",
           "auth": {
             "user": "user@server.com",
             "pass": "passsword"
