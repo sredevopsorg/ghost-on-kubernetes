@@ -55,23 +55,28 @@ spec:
         - -c
         - |
           set -e
-          # Check if $GHOST_CONTENT/themes/source exists, if it doesn't exist clone it and then set the ownership
-          if [ ! -d "$GHOST_CONTENT/themes/source/" ]; then
-            echo "Source theme already exists"
-          else
-            git clone https://github.com/TryGhost/Source $GHOST_CONTENT/themes/source --single-branch --branch=main --depth=1
+          # Check if $GHOST_CONTENT/themes/source exists, if it doesn't exist clone it and then set the ownership. If it exists, cd into the directory and pull the latest changes.
+          if [ ! -d "$GHOST_CONTENT/themes/source" ]; then
+            # Clone the repository if the directory doesn't exist
+            git clone https://github.com/your-repo/source.git $GHOST_CONTENT/themes/source  --single-branch --branch=main --depth=1
+            # Set the ownership
             chown -R 1000:1000 $GHOST_CONTENT/themes/source
             echo "Cloned Source theme"
+          else
+            # If the directory exists, cd into it and pull the latest changes
+            cd $GHOST_CONTENT/themes/source
+            git pull origin main
+            echo "Pulled latest changes from Source theme"
           fi
 
-          # Check if $GHOST_CONTENT/themes/casper exists, if it doesn't exist clone it and then set the ownership
-          if [ ! -d "$GHOST_CONTENT/themes/casper/" ]; then
-            echo "Casper theme already exists"
-          else
-            git clone https://github.com/TryGhost/Casper $GHOST_CONTENT/themes/casper --single-branch --branch=main --depth=1
-            chown -R 1000:1000 $GHOST_CONTENT/themes/casper
-            echo "Cloned Casper theme"
-          fi
+          # # Check if $GHOST_CONTENT/themes/casper exists, if it doesn't exist clone it and then set the ownership
+          # if [ ! -d "$GHOST_CONTENT/themes/casper/" ]; then
+          #   echo "Casper theme already exists"
+          # else
+          #   git clone https://github.com/TryGhost/Casper $GHOST_CONTENT/themes/casper --single-branch --branch=main --depth=1
+          #   chown -R 1000:1000 $GHOST_CONTENT/themes/casper
+          #   echo "Cloned Casper theme"
+          # fi
 
           # Assure ownership of the ghost installation for the user node
           chown -R 1000:1000 $GHOST_CONTENT || true
