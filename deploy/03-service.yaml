@@ -4,11 +4,11 @@ metadata:
   name: service-ghost-k8s
   namespace: ghost-k8s
   labels:
-    app: ghost-k8s
-    app.kubernetes.io/name: ghost-k8s
+    app: service-ghost-k8s
+    app.kubernetes.io/name: service-ghost-k8s
     app.kubernetes.io/instance: ghost-k8s
     app.kubernetes.io/version: "5.8"
-    app.kubernetes.io/component: frontend
+    app.kubernetes.io/component: service
     app.kubernetes.io/part-of: ghost-k8s
 
 spec:
