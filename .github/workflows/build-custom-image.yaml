@@ -78,9 +78,9 @@ jobs:
 
       - name: Install cosign
         if: github.event_name != 'pull_request'
-        uses: sigstore/cosign-installer@6e04d228eb30da1757ee4e1dd75a0ec73a653e06 #v3.1.1
+        uses: sigstore/cosign-installer@e1523de7571e31dbe865fd2e80c5c7c23ae71eb4 
         with:
-          cosign-release: 'v2.1.1'
+          cosign-release: 'v2.3.3'
 
       # Set up BuildKit Docker container builder to be able to build
       # multi-platform images and export cache
@@ -105,12 +105,12 @@ jobs:
         uses: docker/metadata-action@96383f45573cb7f253c731d3b3ab81c87ef81934 # v5.0.0
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=ref,event=branch
-            type=ref,event=tag
-            type=raw,value=${{ steps.versions.outputs.MANUAL_TAG }}
-            type=raw,value=v${{ steps.versions.outputs.GHOST_VERSION }}
-            type=sha,format=long
+          # tags: |
+          #   type=ref,event=branch
+          #   type=ref,event=tag
+          #   type=raw,value=${{ steps.versions.outputs.MANUAL_TAG }}
+          #   type=raw,value=v${{ steps.versions.outputs.GHOST_VERSION }}
+          #   type=sha,format=long
 
       # Build and push Docker image with Buildx (don't push on PR)
       # https://github.com/docker/build-push-action
@@ -146,21 +146,6 @@ jobs:
         continue-on-error: true
 
 
-
-      - name: Sign container image with annotations from our environment
-        if: steps.sign.outputs.status != 'success' && github.event_name != 'pull_request'
-        continue-on-error: true
-        run: |
-          echo "${{ secrets.COSIGN_PRIVATE_KEY }}" > ./cosign.key
-          images=""
-          for tag in ${TAGS}; do
-            images+="${tag}@${DIGEST} "
-          done
-          cosign sign --yes --key ./cosign.key \
-            -a "repo=${{ github.repository }}" \
-            -a "workflow=${{ github.workflow }}" \
-            -a "ref=${{ github.sha }}" ${images}
-
       -
         name: Build pull request
         uses: docker/build-push-action@v5
@@ -172,6 +157,8 @@ jobs:
           push: false
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           build-args: |
             GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }} 
 
