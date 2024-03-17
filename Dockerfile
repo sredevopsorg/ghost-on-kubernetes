@@ -38,7 +38,8 @@ USER root
 # Move the original content directory to a backup location, create a new content directory, set the correct ownership and permissions, and switch back to the "node" user
 RUN mv -v $GHOST_CONTENT $GHOST_CONTENT_ORIGINAL && \
     mkdir -pv $GHOST_CONTENT && \
-    chown -Rfv node:node $GHOST_INSTALL && \
+    chown -Rfv node:node $GHOST_CONTENT_ORIGINAL && \
+    chown -Rfv node:node $GHOST_CONTENT && \
     chmod 1777 $GHOST_CONTENT
 
 # Switch back to the "node" user
