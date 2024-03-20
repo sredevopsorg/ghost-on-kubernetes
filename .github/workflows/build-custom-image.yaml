@@ -1,27 +1,18 @@
-name: Build, push, and sign Docker images
-
-
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
+name: Build and push image to DockerHub and GitHub Container Registry
 
 on:
-  # schedule:
-  #   - cron: $cron-daily
   push:
-    branches: [ $default-branch ]
-    # Publish semver tags as releases.
-    tags: [ 'v*' ]
+    tags:
+      - 'v*'
   pull_request:
-    branches: [ $default-branch ]
-
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       manual-tag:
         description: 'Manual Tag'
         required: false
-        default: 'manual'
+        default: 'main'
         type: string
       ghost_version:
         description: 'Ghost version'
@@ -29,32 +20,39 @@ on:
         default: '5.80.2'
         type: string
 
-env:
-  # Use docker.io for Docker Hub if empty
-  REGISTRY: ghcr.io
-  # github.repository as <account>/<repo>
-  IMAGE_NAME: ${{ github.repository }}
-
-
 jobs:
-  build:
-
+  docker:
     runs-on: ubuntu-latest
+
     permissions:
       contents: read
       packages: write
-      # This is used to complete the identity challenge
-      # with sigstore/fulcio when running outside of PRs.
-      id-token: write
+      id-token: write # needed for signing the images with GitHub OIDC Token
 
     steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - name: Install Cosign
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        uses: sigstore/cosign-installer@v3.4.0
 
-      # Install the cosign tool except on PR
-      # https://github.com/sigstore/cosign-installer
+      -
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: linux/amd64
 
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: |
+            network=host
+            image=moby/buildkit:master
 
       - 
         name: Set up GHOST_VERSION and MANUAL_TAG values, depending on event type (push or workflow_dispatch)
@@ -74,79 +72,94 @@ jobs:
         run: |
           echo ${{ steps.versions.outputs.GHOST_VERSION }} &&
           echo ${{ steps.versions.outputs.MANUAL_TAG }}
-
-
-      - name: Install cosign
-        if: github.event_name != 'pull_request'
-        uses: sigstore/cosign-installer@v3.4.0
-        # with:
-        #   cosign-release: 'v2.3.3'
-
-      # Set up BuildKit Docker container builder to be able to build
-      # multi-platform images and export cache
-      # https://github.com/docker/setup-buildx-action
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@f95db51fddba0c2d1ec667646a06c2ce06100226 # v3.0.0
-
-      # Login against a Docker registry except on PR
-      # https://github.com/docker/login-action
-      - name: Log into registry ${{ env.REGISTRY }}
-        if: github.event_name != 'pull_request'
-        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+      -
+        name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
         with:
-          registry: ${{ env.REGISTRY }}
+          images: |
+            ghcr.io/${{ github.repository }}
+            quay.io/${{ vars.QUAY_ORG }}/${{ github.event.repository.name }}
+            docker.io/${{ vars.DOCKER_USER }}/${{ github.event.repository.name }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=tag
+            type=raw,value=${{ steps.versions.outputs.MANUAL_TAG }}
+            type=raw,value=v${{ steps.versions.outputs.GHOST_VERSION }}
+            type=ref,event=branch,ref=main
+          labels: |
+            org.opencontainers.image.title=ghost-on-kubernetes
+            org.opencontainers.image.vendor=https://sredevops.org
+            org.opencontainers.image.source=https://github.com/sredevopsorg/ghost-on-kubernetes
+            org.opencontainers.image.documentation=https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/README.md
+            org.opencontainers.image.licenses=MIT
+            org.opencontainers.image.url=https://github.com/sredevopsorg/ghost-on-kubernetes/pkgs/container/ghost-on-kubernetes
+          
+      -
+        name: Login to DockerHub
+        uses: docker/login-action@v3
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        with:
+          registry: docker.io
+          username: ${{ vars.DOCKER_USER }}
+          password: ${{ secrets.DOCKER_PASS }}
+      -
+        name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        with:
+          registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      # Extract metadata (tags, labels) for Docker
-      # https://github.com/docker/metadata-action
-      - name: Extract Docker metadata
-        id: meta
-        uses: docker/metadata-action@96383f45573cb7f253c731d3b3ab81c87ef81934 # v5.0.0
+      -
+        name: Login to Quay Container Registry
+        uses: docker/login-action@v3
+        continue-on-error: true
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          # tags: |
-          #   type=ref,event=branch
-          #   type=ref,event=tag
-          #   type=raw,value=${{ steps.versions.outputs.MANUAL_TAG }}
-          #   type=raw,value=v${{ steps.versions.outputs.GHOST_VERSION }}
-          #   type=sha,format=long
+          registry: quay.io
+          username: ${{ vars.QUAY_USER }}  
+          password: ${{ secrets.QUAY_PASS }}
 
-      # Build and push Docker image with Buildx (don't push on PR)
-      # https://github.com/docker/build-push-action
-      - name: Build and push Docker image
+      -
+        name: Build and push
+        uses: docker/build-push-action@v5
         id: build-and-push
-        if: github.event_name != 'pull_request'
-        uses: docker/build-push-action@0565240e2d4ab88bba5387d719585280857ece09 # v5.0.0
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         with:
           context: .
-          push: ${{ github.event_name != 'pull_request' }}
+          platforms: linux/amd64
+          push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          build-args: |-
+          build-args: |
             GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }} 
 
-      # Sign the resulting Docker image digest except on PRs.
-      # This will only write to the public Rekor transparency log when the Docker
-      # repository is public to avoid leaking data.  If you would like to publish
-      # transparency data even for private images, pass --force to cosign below.
-      # https://github.com/sigstore/cosign
-      - name: Sign the published Docker image
-        id: sign
-        if: ${{ github.event_name != 'pull_request' }}
+      - name: Sign image with a key
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        run: |
+          images=""
+          for tag in ${TAGS}; do
+            images+="${tag}@${DIGEST} "
+          done
+          cosign sign --yes --key env://COSIGN_PRIVATE_KEY ${images}
         env:
-          # https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-an-intermediate-environment-variable
           TAGS: ${{ steps.meta.outputs.tags }}
+          COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
+          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
           DIGEST: ${{ steps.build-and-push.outputs.digest }}
-          COSIGN_EXPERIMENTAL: 1
-        # This step uses the identity token to provision an ephemeral certificate
-        # against the sigstore community Fulcio instance.
-        run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
-        continue-on-error: true
 
-
+      - name: Sign the images with GitHub OIDC Token
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        env:
+          DIGEST: ${{ steps.build-and-push.outputs.digest }}
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          images=""
+          for tag in ${TAGS}; do
+            images+="${tag}@${DIGEST} "
+          done
+          cosign sign --yes ${images}
       -
         name: Build pull request
         uses: docker/build-push-action@v5
@@ -158,9 +171,5 @@ jobs:
           push: false
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
           build-args: |
-            GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }} 
-
-
+            GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }}
