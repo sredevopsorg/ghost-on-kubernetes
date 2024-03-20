@@ -85,7 +85,6 @@ jobs:
           tags: |
             type=ref,event=branch
             type=ref,event=tag
-            type=ref,ref=${{ github.ref }}
             type=raw,value=${{ steps.versions.outputs.GHOST_VERSION }}
       -
         name: Docker meta for workflow_dispatch
@@ -99,7 +98,6 @@ jobs:
             docker.io/${{ vars.DOCKER_USER }}/${{ github.event.repository.name }}
           tags: |
             type=ref,event=branch
-            type=ref,ref=${{ github.ref }}
             type=raw,value=${{ steps.versions.outputs.MANUAL_TAG }}
             type=raw,value=${{ steps.versions.outputs.GHOST_VERSION }}
 
