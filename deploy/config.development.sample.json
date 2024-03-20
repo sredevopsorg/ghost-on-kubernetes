@@ -8,17 +8,7 @@
     "host": "0.0.0.0"
   },
   "mail": {
-    "transport": "SMTP",
-    "options": {
-      "service": "Google",
-      "host": "smtp.gmail.com",
-      "port": 465,
-      "secure": true,
-      "auth": {
-        "user": "user@server.com",
-        "pass": "passsword"
-      }
-    }
+    "transport": "direct"
   },
   "logging": {
     "transports": [
