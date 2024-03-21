@@ -2,7 +2,7 @@
 
 ## 1. Propósito
 
-Un objetivo primordial de ElClaustro.cl es ser inclusivo con la mayor cantidad de colaboradores, con los más variados y diversos perfiles posibles. Como tal, estamos comprometidos a brindar un entorno amigable, seguro y acogedor para todos, independientemente de su género, orientación sexual, capacidad, etnia, nivel socioeconómico y religión (o la ausencia de estos).
+Un objetivo primordial de SREDevOps.org es ser inclusivo con la mayor cantidad de colaboradores, con los más variados y diversos perfiles posibles. Como tal, estamos comprometidos a brindar un entorno amigable, seguro y acogedor para todos, independientemente de su género, orientación sexual, capacidad, etnia, nivel socioeconómico y religión (o la ausencia de estos).
 
 Defendemos de manera categórica a la diversidad, particularmente a las históricamente perseguidas y oprimidas, particularmente diversidades de género, diversidad sexual, diversidad identitaria y en general a las y los desposeídos.
 
@@ -10,7 +10,7 @@ Este código de conducta describe nuestras expectativas para todos aquellos que 
 
 Entendemos el comportamiento inaceptable, principalmente como la negación de la Carta de los Derechos Humanos, machismo, racismo, y el fascismo, entre otras conuctas y discursos de odio.
 
-Invitamos a todos los que participan en ElClaustro.cl a ayudarnos a crear experiencias seguras y positivas para todos.
+Invitamos a todos los que participan en SREDevOps.org a ayudarnos a crear experiencias seguras y positivas para todos.
 
 ## 2. Ciudadanía y cultura abierta
 
@@ -49,7 +49,7 @@ Los siguientes comportamientos se consideran acoso y son inaceptables dentro de 
 
 ## 5. Política de armas
 
-No se permitirán armas en los eventos de ElClaustro.cl, espacios comunitarios u otros espacios cubiertos por el alcance de este Código de Conducta. Las armas incluyen, entre otras, pistolas, explosivos (incluidos los fuegos artificiales) y cuchillos grandes, como los que se usan para cazar o exhibir, así como cualquier otro artículo que se use con el fin de causar lesiones o daño a otros. A cualquier persona que se vea en posesión de uno de estos artículos se le pedirá que se vaya de inmediato y solo se le permitirá regresar sin el arma. Se espera además que los miembros de la comunidad cumplan con todas las leyes estatales y locales sobre este asunto.
+No se permitirán armas en los eventos de SREDevOps.org, espacios comunitarios u otros espacios cubiertos por el alcance de este Código de Conducta. Las armas incluyen, entre otras, pistolas, explosivos (incluidos los fuegos artificiales) y cuchillos grandes, como los que se usan para cazar o exhibir, así como cualquier otro artículo que se use con el fin de causar lesiones o daño a otros. A cualquier persona que se vea en posesión de uno de estos artículos se le pedirá que se vaya de inmediato y solo se le permitirá regresar sin el arma. Se espera además que los miembros de la comunidad cumplan con todas las leyes estatales y locales sobre este asunto.
 
 ## 6. Consecuencias del comportamiento inaceptable
 
@@ -67,7 +67,7 @@ Además, los organizadores de la comunidad están disponibles para ayudar a los 
 
 ## 8. Abordar las quejas
 
-Si siente que ha sido acusado falsa o injustamente de violar este Código de Conducta, debe notificarlo a ElClaustro.cl con una descripción concisa de su queja. Su queja será atendidade acuerdo con nuestras políticas de gobierno existentes.
+Si siente que ha sido acusado falsa o injustamente de violar este Código de Conducta, debe notificarlo a SREDevOps.org con una descripción concisa de su queja. Su queja será atendidade acuerdo con nuestras políticas de gobierno existentes.
 
 ## 9. Alcance
 
@@ -81,7 +81,7 @@ Este código de conducta y sus procedimientos relacionados también se aplican a
 
 ## 11. Licencia y atribución
 
-El Código de conducta del ciudadano es distribuido por [Stumptown Syndicate](http://stumptownsyndicate.org) bajo una [licencia Creative Commons Attribution-ShareAlike](http://creativecommons.org/licenses/by-sa/3.0/).
+El Código de conducta del ciudadano es distribuido por [Stumptown Syndicate]() bajo una [licencia Creative Commons Attribution-ShareAlike](http://creativecommons.org/licenses/by-sa/3.0/).
 
 Partes del texto derivadas del [Código de conducta de Django](https://www.djangoproject.com/conduct/) y la [Política contra el acoso del feminismo geek](http://geekfeminism.wikia.com/wiki/Conference_anti-acoso/Política).
 
@@ -91,4 +91,4 @@ _Revisión 2.2. Publicado el 4 de febrero de 2016._
 
 _Revisión 2.1. Publicado el 23 de junio de 2014._
 
-_Revisión 2.0, adoptada por la junta de [Stumptown Syndicate](http://stumptownsyndicate.org) el 10 de enero de 2013. Publicado el 17 de marzo de 2013._
+_Revisión 2.0, adoptada por la junta de [Stumptown Syndicate]() el 10 de enero de 2013. Publicado el 17 de marzo de 2013._
