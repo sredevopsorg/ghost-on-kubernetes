@@ -103,7 +103,7 @@ kubernetes-deployment/config.json
 dockermount/
 
 test/
-**.local
+**.local.**
 ghost-upstream/
 content/
 config.production.json
@@ -114,3 +114,6 @@ ghost-local.db
 .monokle
 .monokle
 docker-compose.yml
+trustr-production-promote.yaml
+trustr-staging-build-monorepo.yaml
+trustr-staging-build-not-monorepo.yaml

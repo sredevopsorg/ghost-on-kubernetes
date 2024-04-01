@@ -9,8 +9,7 @@ FROM node:hydrogen-bookworm-slim AS build-env
 ENV NODE_ENV production 
 
 # Install the latest version of Ghost CLI globally and clean the npm cache
-RUN npm install -g "ghost-cli@latest" && \
-    npm cache clean --force
+RUN npm install -g "ghost-cli@latest"
 
 # Define the GHOST_VERSION build argument and set it as an environment variable
 ARG GHOST_VERSION
@@ -23,11 +22,11 @@ ENV GHOST_CONTENT_ORIGINAL /var/lib/ghost/content.orig
 
 # Create the Ghost installation directory and set the owner to the "node" user
 RUN mkdir -pv "$GHOST_INSTALL" && \
-  chown node:node "$GHOST_INSTALL"
+    chown node:node "$GHOST_INSTALL"
 
 # Switch to the "node" user and set the working directory to the home directory
 USER node
-WORKDIR /home/node
+# WORKDIR /home/node
 
 # Install Ghost with the specified version, using MySQL as the database, and configure it without prompts, stack traces, setup, and in the specified installation directory
 RUN ghost install $GHOST_VERSION --db mysql --dbhost mysql --no-prompt --no-stack --no-setup --dir $GHOST_INSTALL
