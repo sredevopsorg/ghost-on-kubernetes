@@ -2,6 +2,8 @@ name: Build and push image to DockerHub and GitHub Container Registry
 
 on:
   push:
+    branches:
+      - main
     tags:
       - 'v*'
   pull_request:
@@ -36,15 +38,11 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Install Cosign
-        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-        uses: sigstore/cosign-installer@v3.4.0
-
       -
         name: Set up QEMU
         uses: docker/setup-qemu-action@v3
         with:
-          platforms: linux/amd64
+          platforms: linux/amd64,linux/arm64
 
       -
         name: Set up Docker Buildx
@@ -86,6 +84,7 @@ jobs:
             type=ref,event=branch
             type=ref,event=tag
             type=raw,value=${{ steps.versions.outputs.GHOST_VERSION }}
+            type=raw,value=${{ steps.versions.outputs.MANUAL_TAG }}
       -
         name: Docker meta for workflow_dispatch
         id: meta-workflow-dispatch
@@ -99,7 +98,7 @@ jobs:
           tags: |
             type=ref,event=branch
             type=raw,value=${{ steps.versions.outputs.MANUAL_TAG }}
-            type=raw,value=${{ steps.versions.outputs.GHOST_VERSION }}
+            type=raw,value=v${{ steps.versions.outputs.GHOST_VERSION }}
 
       -
         name: Login to DockerHub
@@ -140,6 +139,7 @@ jobs:
           push: true
           tags: ${{ steps.meta-push.outputs.tags }}
           labels: ${{ steps.meta-push.outputs.labels }}
+          
           build-args: |
             GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }} 
 
@@ -151,28 +151,17 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         with:
           context: .
-          platforms: linux/amd64
+
+          platforms: linux/amd64,linux/arm64
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          provenance: 
           push: true
           tags: ${{ steps.meta-workflow-dispatch.outputs.tags }}
           labels: ${{ steps.meta-workflow-dispatch.outputs.labels }}
           build-args: |
             GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }} 
 
-      - name: Sign the images with GitHub OIDC Token
-        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-        continue-on-error: true
-        env:
-          DIGEST: ${{ steps.build-and-push.outputs.digest || steps.build-and-push-workflow-dispatch.outputs.digest }}
-          TAGS: ${{ steps.meta-push.outputs.tags || steps.meta-workflow-dispatch.outputs.tags }}
-          COSIGN_EXPERIMENTAL: 1
-        run: |
-          images=""
-          for tag in ${TAGS}; do
-            images+="${tag}@${DIGEST} "
-          done
-          cosign sign --yes ${images}
       -
         name: Build pull request
         uses: docker/build-push-action@v5

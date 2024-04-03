@@ -78,9 +78,15 @@ spec:
               # Remove gitconfig file and gitcredentials file.
               rm -f $GHOST_CONTENT/themes/source/.gitconfig $GHOST_CONTENT/themes/source/.git-credentials || true
             fi
-            chown -Rf 1000:1000 $GHOST_CONTENT || true
-            echo "Assured ownership of the ghost installation"
+
+            # Check if the directory owner UID is 1000, if not, change the owner to 1000 recursively.
+            if [ "$(stat -c %u $GHOST_CONTENT)" != "1000" ]; then
+              echo "Changing ownership of the ghost content directory"
+              chown -Rf 1000:1000 $GHOST_CONTENT || true
+            fi
+            echo 'Finished init container, bye!'
             exit 0
+
 
         volumeMounts:
         - name: ghost-k8s-static-ghost
