@@ -40,7 +40,7 @@ ENV NODE_ENV production
 #     ghost install $GHOST_VERSION --db mysql --dbhost mysql --no-prompt --no-stack --no-setup --dir $GHOST_INSTALL
 
 RUN set -eux; \
-	installCmd='ghost install "$GHOST_VERSION" --db mysql --dbhost mysql --no-prompt --no-stack --no-setup --dir "$GHOST_INSTALL"'; \
+  installCmd='yarn config set network-timeout 180000 && ghost install "$GHOST_VERSION" --db mysql --dbhost mysql --no-prompt --no-stack --no-setup --dir "$GHOST_INSTALL"'; \
 	if ! eval "$installCmd"; then \
 		eval "$installCmd"; \
 	fi; \
