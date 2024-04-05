@@ -2,7 +2,7 @@
 # The image is based on the official Node.js image and uses the Distroless base image for security and minimalism.
 
 # Stage 1: Build Environment
-FROM node:hydrogen-alpine AS build-env
+FROM node:hydrogen-alpine3.17 AS build-env
 
 
 # Set the NODE_ENV environment variable to "production"
