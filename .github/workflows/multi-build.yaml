@@ -4,13 +4,23 @@ on:
   push:
     branches:
       - "arm64"
-
   workflow_dispatch:
+    inputs:
+      manual-tag:
+        description: 'Manual Tag'
+        required: false
+        default: 'main'
+        type: string
+      ghost_version:
+        description: 'Ghost version'
+        required: false
+        default: '5.81.1'
+        type: string
 
 
 env:
-  # REGISTRY_IMAGE: ${{ github.repository }}
-  REGISTRY_IMAGE: "ngeorger/ghost-on-kubernetes"
+  REGISTRY_IMAGE: ghcr.io/${{ github.repository }}
+  # REGISTRY_IMAGE: "ngeorger/ghost-on-kubernetes"
 
 jobs:
   build:
@@ -20,7 +30,6 @@ jobs:
       matrix:
         platform:
           - linux/arm64
-          - linux/arm/v7
           - linux/amd64
     steps:
       -
@@ -40,6 +49,9 @@ jobs:
       -
         name: Set up QEMU
         uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64,amd64
+      
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -49,18 +61,26 @@ jobs:
             network=host
 
       -
-        name: Login to Docker Hub
+        name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKER_USER }}
-          password: ${{ secrets.DOCKER_PASS }}
-
-      - 
-        name: Set up GHOST_VERSION
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      -
+        name: Set up GHOST_VERSION and MANUAL_TAG values, depending on event type (push or workflow_dispatch)
         id: versions
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
         run: |
-            echo "GHOST_VERSION=5.81.1" >> $GITHUB_OUTPUT
+          if [ ${{ env.GITHUB_EVENT_NAME }} == workflow_dispatch ]; then
+            echo "GHOST_VERSION=${{ github.event.inputs.ghost_version }}" >> $GITHUB_OUTPUT
+            echo "MANUAL_TAG=${{ github.event.inputs.manual-tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "GHOST_VERSION=5.81.1" >> $GITHUB_OUTPUT 
+            # not yet
             # echo "GHOST_VERSION=$(curl -s https://api.github.com/repos/tryghost/ghost/releases/latest | jq '.name' | sed 's/\"//g')" >> $GITHUB_OUTPUT
+          fi
 
 
       -
@@ -114,11 +134,12 @@ jobs:
         with:
           images: ${{ env.REGISTRY_IMAGE }}
       -
-        name: Login to Docker Hub
+        name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
-          username: ${{ vars.DOCKER_USER }}
-          password: ${{ secrets.DOCKER_PASS }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
       -
         name: Create manifest list and push
         working-directory: /tmp/digests

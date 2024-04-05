@@ -48,7 +48,7 @@ RUN set -eux; \
 # (which means that if it fails to install, like on ARM/ppc64le/s390x, the failure will be silently ignored and thus turn into a runtime error instead)
 # see https://github.com/TryGhost/Ghost/pull/7677 for more details
 	cd "$GHOST_INSTALL/current"; \
-# scrape the expected versions directly from Ghost/dependencies
+  # scrape the expected versions directly from Ghost/dependencies
 	packages="$(node -p ' \
 		var ghost = require("./package.json"); \
 		var transform = require("./node_modules/@tryghost/image-transform/package.json"); \
@@ -61,7 +61,7 @@ RUN set -eux; \
 	for package in $packages; do \
 		installCmd='yarn add "$package" --force'; \
 		if ! eval "$installCmd"; then \
-# must be some non-amd64 architecture pre-built binaries aren't published for, so let's install some build deps and do-it-all-over-again
+      # must be some non-amd64 architecture pre-built binaries aren't published for, so let's install some build deps and do-it-all-over-again
 			case "$package" in \
 				# TODO sharp@*) apt-get install -y --no-install-recommends libvips-dev ;; \
 				sharp@*) echo >&2 "sorry: libvips 8.10 in Debian bullseye is not new enough (8.12.2+) for sharp 0.30 😞"; continue ;; \
@@ -69,9 +69,10 @@ RUN set -eux; \
 			\
 			eval "$installCmd --build-from-source"; \
 		fi; \
-	done; \
-	yarn cache clean; \
-	npm cache clean --force;
+	done;
+
+	# yarn cache clean; \
+	# npm cache clean --force;
 
 
 # Switch back to the root user
