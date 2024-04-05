@@ -27,6 +27,7 @@ RUN mkdir -pv "$GHOST_INSTALL" && \
 
 # Switch to the "node" user and set the working directory to the home directory
 USER node
+ENV NODE_ENV production
 # WORKDIR /home/node
 
 # Install Ghost with the specified version, using MySQL as the database, and configure it without prompts, stack traces, setup, and in the specified installation directory
