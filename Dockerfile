@@ -26,7 +26,7 @@ RUN mkdir -pv "$GHOST_INSTALL" && \
     chown node:node "$GHOST_INSTALL"
 
 # Switch to the "node" user and set the working directory to the home directory
-# USER node
+USER node
 # WORKDIR /home/node
 
 # Install Ghost with the specified version, using MySQL as the database, and configure it without prompts, stack traces, setup, and in the specified installation directory
@@ -34,7 +34,7 @@ RUN yarn config set network-timeout 180000 || true && \
     ghost install $GHOST_VERSION --db mysql --dbhost mysql --no-prompt --no-stack --no-setup --dir $GHOST_INSTALL
 
 # Switch back to the root user
-# USER root
+USER root
 
 # Move the original content directory to a backup location, create a new content directory, set the correct ownership and permissions, and switch back to the "node" user
 RUN mv -v $GHOST_CONTENT $GHOST_CONTENT_ORIGINAL && \
