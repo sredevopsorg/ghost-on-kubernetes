@@ -8,6 +8,9 @@ FROM node:hydrogen-alpine AS build-env
 # Set the NODE_ENV environment variable to "production"
 # ENV NODE_ENV production 
 USER root
+
+RUN apk add --update --no-cache python3 make g++
+
 # Install the latest version of Ghost CLI globally and clean the npm cache
 RUN yarn config set network-timeout 180000 && yarn global add ghost-cli@v1.26.0
 
