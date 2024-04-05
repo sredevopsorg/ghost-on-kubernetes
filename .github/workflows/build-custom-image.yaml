@@ -14,7 +14,7 @@ on:
       manual-tag:
         description: 'Manual Tag'
         required: false
-        default: 'main'
+        default: 'custom'
         type: string
       ghost_version:
         description: 'Ghost version'
@@ -42,7 +42,7 @@ jobs:
         name: Set up QEMU
         uses: docker/setup-qemu-action@v3
         with:
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
 
       -
         name: Set up Docker Buildx
@@ -83,8 +83,7 @@ jobs:
           tags: |
             type=ref,event=branch
             type=ref,event=tag
-            type=raw,value=${{ steps.versions.outputs.GHOST_VERSION }}
-            type=raw,value=${{ steps.versions.outputs.MANUAL_TAG }}
+            type=raw,value=main
       -
         name: Docker meta for workflow_dispatch
         id: meta-workflow-dispatch
@@ -127,22 +126,21 @@ jobs:
           password: ${{ secrets.QUAY_PASS }}
 
       -
-        name: Build and push
+        name: Build and push version tag
         uses: docker/build-push-action@v5
         id: build-and-push
-        if: github.event_name == 'push' || github.head_ref == 'v*' || github.head_ref == 'main'
+        if: ${{ github.event_name == 'push' || github.head_ref == 'v*' || github.head_ref == 'main' }}
         with:
           context: .
           platforms: linux/amd64
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          provenance: true
+          sbom: true
           push: true
           tags: ${{ steps.meta-push.outputs.tags }}
           labels: ${{ steps.meta-push.outputs.labels }}
-          
-          build-args: |
-            GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }} 
-
+          build-args: GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }} 
 
       -
         name: Build and push
@@ -151,16 +149,15 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         with:
           context: .
-
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          provenance: 
+          provenance: true
+          sbom: true
           push: true
           tags: ${{ steps.meta-workflow-dispatch.outputs.tags }}
           labels: ${{ steps.meta-workflow-dispatch.outputs.labels }}
-          build-args: |
-            GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }} 
+          build-args: GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }} 
 
       -
         name: Build pull request
@@ -173,5 +170,4 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           push: false
-          build-args: |
-            GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }}
+          build-args: GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }}

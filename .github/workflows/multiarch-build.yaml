@@ -1,4 +1,4 @@
-name: multiarch-build
+name: bake multi-arch images and push to ghcr.io
 
 on:
 
