@@ -59,7 +59,7 @@ jobs:
         name: Set up GHOST_VERSION
         id: versions
         run: |
-            echo "GHOST_VERSION=5.81.1 >> $GITHUB_OUTPUT
+            echo "GHOST_VERSION=5.81.1" >> $GITHUB_OUTPUT
             # echo "GHOST_VERSION=$(curl -s https://api.github.com/repos/tryghost/ghost/releases/latest | jq '.name' | sed 's/\"//g')" >> $GITHUB_OUTPUT
 
 
