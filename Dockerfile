@@ -7,10 +7,10 @@ FROM node:hydrogen-bookworm-slim AS build-env
 
 # Set the NODE_ENV environment variable to "production"
 # ENV NODE_ENV production 
-
+USER root
 # Install the latest version of Ghost CLI globally and clean the npm cache
-RUN yarn global add "ghost-cli@latest" || npm install -g "ghost-cli@latest" && \
-    npm cache clean --force
+RUN yarn config set network-timeout 180000 && yarn global add ghost-cli@v1.25.3
+
 
 # Define the GHOST_VERSION build argument and set it as an environment variable
 ARG GHOST_VERSION
