@@ -2,7 +2,7 @@
 # The image is based on the official Node.js image and uses the Distroless base image for security and minimalism.
 
 # Stage 1: Build Environment
-FROM node:hydrogen-slim AS build-env
+FROM node:hydrogen AS build-env
 
 ENV NODE_ENV production
 ENV DEBIAN_FRONTEND noninteractive
@@ -11,13 +11,13 @@ ENV DEBIAN_FRONTEND noninteractive
 # Set the NODE_ENV environment variable to "production"
 # ENV NODE_ENV production 
 USER root
-# Install the latest version of Ghost CLI globally and clean the npm cache
-RUN yarn cache clean && \
-    yarn global add ghost-cli@1.25.3
 
-RUN apt-get update && apt-get install --no-install-recommends --no-install-suggests -y g++ make python3
-# && \
-#    rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install --no-install-recommends --no-install-suggests -y g++ make python3 ca-certificates && \
+    update-ca-certificates
+
+# Install the latest version of Ghost CLI globally and clean the npm cache
+RUN yarn config set network-timeout 15000 && \
+    yarn global add ghost-cli@latest
 
 
 # Define the GHOST_VERSION build argument and set it as an environment variable
