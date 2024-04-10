@@ -12,14 +12,16 @@ ENV DEBIAN_FRONTEND noninteractive
 # ENV NODE_ENV production 
 USER root
 
+RUN apt-get update && apt-get install --no-install-recommends --no-install-suggests -y libvips-dev ca-certificates && \
+    update-ca-certificates
+# && \
+#    rm -rf /var/lib/apt/lists/*
+
 # Install the latest version of Ghost CLI globally and clean the npm cache
 RUN yarn config set network-timeout 60000 && \
-    npm config set fetch-timeout 60000 && \
-    yarn global add ghost-cli@latest || npm install -g ghost-cli@latest
-
-RUN apt-get update && apt-get install --no-install-recommends --no-install-suggests -y libvips-dev && \
-    update-ca-certificates
-
+		npm config set fetch-timeout 60000 && \
+		yarn global add ghost-cli@latest || npm install -g ghost-cli@latest
+#RUN yarn cache clean --force && npm cache clean --force 
 
 # Define the GHOST_VERSION build argument and set it as an environment variable
 ARG GHOST_VERSION
@@ -43,31 +45,38 @@ USER node
 #     ghost install $GHOST_VERSION --db mysql --dbhost mysql --no-prompt --no-stack --no-setup --dir $GHOST_INSTALL
 
 RUN set -eux; \
-  yarn config set network-timeout 15000; \
-  yarn config set ignore-optional true; \
+  yarn config set network-timeout 180000; \
   installCmd='ghost install "$GHOST_VERSION" --db mysql --dbhost mysql --no-prompt --no-stack --no-setup --dir "$GHOST_INSTALL"'; \
 	if ! eval "$installCmd"; then \
-    echo "failure with base command"; \
-    cd "$GHOST_INSTALL/current"; \
-    packages="$(node -p ' \
-      var ghost = require("./package.json"); \
-      var transform = require("./node_modules/@tryghost/image-transform/package.json"); \
-      [ \
-        "sharp@" + transform.optionalDependencies["sharp"], \
-        "sqlite3@" + ghost.optionalDependencies["sqlite3"], \
-      ].join(" ") \
-    ')"; \
-    if echo "$packages" | grep 'undefined'; then exit 1; fi; \
-    for package in $packages; do \
-      installCmd='yarn add "$package" --force'; \
-      if ! eval "$installCmd"; then \
-        case "$package" in \
-          sharp@*) echo >&2 "sorry: libvips 8.10 in Debian bullseye is not new enough (8.12.2+) for sharp 0.30 😞"; continue ;; \
-        esac; \
-        eval "$installCmd --build-from-source"; \
-      fi; \
-    done; \
-  fi;
+		eval "$installCmd"; \
+	fi; \
+# force install a few extra packages manually since they're "optional" dependencies
+# (which means that if it fails to install, like on ARM/ppc64le/s390x, the failure will be silently ignored and thus turn into a runtime error instead)
+# see https://github.com/TryGhost/Ghost/pull/7677 for more details
+	cd "$GHOST_INSTALL/current"; \
+  # scrape the expected versions directly from Ghost/dependencies
+	packages="$(node -p ' \
+		var ghost = require("./package.json"); \
+		var transform = require("./node_modules/@tryghost/image-transform/package.json"); \
+		[ \
+			"sharp@" + transform.optionalDependencies["sharp"], \
+			"sqlite3@" + ghost.optionalDependencies["sqlite3"], \
+		].join(" ") \
+	')"; \
+	if echo "$packages" | grep 'undefined'; then exit 1; fi; \
+	for package in $packages; do \
+		installCmd='yarn add "$package" --force'; \
+		if ! eval "$installCmd"; then \
+      # must be some non-amd64 architecture pre-built binaries aren't published for, so let's install some build deps and do-it-all-over-again
+			case "$package" in \
+				# TODO sharp@*) apt-get install -y --no-install-recommends libvips-dev ;; \
+				sharp@*) echo >&2 "sorry: libvips 8.10 in Debian bullseye is not new enough (8.12.2+) for sharp 0.30 😞"; continue ;; \
+			esac; \
+			\
+			eval "$installCmd --build-from-source"; \
+		fi; \
+	done;
+
 	# yarn cache clean; \
 	# npm cache clean --force;
 
