@@ -66,7 +66,6 @@ jobs:
           driver-opts: |
             network=host
           platforms: linux/amd64,linux/arm64
-          driver: docker
 
       -
         name: Login to GitHub Container Registry
@@ -137,7 +136,6 @@ jobs:
           driver-opts: |
             network=host
           platforms: linux/amd64,linux/arm64
-          driver: docker
       -
         name: Docker meta
         id: meta
