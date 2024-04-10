@@ -12,7 +12,7 @@ ENV DEBIAN_FRONTEND noninteractive
 # ENV NODE_ENV production 
 USER root
 # Install the latest version of Ghost CLI globally and clean the npm cache
-RUN yarn config set network-timeout 15000 && yarn global add "ghost-cli@1.26.0" --verbose
+RUN yarn config set network-timeout 15000 && yarn global add "ghost-cli@1.26.0"
 
 RUN apt-get update && apt-get install --no-install-recommends --no-install-suggests -y g++ make python3
 # && \
