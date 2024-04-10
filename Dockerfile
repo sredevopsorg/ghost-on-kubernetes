@@ -4,18 +4,20 @@
 # Stage 1: Build Environment
 FROM node:hydrogen-slim AS build-env
 
+ENV NODE_ENV production
 
 # Set the NODE_ENV environment variable to "production"
 # ENV NODE_ENV production 
 USER root
 
-RUN apt-get update && apt-get install --no-install-recommends -y g++ make python3 && \
-    rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install --no-install-recommends -y g++ make python3 libvips-dev ca-certificates
+# && \
+#    rm -rf /var/lib/apt/lists/*
 
 # Install the latest version of Ghost CLI globally and clean the npm cache
-RUN yarn config set network-timeout 180000 && yarn global add ghost-cli@v1.26.0
-RUN yarn cache clean --force && npm cache clean --force 
+RUN npm install --global "ghost-cli@v1.26.0"
 
+#RUN yarn cache clean --force && npm cache clean --force 
 
 # Define the GHOST_VERSION build argument and set it as an environment variable
 ARG GHOST_VERSION
@@ -32,7 +34,6 @@ RUN mkdir -pv "$GHOST_INSTALL" && \
 
 # Switch to the "node" user and set the working directory to the home directory
 USER node
-ENV NODE_ENV production
 # WORKDIR /home/node
 
 # Install Ghost with the specified version, using MySQL as the database, and configure it without prompts, stack traces, setup, and in the specified installation directory
