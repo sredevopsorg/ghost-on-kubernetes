@@ -5,18 +5,21 @@
 FROM node:hydrogen-slim AS build-env
 
 ENV NODE_ENV production
+ENV DEBIAN_FRONTEND noninteractive
+
 
 # Set the NODE_ENV environment variable to "production"
 # ENV NODE_ENV production 
 USER root
 
-RUN apt-get update && apt-get install --no-install-recommends -y g++ make python3 libvips-dev ca-certificates
+RUN apt-get update && apt-get install --no-install-recommends --no-install-suggests -y g++ make python3 libvips-dev ca-certificates
 # && \
 #    rm -rf /var/lib/apt/lists/*
 
 # Install the latest version of Ghost CLI globally and clean the npm cache
-RUN npm install --global "ghost-cli@v1.26.0"
-
+RUN yarn config set network-timeout 60000 && \
+		npm config set fetch-timeout 60000 && \
+		yarn global add ghost-cli@latest || npm install -g ghost-cli@latest
 #RUN yarn cache clean --force && npm cache clean --force 
 
 # Define the GHOST_VERSION build argument and set it as an environment variable
