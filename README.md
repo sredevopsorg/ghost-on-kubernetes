@@ -1,8 +1,8 @@
 # Ghost on Kubernetes by [SREDevOps](https://sredevops.org)
 
-[![Build and push image to DockerHub and GitHub Container Registry](https://github.com/sredevopsorg/ghost-on-kubernetes/actions/workflows/build-custom-image.yaml/badge.svg)](https://github.com/sredevopsorg/ghost-on-kubernetes/actions/workflows/build-custom-image.yaml)
+[![amd64-arm64 to ghcr.io](https://github.com/sredevopsorg/ghost-on-kubernetes/actions/workflows/multi-build.yaml/badge.svg)](https://github.com/sredevopsorg/ghost-on-kubernetes/actions/workflows/multi-build.yaml)
 
-This repo deploys a clean Ghost CMS v5.xx.x from [@TryGhost (upstream)](https://github.com/TryGhost/Ghost) in Kubernetes, as a Deployment using our [custom image](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/Dockerfile) built based on the ["official" Ghost 5 debian image](https://github.com/docker-library/ghost/blob/master/5/debian/Dockerfile), but with some modifications:
+This repo deploys a clean Ghost CMS v5.xx.x from [@TryGhost (upstream)](https://github.com/TryGhost/Ghost) in Kubernetes, as a Deployment using our [custom image](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/Dockerfile), based on the ["official" Ghost 5 debian image](https://github.com/docker-library/ghost/blob/master/5/debian/Dockerfile), but with some modifications:
 
 ## Recent Changes
 
@@ -14,20 +14,19 @@ We've made some significant updates to improve the security and efficiency of ou
 
 3. **Non-Root User**: By default, the Ghost container now runs as a non-root user. This is a best practice for security, as it reduces the potential damage if the container is compromised. The Ghost application is started with an init container, which performs necessary setup tasks before the main Ghost container starts.
 
-Please refer to the updated `[deploy/06-ghost-deployment.yaml](deploy/06-ghost-deployment.yaml)` file for the implementation details of these changes.
+Please refer to the updated [deploy/06-ghost-deployment.yaml](deploy/06-ghost-deployment.yaml) file for the implementation details of these changes.
 
 ## Features
-
-- We use the official Node 18 Hydrogen bookworm slim image as build environment.
+- *ARM64 support!* 
+- We use the official Node 18 Hydrogen bookworm image as build environment.
 - Introduced a multi-stage build to compile the image.
 - [distroless node 18 debian 12](https://github.com/GoogleContainerTools/distroless/blob/main/README.md) as the final image.
 - Removed gosu, we use the default user node.
 - ~~Modified the entrypoint to run as node user, so we can run the pod as non-root.~~ DELETED ENTRYPOINT
 - Update every possible dependencies in the base image to minimize vulnerabilities.
-- We update npm and ghost-cli to the latest versions on every build.
 - We use the latest version of Ghost 5 (at the time of build the image)
 
-> *Note for ARM users 📌: At this time, we dropped support for arm64 and armv7l [(link to discussion)](https://github.com/sredevopsorg/ghost-on-kubernetes/issues/73#issuecomment-1933939315), but we will add it back soon. Pull requests are welcome._* 
+> *Note for ARM users 📌: ARM64 supported! ~~At this time, we dropped support for arm64 and armv7l [(link to discussion)](https://github.com/sredevopsorg/ghost-on-kubernetes/issues/73#issuecomment-1933939315), but we will add it back soon. Pull requests are welcome._~~ * 
 
 ## Star History
 
