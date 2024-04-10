@@ -1,9 +1,14 @@
-name: Multi build only Docker Registry
+name: amd64-arm64 to ghcr.io
 
 on:
   push:
+    tags:
+      - "v*"
     branches:
+      - "main"
       - "arm64"
+    # paths:
+    #   - "Dockerfile"
   workflow_dispatch:
     inputs:
       manual-tag:
@@ -66,7 +71,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ github.token }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       -
         name: Set up GHOST_VERSION and MANUAL_TAG values, depending on event type (push or workflow_dispatch)
         id: versions
@@ -77,12 +82,14 @@ jobs:
             echo "GHOST_VERSION=${{ github.event.inputs.ghost_version }}" >> $GITHUB_OUTPUT
             echo "MANUAL_TAG=${{ github.event.inputs.manual-tag }}" >> $GITHUB_OUTPUT
           else
-            echo "GHOST_VERSION=5.81.1" >> $GITHUB_OUTPUT 
-            # not yet
-            # echo "GHOST_VERSION=$(curl -s https://api.github.com/repos/tryghost/ghost/releases/latest | jq '.name' | sed 's/\"//g')" >> $GITHUB_OUTPUT
+            echo "GHOST_VERSION=$(curl -s https://api.github.com/repos/tryghost/ghost/releases/latest | jq '.name' | sed 's/\"//g')" >> $GITHUB_OUTPUT
           fi
 
-
+      -
+        name: Show Ghost version
+        run: |
+              echo "GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }}"
+              echo "MANUAL_TAG=${{ steps.versions.outputs.MANUAL_TAG }}" 
       -
         name: Build and push by digest
         id: build
@@ -139,7 +146,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ github.token }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       -
         name: Create manifest list and push
         working-directory: /tmp/digests
