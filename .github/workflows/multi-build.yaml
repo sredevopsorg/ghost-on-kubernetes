@@ -66,7 +66,6 @@ jobs:
         with:
           driver-opts: |
             network=host
-          platforms: linux/amd64,linux/arm64
 
       -
         name: Login to GitHub Container Registry
@@ -103,6 +102,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }} 
           outputs: type=image,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true,push=true
+          provenance: false
           cache-from: type=gha
           cache-to: type=gha,mode=max
       -
@@ -138,7 +138,6 @@ jobs:
         with:
           driver-opts: |
             network=host
-          platforms: linux/amd64,linux/arm64
       -
         name: Docker meta
         id: meta
