@@ -38,11 +38,11 @@ jobs:
         with:
           fetch-depth: 1
 
-      -
-        name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: linux/amd64
+      # -
+      #   name: Set up QEMU
+      #   uses: docker/setup-qemu-action@v3
+      #   with:
+      #     platforms: linux/amd64
 
       -
         name: Set up Docker Buildx
@@ -51,6 +51,7 @@ jobs:
           driver-opts: |
             network=host
             image=moby/buildkit:master
+          driver: docker
 
       - 
         name: Set up GHOST_VERSION and MANUAL_TAG values, depending on event type (push or workflow_dispatch)
