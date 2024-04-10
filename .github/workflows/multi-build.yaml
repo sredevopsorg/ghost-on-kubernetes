@@ -6,7 +6,9 @@ on:
       - "v*"
     branches:
       - "main"
-      - "arm64"
+    paths-ignore:
+      - "**.md"
+      - "deploy/**"
     # paths:
     #   - "Dockerfile"
   workflow_dispatch:
@@ -26,7 +28,6 @@ permissions: write-all
 
 env:
   REGISTRY_IMAGE: ghcr.io/${{ github.repository }}
-  # REGISTRY_IMAGE: "ngeorger/ghost-on-kubernetes"
 
 
 jobs:
