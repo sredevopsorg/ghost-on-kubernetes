@@ -12,9 +12,7 @@ ENV DEBIAN_FRONTEND noninteractive
 # ENV NODE_ENV production 
 USER root
 # Install the latest version of Ghost CLI globally and clean the npm cache
-RUN yarn config set network-timeout 30000 && \
-		npm config set fetch-timeout 30000 && \
-    npm install --global --verbose "ghost-cli@1.26.0" || yarn global add "ghost-cli@1.26.0" --verbose
+RUN yarn config set network-timeout 15000 && yarn global add "ghost-cli@1.26.0" --verbose
 
 RUN apt-get update && apt-get install --no-install-recommends --no-install-suggests -y g++ make python3
 # && \
@@ -43,7 +41,7 @@ USER node
 #     ghost install $GHOST_VERSION --db mysql --dbhost mysql --no-prompt --no-stack --no-setup --dir $GHOST_INSTALL
 
 RUN set -eux; \
-  yarn config set network-timeout 30000; \
+  yarn config set network-timeout 15000; \
   yarn config set ignore-optional true; \
   installCmd='ghost install "$GHOST_VERSION" --db mysql --dbhost mysql --no-prompt --no-stack --no-setup --dir "$GHOST_INSTALL"'; \
 	if ! eval "$installCmd"; then \
