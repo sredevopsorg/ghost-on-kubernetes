@@ -43,8 +43,7 @@ USER node
 # Install Ghost with the specified version, using MySQL as the database, and configure it without prompts, stack traces, setup, and in the specified installation directory
 RUN yarn config set network-timeout 180000 && \
     yarn config set verbose true && \
-    ghost install $GHOST_VERSION --db mysql --dbhost mysql --no-prompt --no-stack --no-setup --dir $GHOST_INSTALL || cd $GHOST_INSTALL/current && yarn install --force
-
+    ghost install $GHOST_VERSION --db mysql --dbhost mysql --no-prompt --no-stack --no-setup --dir $GHOST_INSTALL
 
 # Switch back to the root user
 USER root
