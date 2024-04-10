@@ -1,0 +1,164 @@
+name: amd64-arm64 to ghcr.io
+
+on:
+  push:
+    tags:
+      - "v*"
+    branches:
+      - "main"
+    paths-ignore:
+      - "**.md"
+      - "deploy/**"
+    # paths:
+    #   - "Dockerfile"
+  workflow_dispatch:
+    inputs:
+      manual-tag:
+        description: 'Manual Tag'
+        required: false
+        default: 'main'
+        type: string
+      ghost_version:
+        description: 'Ghost version'
+        required: false
+        default: '5.81.1'
+        type: string
+
+permissions: write-all
+
+env:
+  REGISTRY_IMAGE: ghcr.io/${{ github.repository }}
+
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: true
+      matrix:
+        platform:
+          - linux/arm64
+          - linux/amd64
+    steps:
+      -
+        name: Prepare
+        run: |
+          platform=${{ matrix.platform }}
+          echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
+      -
+        name: Checkout
+        uses: actions/checkout@v4
+      -
+        name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY_IMAGE }}
+      -
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: amd64,arm64
+      
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: |
+            network=host
+          platforms: linux/amd64,linux/arm64
+
+      -
+        name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      -
+        name: Set up GHOST_VERSION and MANUAL_TAG values, depending on event type (push or workflow_dispatch)
+        id: versions
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if [ ${{ env.GITHUB_EVENT_NAME }} == workflow_dispatch ]; then
+            echo "GHOST_VERSION=${{ github.event.inputs.ghost_version }}" >> $GITHUB_OUTPUT
+            echo "MANUAL_TAG=${{ github.event.inputs.manual-tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "GHOST_VERSION=$(curl -s https://api.github.com/repos/tryghost/ghost/releases/latest | jq '.name' | sed 's/\"//g')" >> $GITHUB_OUTPUT
+          fi
+
+      -
+        name: Show Ghost version
+        run: |
+              echo "GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }}"
+              echo "MANUAL_TAG=${{ steps.versions.outputs.MANUAL_TAG }}" 
+      -
+        name: Build and push by digest
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: ${{ matrix.platform }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }} 
+          outputs: type=image,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true,push=true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      -
+        name: Export digest
+        run: |
+          mkdir -p /tmp/digests
+          digest="${{ steps.build.outputs.digest }}"
+          touch "/tmp/digests/${digest#sha256:}"
+      -
+        name: Upload digest
+        uses: actions/upload-artifact@v4
+        with:
+          name: digests-${{ env.PLATFORM_PAIR }}
+          path: /tmp/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  merge:
+    runs-on: ubuntu-22.04
+    needs:
+      - build
+    steps:
+      -
+        name: Download digests
+        uses: actions/download-artifact@v4
+        with:
+          path: /tmp/digests
+          pattern: digests-*
+          merge-multiple: true
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: |
+            network=host
+          platforms: linux/amd64,linux/arm64
+      -
+        name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY_IMAGE }}
+      -
+        name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      -
+        name: Create manifest list and pushs
+        working-directory: /tmp/digests
+        run: |
+          docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf '${{ env.REGISTRY_IMAGE }}@sha256:%s ' *)
+      -
+        name: Inspect image
+        run: |
+          docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:${{ steps.meta.outputs.version }}

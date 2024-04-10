@@ -2,6 +2,8 @@ name: Build and push image to DockerHub and GitHub Container Registry
 
 on:
   push:
+    branches:
+      - main
     tags:
       - 'v*'
   pull_request:
@@ -12,7 +14,7 @@ on:
       manual-tag:
         description: 'Manual Tag'
         required: false
-        default: 'main'
+        default: 'custom'
         type: string
       ghost_version:
         description: 'Ghost version'
@@ -36,15 +38,11 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Install Cosign
-        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-        uses: sigstore/cosign-installer@v3.4.0
-
-      -
-        name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: linux/amd64
+      # -
+      #   name: Set up QEMU
+      #   uses: docker/setup-qemu-action@v3
+      #   with:
+      #     platforms: linux/amd64
 
       -
         name: Set up Docker Buildx
@@ -53,6 +51,7 @@ jobs:
           driver-opts: |
             network=host
             image=moby/buildkit:master
+          driver: docker
 
       - 
         name: Set up GHOST_VERSION and MANUAL_TAG values, depending on event type (push or workflow_dispatch)
@@ -85,7 +84,7 @@ jobs:
           tags: |
             type=ref,event=branch
             type=ref,event=tag
-            type=raw,value=${{ steps.versions.outputs.GHOST_VERSION }}
+            type=raw,value=main
       -
         name: Docker meta for workflow_dispatch
         id: meta-workflow-dispatch
@@ -99,7 +98,7 @@ jobs:
           tags: |
             type=ref,event=branch
             type=raw,value=${{ steps.versions.outputs.MANUAL_TAG }}
-            type=raw,value=${{ steps.versions.outputs.GHOST_VERSION }}
+            type=raw,value=v${{ steps.versions.outputs.GHOST_VERSION }}
 
       -
         name: Login to DockerHub
@@ -128,21 +127,21 @@ jobs:
           password: ${{ secrets.QUAY_PASS }}
 
       -
-        name: Build and push
+        name: Build and push version tag
         uses: docker/build-push-action@v5
         id: build-and-push
-        if: github.event_name == 'push' || github.head_ref == 'v*' || github.head_ref == 'main'
+        if: ${{ github.event_name == 'push' || github.head_ref == 'v*' || github.head_ref == 'main' }}
         with:
           context: .
           platforms: linux/amd64
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          provenance: true
+          sbom: true
           push: true
           tags: ${{ steps.meta-push.outputs.tags }}
           labels: ${{ steps.meta-push.outputs.labels }}
-          build-args: |
-            GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }} 
-
+          build-args: GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }} 
 
       -
         name: Build and push
@@ -154,25 +153,13 @@ jobs:
           platforms: linux/amd64
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          provenance: true
+          sbom: true
           push: true
           tags: ${{ steps.meta-workflow-dispatch.outputs.tags }}
           labels: ${{ steps.meta-workflow-dispatch.outputs.labels }}
-          build-args: |
-            GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }} 
+          build-args: GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }} 
 
-      - name: Sign the images with GitHub OIDC Token
-        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-        continue-on-error: true
-        env:
-          DIGEST: ${{ steps.build-and-push.outputs.digest || steps.build-and-push-workflow-dispatch.outputs.digest }}
-          TAGS: ${{ steps.meta-push.outputs.tags || steps.meta-workflow-dispatch.outputs.tags }}
-          COSIGN_EXPERIMENTAL: 1
-        run: |
-          images=""
-          for tag in ${TAGS}; do
-            images+="${tag}@${DIGEST} "
-          done
-          cosign sign --yes ${images}
       -
         name: Build pull request
         uses: docker/build-push-action@v5
@@ -184,5 +171,4 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           push: false
-          build-args: |
-            GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }}
+          build-args: GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }}

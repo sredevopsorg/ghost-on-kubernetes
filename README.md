@@ -14,7 +14,7 @@ We've made some significant updates to improve the security and efficiency of ou
 
 3. **Non-Root User**: By default, the Ghost container now runs as a non-root user. This is a best practice for security, as it reduces the potential damage if the container is compromised. The Ghost application is started with an init container, which performs necessary setup tasks before the main Ghost container starts.
 
-Please refer to the updated `06-ghost-deployment.yaml` file for the implementation details of these changes.
+Please refer to the updated `[deploy/06-ghost-deployment.yaml](deploy/06-ghost-deployment.yaml)` file for the implementation details of these changes.
 
 ## Features
 
@@ -43,11 +43,11 @@ Please refer to the updated `06-ghost-deployment.yaml` file for the implementati
 
 ```bash
 # Clone the repository
-git clone https://github.com/sredevopsorg/ghost-on-kubernetes.git
+git clone https://github.com/sredevopsorg/ghost-on-kubernetes.git --depth 1 --branch main --single-branch --no-tags
 # Change directory
 cd ghost-on-kubernetes
-# Checkout to your local branch (optional)
-git checkout -b my-branch
+# Create a new branch for your changes in deattach mode (optional but recommended).
+git checkout -b my-branch --no-track --detach
 
 ```
 
@@ -57,25 +57,25 @@ git checkout -b my-branch
 
 - deploy/01-secrets.yaml
 
-```yaml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: mysql-ghost-k8s
-  namespace: ghost-k8s
-type: Opaque
-stringData:
-  MYSQL_DATABASE: mysql-db-name # Same as in config.production.json
-  MYSQL_USER: mysql-db-user # Same as in config.production.json
-  MYSQL_PASSWORD: mysql-db-password # Same as in config.production.json
-  MYSQL_ROOT_PASSWORD: mysql-db-root-password # Same as in config.production.json
-```
+    ```yaml
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: mysql-ghost-k8s
+      namespace: ghost-k8s
+    type: Opaque
+    stringData:
+      MYSQL_DATABASE: mysql-db-name # Same as in deploy/04-config.production.yaml
+      MYSQL_USER: mysql-db-user # Same as in deploy/04-config.production.yaml
+      MYSQL_PASSWORD: mysql-db-password # Same as in deploy/04-config.production.yaml
+      MYSQL_ROOT_PASSWORD: mysql-db-root-password # Same as in deploy/04-config.production.yaml
+    ```
 
 - deploy/02-pvc.yaml # Change the storageClassName as per your requirements
 - deploy/03-services.yaml # Change the hosts as per your requirements
 - deploy/04-config.production.yaml # Change values according to secrets and services
-- deploy/05-mysql.yaml
-- deploy/06-ghost-deployment.yaml
+- deploy/05-mysql.yaml # Change values according to secrets and services
+- deploy/06-ghost-deployment.yaml # Change values according to secrets and services
 - deploy/07-ingress.yaml # Optional
 
 ## 3. Apply your manifests

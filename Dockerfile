@@ -2,14 +2,26 @@
 # The image is based on the official Node.js image and uses the Distroless base image for security and minimalism.
 
 # Stage 1: Build Environment
-FROM node:hydrogen-bookworm-slim AS build-env
+FROM node:hydrogen AS build-env
+
+ENV NODE_ENV production
+ENV DEBIAN_FRONTEND noninteractive
 
 
 # Set the NODE_ENV environment variable to "production"
-ENV NODE_ENV production 
+# ENV NODE_ENV production 
+USER root
+
+RUN apt-get update && apt-get install --no-install-recommends --no-install-suggests -y libvips-dev ca-certificates && \
+    update-ca-certificates
+# && \
+#    rm -rf /var/lib/apt/lists/*
 
 # Install the latest version of Ghost CLI globally and clean the npm cache
-RUN npm install -g "ghost-cli@latest"
+RUN yarn config set network-timeout 60000 && \
+		npm config set fetch-timeout 60000 && \
+		yarn global add ghost-cli@latest || npm install -g ghost-cli@latest
+#RUN yarn cache clean --force && npm cache clean --force 
 
 # Define the GHOST_VERSION build argument and set it as an environment variable
 ARG GHOST_VERSION
@@ -29,7 +41,9 @@ USER node
 # WORKDIR /home/node
 
 # Install Ghost with the specified version, using MySQL as the database, and configure it without prompts, stack traces, setup, and in the specified installation directory
-RUN ghost install $GHOST_VERSION --db mysql --dbhost mysql --no-prompt --no-stack --no-setup --dir $GHOST_INSTALL
+RUN yarn config set network-timeout 180000 && \
+    yarn config set verbose true && \
+    ghost install $GHOST_VERSION --db mysql --dbhost mysql --no-prompt --no-stack --no-setup --dir $GHOST_INSTALL
 
 # Switch back to the root user
 USER root
