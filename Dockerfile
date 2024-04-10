@@ -12,12 +12,13 @@ ENV DEBIAN_FRONTEND noninteractive
 # ENV NODE_ENV production 
 USER root
 
-RUN apt-get update && apt-get install --no-install-recommends --no-install-suggests -y g++ make python3 ca-certificates && \
-    update-ca-certificates
-
 # Install the latest version of Ghost CLI globally and clean the npm cache
-RUN yarn config set network-timeout 15000 && \
-    yarn global add ghost-cli@latest
+RUN yarn config set network-timeout 60000 && \
+    npm config set fetch-timeout 60000 && \
+    yarn global add ghost-cli@latest || npm install -g ghost-cli@latest
+
+RUN apt-get update && apt-get install --no-install-recommends --no-install-suggests -y libvips-dev && \
+    update-ca-certificates
 
 
 # Define the GHOST_VERSION build argument and set it as an environment variable
