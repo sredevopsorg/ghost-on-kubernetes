@@ -1,4 +1,4 @@
-name: Multi Arch Build, Push and Merge GHCR and Docker Hub
+name: CI Multiarch + Trivy
 
 on:
   push:
@@ -177,3 +177,22 @@ jobs:
           docker buildx imagetools create \
             --tag ${{ env.DOCKER_IMAGE }}:${{ steps.meta.outputs.version }} \
             ${{ env.REGISTRY_IMAGE }}:${{ steps.meta.outputs.version }}
+  scan:
+    runs-on: ubuntu-22.04
+    needs:
+      - build
+      - merge
+    steps:
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        continue-on-error: true
+        with:
+          image-ref: '${{ env.REGISTRY_IMAGE }}:${{ steps.meta.outputs.version }}'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        continue-on-error: true
+        with:
+          sarif_file: 'trivy-results.sarif'

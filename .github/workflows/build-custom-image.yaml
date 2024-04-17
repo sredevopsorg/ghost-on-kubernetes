@@ -1,14 +1,6 @@
-name: Build and push image to DockerHub and GitHub Container Registry
+name: Build custom single amd64 image
 
 on:
-  push:
-    branches:
-      - main
-    tags:
-      - 'v*'
-  pull_request:
-    branches:
-      - main
   workflow_dispatch:
     inputs:
       manual-tag:

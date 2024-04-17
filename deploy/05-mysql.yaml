@@ -37,9 +37,9 @@ spec:
         - /bin/sh
         - -c
         - |
-          set -ex
+          set -e
           echo 'Changing ownership of mysql mount directory to 999:999'
-          chown -R 999:999 /mnt/mysql || echo 'Error changing ownership of mysql mount directory to 999:999' && true
+          chown -Rfv 999:999 /mnt/mysql || echo 'Error changing ownership of mysql mount directory to 999:999' && true
           echo 'Changing ownership of tmp mount directory to 999:999'
           chown -R 999:999 /mnt/tmp || echo 'Error changing ownership of tmp mount directory to 999:999' && true
           echo 'Changing ownership of socket mount directory to 999:999'
@@ -50,7 +50,7 @@ spec:
         volumeMounts:
         - name: mysql-ghost-k8s-volume
           mountPath: /mnt/mysql
-          subPath: mysql-empty-dir
+          subPath: mysql-empty-subdir
 
         - name: mysql-ghost-k8s-tmp
           mountPath: /mnt/tmp
@@ -59,13 +59,14 @@ spec:
         - name: mysql-ghost-k8s-socket
           mountPath: /mnt/var/run/mysqld
           readOnly: false
+# YOu can ajust the resources according to your needs
 
         resources:
           requests:
             memory: 400Mi
             cpu: 300m
           limits:
-            memory: 1000Mi # You c
+            memory: 1000Mi 
             cpu: 1000m
 
       containers:
@@ -96,7 +97,7 @@ spec:
         volumeMounts:
         - name: mysql-ghost-k8s-volume
           mountPath: /var/lib/mysql
-          subPath: mysql-empty-dir
+          subPath: mysql-empty-subdir
 
         - name: mysql-ghost-k8s-tmp
           mountPath: /tmp
