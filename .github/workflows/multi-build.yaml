@@ -1,4 +1,4 @@
-name: CI Multiarch + Trivy
+name: CI Build Multiarch + Trivy
 
 on:
   push:
@@ -6,9 +6,10 @@ on:
       - "v*"
     branches:
       - "main"
-    paths-ignore:
-      - "**.md"
-      - "deploy/**"
+    paths:
+        - "Dockerfile"
+        - .github/workflows/multi-build.yaml
+
     # paths:
     #   - "Dockerfile"
   workflow_dispatch:
@@ -160,8 +161,28 @@ jobs:
             $(printf '${{ env.REGISTRY_IMAGE }}@sha256:%s ' *)
       -
         name: Inspect image
+        id: inspect
         run: |
           docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:${{ steps.meta.outputs.version }}
+
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        continue-on-error: true
+        with:
+          image-ref: '${{ env.REGISTRY_IMAGE }}:${{ steps.meta.outputs.version }}'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          scan-type: 'image'
+          github-pat: '${{ secrets.GITHUB_TOKEN }}'
+
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        continue-on-error: true
+        with:
+          sarif_file: 'trivy-results.sarif'
+          
 
       -
         name: Login to Docker Hub
@@ -170,6 +191,7 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USER }}
           password: ${{ secrets.DOCKER_PASS }}
+
       -
         name: Push to Docker Hub
         continue-on-error: true
@@ -177,22 +199,3 @@ jobs:
           docker buildx imagetools create \
             --tag ${{ env.DOCKER_IMAGE }}:${{ steps.meta.outputs.version }} \
             ${{ env.REGISTRY_IMAGE }}:${{ steps.meta.outputs.version }}
-  scan:
-    runs-on: ubuntu-22.04
-    needs:
-      - build
-      - merge
-    steps:
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
-        continue-on-error: true
-        with:
-          image-ref: '${{ env.REGISTRY_IMAGE }}:${{ steps.meta.outputs.version }}'
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-
-      - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v2
-        continue-on-error: true
-        with:
-          sarif_file: 'trivy-results.sarif'
