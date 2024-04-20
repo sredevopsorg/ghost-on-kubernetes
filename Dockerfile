@@ -2,7 +2,7 @@
 # The image is based on the official Node.js image and uses the Distroless base image for security and minimalism.
 
 # Stage 1: Build Environment
-FROM node:hydrogen AS build-env
+FROM node:iron-buster AS build-env
 
 ENV NODE_ENV production
 ENV DEBIAN_FRONTEND noninteractive
@@ -59,7 +59,7 @@ RUN mv -v $GHOST_CONTENT $GHOST_CONTENT_ORIGINAL && \
 USER node
 
 # Stage 2: Final Image
-FROM gcr.io/distroless/nodejs18-debian12:latest
+FROM gcr.io/distroless/nodejs20-debian12:latest
 
 # Set the installation directory and content directory for Ghost
 ENV GHOST_INSTALL /var/lib/ghost
