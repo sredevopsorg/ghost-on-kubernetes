@@ -32,6 +32,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
+          ref: ${{ github.ref_name }}
 
       # -
       #   name: Set up QEMU
@@ -66,9 +67,9 @@ jobs:
           echo ${{ steps.versions.outputs.GHOST_VERSION }} &&
           echo ${{ steps.versions.outputs.MANUAL_TAG }}
       -
-        name: Docker meta for push on main or tag
+        name: Docker meta for push on node20 branch
         id: meta-push
-        if: ${{ github.event_name == 'push' && github.head_ref == 'node20' }}
+        if: github.ref == 'refs/heads/node20'
         uses: docker/metadata-action@v5
         with:
           images: |
