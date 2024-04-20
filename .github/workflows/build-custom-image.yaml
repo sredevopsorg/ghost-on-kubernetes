@@ -1,9 +1,6 @@
 name: Build custom single amd64 image
 
 on:
-  push:
-    branches:
-      - node20
   workflow_dispatch:
     inputs:
       manual-tag:
@@ -67,9 +64,9 @@ jobs:
           echo ${{ steps.versions.outputs.GHOST_VERSION }} &&
           echo ${{ steps.versions.outputs.MANUAL_TAG }}
       -
-        name: Docker meta for push on node20 branch
+        name: Docker meta for push on main branch
         id: meta-push
-        if: github.ref == 'refs/heads/node20'
+        if: github.ref == 'refs/heads/main'
         uses: docker/metadata-action@v5
         with:
           images: |
@@ -123,7 +120,7 @@ jobs:
         name: Build and push version tag
         uses: docker/build-push-action@v5
         id: build-and-push
-        if: ${{ github.event_name == 'push' || github.head_ref == 'v*' || github.head_ref == 'node20' }}
+        if: ${{ github.event_name == 'push' || github.head_ref == 'v*' || github.head_ref == 'main' }}
         with:
           context: .
           platforms: linux/amd64
