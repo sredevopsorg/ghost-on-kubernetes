@@ -29,7 +29,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
-          ref: ${{ github.ref_name }}
 
       # -
       #   name: Set up QEMU
@@ -44,6 +43,7 @@ jobs:
           driver-opts: |
             network=host
             image=moby/buildkit:master
+          driver: docker
 
       - 
         name: Set up GHOST_VERSION and MANUAL_TAG values, depending on event type (push or workflow_dispatch)
@@ -64,9 +64,9 @@ jobs:
           echo ${{ steps.versions.outputs.GHOST_VERSION }} &&
           echo ${{ steps.versions.outputs.MANUAL_TAG }}
       -
-        name: Docker meta for push on main branch
+        name: Docker meta for push on main or tag
         id: meta-push
-        if: github.ref == 'refs/heads/main'
+        if: github.event_name == 'push' || github.head_ref == 'v*' || github.head_ref == 'main'
         uses: docker/metadata-action@v5
         with:
           images: |
@@ -75,6 +75,8 @@ jobs:
             docker.io/${{ vars.DOCKER_USER }}/${{ github.event.repository.name }}
           tags: |
             type=ref,event=branch
+            type=ref,event=tag
+            type=raw,value=main
       -
         name: Docker meta for workflow_dispatch
         id: meta-workflow-dispatch
