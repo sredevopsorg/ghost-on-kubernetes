@@ -2,7 +2,7 @@
 # The image is based on the official Node.js image and uses the Distroless base image for security and minimalism.
 
 # Stage 1: Build Environment
-FROM node:iron-buster:latest AS build-env
+FROM docker.io/node:iron-buster AS build-env
 
 ENV NODE_ENV production
 ENV DEBIAN_FRONTEND noninteractive
