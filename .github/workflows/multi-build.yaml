@@ -73,8 +73,8 @@ jobs:
         with:
           images: ${{ env.GHCR_IMAGE }}
           tags: |
-            type=raw,value=latest,enable=${{is_default_branch}}
-            type=raw,value=main,enable=${{is_default_branch}}
+            type=raw,value=latest,enable=${{ github.event_name == 'push' || github.ref == 'refs/heads/main' || github.event.ref == 'tags/v*' }}
+            type=raw,value=main,enable=${{ github.event_name == 'push' || github.ref == 'refs/heads/main' || github.event.ref == 'tags/v*' }}
             type=raw,value=${{ steps.versions.outputs.MANUAL_TAG }},enable=${{ github.event_name == 'workflow_dispatch' }}
             type=raw,value=v${{ steps.versions.outputs.GHOST_VERSION }},enable=${{ github.event_name == 'workflow_dispatch' }}
 
