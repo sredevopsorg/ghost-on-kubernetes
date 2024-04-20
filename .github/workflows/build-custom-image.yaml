@@ -46,7 +46,6 @@ jobs:
           driver-opts: |
             network=host
             image=moby/buildkit:master
-          driver: docker
 
       - 
         name: Set up GHOST_VERSION and MANUAL_TAG values, depending on event type (push or workflow_dispatch)
