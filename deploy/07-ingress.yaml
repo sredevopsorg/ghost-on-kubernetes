@@ -3,6 +3,14 @@ kind: Ingress
 metadata:
   name: ghost-k8s-ingress
   namespace: ghost-k8s
+  labels:
+    app: ghost-k8s
+    app.kubernetes.io/name: ghost-k8s
+    app.kubernetes.io/instance: ghost-k8s
+    app.kubernetes.io/version: "5.8"
+    app.kubernetes.io/component: ingress
+    app.kubernetes.io/part-of: ghost-k8s
+    app.kubernetes.io/managed-by: sredevopsorg
 spec:
   ingressClassName: traefik # Or your ingress controller 
   tls:

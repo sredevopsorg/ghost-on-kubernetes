@@ -14,25 +14,26 @@ var copyRecursiveSync = function(src, dest) {
   var stats = exists && fs.statSync(src);
   var isDirectory = exists && stats.isDirectory();
   if (isDirectory) {
-    fs.mkdirSync(dest);
+    fs.mkdirSync(dest, { recursive: true });
     fs.readdirSync(src).forEach(function(childItemName) {
       copyRecursiveSync(path.join(src, childItemName),
                         path.join(dest, childItemName));
     });
   } else {
-    fs.copyFileSync(src, dest);
+    fs.copyFileSync(src, dest, fs.constants.COPYFILE_FICLONE);
   }
 };
-// Define the source and destination paths
-let destinationPath = "/var/lib/ghost/content/themes/";
-let sourcePath = "/var/lib/ghost/content.orig/themes/";
 
-// // Call the function
-// copyRecursiveSync(sourcePath, destinationPath);
+// Define sources and destinations for both themes named "casper" and "source".
+const sourcePath = path.join(__dirname, "content.orig", "themes", "source");
+const destinationPath = path.join(__dirname, "content", "themes", "source");
+const sourcePathCasper = path.join(__dirname, "content.orig", "themes", "casper");
+const destinationPathCasper = path.join(__dirname, "content", "themes", "casper");
 
 // Wrap the function in a try/catch block to handle any errors.
 try {
   copyRecursiveSync(sourcePath, destinationPath);
+  copyRecursiveSync(sourcePathCasper, destinationPathCasper);
   console.log("Copy successful!");
 }
 catch (error) {

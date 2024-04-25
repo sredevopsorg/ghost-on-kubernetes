@@ -10,6 +10,7 @@ metadata:
     app.kubernetes.io/version: "5.8"
     app.kubernetes.io/component: database
     app.kubernetes.io/part-of: ghost-k8s
+    app.kubernetes.io/managed-by: sredevopsorg
 spec:
   serviceName: service-mysql-ghost-k8s
   replicas: 1
@@ -51,6 +52,7 @@ spec:
         - name: mysql-ghost-k8s-volume
           mountPath: /mnt/mysql
           subPath: mysql-empty-subdir
+          readOnly: false
 
         - name: mysql-ghost-k8s-tmp
           mountPath: /mnt/tmp
@@ -59,15 +61,15 @@ spec:
         - name: mysql-ghost-k8s-socket
           mountPath: /mnt/var/run/mysqld
           readOnly: false
-# YOu can ajust the resources according to your needs
-
+        
+        # YOu can ajust the resources according to your needs
         resources:
           requests:
-            memory: 400Mi
-            cpu: 300m
+            memory: 0.5Gi
+            cpu: 500m
           limits:
-            memory: 1000Mi 
-            cpu: 1000m
+            memory: 1Gi
+            cpu: '1.5'
 
       containers:
       - name: mysql-ghost-k8s
@@ -79,17 +81,17 @@ spec:
           runAsUser: 999
 
         image: docker.io/mysql:8.2
-        imagePullPolicy: IfNotPresent # You can change this value according to your needs
+        imagePullPolicy: Always # You can change this value according to your needs
         envFrom:
         - secretRef:
             name: mysql-ghost-k8s
         resources:
           requests:
-            memory: 400Mi
-            cpu: 300m
+            memory: 0.4Gi # You can change this value according to your needs
+            cpu: 400m # You can change this value according to your needs
           limits:
             memory: 1Gi # You can change this value according to your needs
-            cpu: 1000m # You can change this value according to your needs
+            cpu: '1.5' # You can change this value according to your needs
         ports:
         - containerPort: 3306
           protocol: TCP
@@ -132,4 +134,4 @@ spec:
           sizeLimit: 128Mi
       - name: mysql-ghost-k8s-socket
         emptyDir:
-          sizeLimit: 16Mi
+          sizeLimit: 128Mi

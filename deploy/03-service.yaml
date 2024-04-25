@@ -10,6 +10,7 @@ metadata:
     app.kubernetes.io/version: "5.8"
     app.kubernetes.io/component: service-ghost
     app.kubernetes.io/part-of: ghost-k8s
+    app.kubernetes.io/managed-by: sredevopsorg
 
 spec:
   ports:
@@ -20,7 +21,6 @@ spec:
   type: ClusterIP
   selector:
     app: ghost-k8s
-    app.kubernetes.io/name: ghost-k8s
 
 ---
 apiVersion: v1
@@ -33,8 +33,9 @@ metadata:
     app.kubernetes.io/name: mysql-ghost-k8s
     app.kubernetes.io/instance: ghost-k8s
     app.kubernetes.io/version: "5.8"
-    app.kubernetes.io/component: service
+    app.kubernetes.io/component: service-db
     app.kubernetes.io/part-of: ghost-k8s
+    app.kubernetes.io/managed-by: sredevopsorg
 spec:
   ports:
   - port: 3306
@@ -45,6 +46,4 @@ spec:
   clusterIP: None
   selector:
     app: mysql-ghost-k8s
-    app.kubernetes.io/name: mysql-ghost-k8s
-
 

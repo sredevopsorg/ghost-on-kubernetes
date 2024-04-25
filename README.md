@@ -1,6 +1,13 @@
-# Ghost on Kubernetes by [SREDevOps](https://sredevops.org)
+# Ghost on Kubernetes by [SREDevOps.Org](https://sredevops.org)
+
+<center><a href="https://sredevops.org" target="_blank" rel="noopener noreferrer"><img src="https://github.com/sredevopsdev/.github/assets/34670018/6878e00f-635c-4553-8df7-3b20406fdb4f" alt="SREDevOps.org" width="60%" align="center" /></a></center>
+
+## Comunidad Site Reliability Engineering (SRE), DevOps, Cloud Native, GNU/Linux y más.  🌎
+
+![Image size](https://ghcr-badge.egpl.dev/sredevopsorg/ghost-on-kubernetes/size?color=%2344cc11&tag=main&label=image+size)
 
 [![amd64-arm64 to ghcr.io](https://github.com/sredevopsorg/ghost-on-kubernetes/actions/workflows/multi-build.yaml/badge.svg)](https://github.com/sredevopsorg/ghost-on-kubernetes/actions/workflows/multi-build.yaml)
+
 
 This repo deploys a clean Ghost CMS v5.xx.x from [@TryGhost (upstream)](https://github.com/TryGhost/Ghost) in Kubernetes, as a Deployment using our [custom image](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/Dockerfile), based on the ["official" Ghost 5 debian image](https://github.com/docker-library/ghost/blob/master/5/debian/Dockerfile), but with some modifications:
 
@@ -51,6 +58,7 @@ cd ghost-on-kubernetes
 git checkout -b my-branch --no-track --detach
 
 ```
+
 ## 1. Check the configuration samples
 
 - There are some sample configuration files in the `examples` directory. You can use them as a reference to create your own configuration secrets, per environment.
