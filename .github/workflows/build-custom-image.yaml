@@ -1,20 +1,17 @@
 name: Build custom single amd64 image
 
 on:
-  push:
-    branches:
-      - entrypoint-tests
   workflow_dispatch:
     inputs:
       manual-tag:
         description: 'Manual Tag'
         required: false
-        default: 'custom-tag'
+        default: 'custom'
         type: string
       ghost_version:
         description: 'Ghost version'
         required: false
-        default: '5.82.3'
+        default: '5.80.2'
         type: string
 
 jobs:
@@ -125,7 +122,7 @@ jobs:
         name: Build and push version tag
         uses: docker/build-push-action@v5
         id: build-and-push
-        if: ${{ github.ref == 'refs/heads/entrypoint-tests' }}
+        if: ${{ github.event_name == 'push' || github.head_ref == 'v*' || github.head_ref == 'main' }}
         with:
           context: .
           platforms: linux/amd64
@@ -139,7 +136,7 @@ jobs:
           build-args: GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }} 
 
       -
-        name: Build and push workflow_dispatch
+        name: Build and push
         uses: docker/build-push-action@v5
         id: build-and-push-workflow-dispatch
         if: github.event_name == 'workflow_dispatch'
