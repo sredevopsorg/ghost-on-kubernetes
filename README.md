@@ -1,6 +1,13 @@
-# Ghost on Kubernetes by [SREDevOps](https://sredevops.org)
+# Ghost on Kubernetes by [SREDevOps.Org](https://sredevops.org)
+
+<center><a href="https://sredevops.org" target="_blank" rel="noopener noreferrer"><img src="https://github.com/sredevopsdev/.github/assets/34670018/6878e00f-635c-4553-8df7-3b20406fdb4f" alt="SREDevOps.org" width="60%" align="center" /></a></center>
+
+## Comunidad Site Reliability Engineering (SRE), DevOps, Cloud Native, GNU/Linux y más.  🌎
+
+![Image size](https://ghcr-badge.egpl.dev/sredevopsorg/ghost-on-kubernetes/size?color=%2344cc11&tag=main&label=image+size)
 
 [![amd64-arm64 to ghcr.io](https://github.com/sredevopsorg/ghost-on-kubernetes/actions/workflows/multi-build.yaml/badge.svg)](https://github.com/sredevopsorg/ghost-on-kubernetes/actions/workflows/multi-build.yaml)
+
 
 This repo deploys a clean Ghost CMS v5.xx.x from [@TryGhost (upstream)](https://github.com/TryGhost/Ghost) in Kubernetes, as a Deployment using our [custom image](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/Dockerfile), based on the ["official" Ghost 5 debian image](https://github.com/docker-library/ghost/blob/master/5/debian/Dockerfile), but with some modifications:
 
@@ -17,16 +24,18 @@ We've made some significant updates to improve the security and efficiency of ou
 Please refer to the updated [deploy/06-ghost-deployment.yaml](deploy/06-ghost-deployment.yaml) file for the implementation details of these changes.
 
 ## Features
-- *ARM64 support!* 
-- We use the official Node 18 Hydrogen bookworm image as build environment.
+
+- [*ARM64 support!*](#-arm64-supported)
+- We use the official Node 20 Iron Buster image as build environment.
 - Introduced a multi-stage build to compile the image.
-- [distroless node 18 debian 12](https://github.com/GoogleContainerTools/distroless/blob/main/README.md) as the final image.
+- [distroless node 20 debian 12](https://github.com/GoogleContainerTools/distroless/blob/main/README.md) as the execution environment for the final image.
 - Removed gosu, we use the default user node.
 - ~~Modified the entrypoint to run as node user, so we can run the pod as non-root.~~ DELETED ENTRYPOINT
-- Update every possible dependencies in the base image to minimize vulnerabilities.
-- We use the latest version of Ghost 5 (at the time of build the image)
+- We use the latest version of Ghost 5 (when the image is built).
 
-> *Note for ARM users 📌: ARM64 supported! ~~At this time, we dropped support for arm64 and armv7l [(link to discussion)](https://github.com/sredevopsorg/ghost-on-kubernetes/issues/73#issuecomment-1933939315), but we will add it back soon. Pull requests are welcome._~~ * 
+## 📌 ARM64 supported
+
+- [(link to discussion)](https://github.com/sredevopsorg/ghost-on-kubernetes/issues/73#issuecomment-1933939315)
 
 ## Star History
 
@@ -38,7 +47,7 @@ Please refer to the updated [deploy/06-ghost-deployment.yaml](deploy/06-ghost-de
 
 ## Installation
 
-## 1. Clone the repository
+## 0. Clone the repository
 
 ```bash
 # Clone the repository
@@ -49,6 +58,13 @@ cd ghost-on-kubernetes
 git checkout -b my-branch --no-track --detach
 
 ```
+
+## 1. Check the configuration samples
+
+- There are some sample configuration files in the `examples` directory. You can use them as a reference to create your own configuration secrets, per environment.
+
+- If you need more information about the configuration, please refer to the [official Ghost documentation](https://ghost.org/docs/config/#custom-configuration-files).
+
 
 ## 2. Review the default values and make changes as per your requirements, if any into the following files
 

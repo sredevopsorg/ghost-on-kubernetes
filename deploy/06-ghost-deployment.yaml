@@ -10,6 +10,8 @@ metadata:
     app.kubernetes.io/version: "5.8"
     app.kubernetes.io/component: ghost
     app.kubernetes.io/part-of: ghost-k8s
+    app.kubernetes.io/managed-by: sredevopsorg
+    
 spec:
   replicas: 1
   selector:
@@ -20,13 +22,12 @@ spec:
       namespace: ghost-k8s
       labels:
         app: ghost-k8s
-        app.kubernetes.io/name: ghost-k8s
     spec:
       automountServiceAccountToken: false # Disable automounting of service account token
       volumes:
-      - name: ghost-k8s-static-ghost
+      - name: k8s-ghost-content
         persistentVolumeClaim:
-          claimName: ghost-k8s-static-ghost
+          claimName: k8s-ghost-content
 
       - name: ghost-config-prod
         secret:
@@ -39,7 +40,7 @@ spec:
 
       initContainers:
       - name: ghost-k8s-init
-        image: docker.io/bitnami/git:2
+        image: docker.io/busybox:stable-musl
         env:
         - name: GHOST_INSTALL
           value: /var/lib/ghost
@@ -59,37 +60,37 @@ spec:
             cpu: 100m
             memory: 128Mi
         command:
-          - /bin/bash
+          - /bin/sh
           - '-c'
           - |
-            set -ex
-            # Check if $GHOST_CONTENT/themes/source exists
-            if [ ! -d "$GHOST_CONTENT/themes/source" ]; then
-              # Clone the repository if the directory doesn't exist
-              git clone https://github.com/TryGhost/Source.git $GHOST_CONTENT/themes/source  --single-branch --branch=main --depth=1
-              echo "Cloned Source theme"
-              # Remove gitconfig file and gitcredentials file.
-              rm -f $GHOST_CONTENT/themes/source/.gitconfig $GHOST_CONTENT/themes/source/.git-credentials || true
-            else
-              # If the directory exists, recursively delete it.
-              rm -rf $GHOST_CONTENT/themes/source
-              # Clone the repository 
-              git clone https://github.com/TryGhost/Source.git $GHOST_CONTENT/themes/source  --single-branch --branch=main --depth=1
-              # Remove gitconfig file and gitcredentials file.
-              rm -f $GHOST_CONTENT/themes/source/.gitconfig $GHOST_CONTENT/themes/source/.git-credentials || true
+            set -e
+
+            # Check if the following directories exists under $GHOST_CONTENT directory, if not, create them and then change the ownership to 1000:1000
+            export DIRS="files logs apps themes data public settings images media"
+            for dir in $DIRS; do
+              if [ ! -d $GHOST_CONTENT/$dir ]; then
+                echo "Creating $GHOST_CONTENT/$dir directory"
+                mkdir -pv $GHOST_CONTENT/$dir && chown -Rf 1000:1000 $GHOST_CONTENT/$dir || echo "Error creating $GHOST_CONTENT/$dir directory" && true
+              fi
+            done
+
+
+            echo 'Delete and clean $GHOST_CONTENT/public directory and recreate it'
+            rm -rfv $GHOST_CONTENT/public && mkdir -pv $GHOST_CONTENT/public || echo 'Error deleting and cleaning $GHOST_CONTENT/public directory and recreating it' && true
+
+            echo 'Check if the directory $GHOST_CONTENT/themes ownership is different from UID 1000 and GID 1000, if so, change it to 1000:1000 recursively and verbose.'
+            if [ "$(stat -c '%u:%g' $GHOST_CONTENT/themes)" != "1000:1000" ]; then
+              echo 'Changing ownership of $GHOST_CONTENT/themes directory to 1000:1000'
+              chown -Rf 1000:1000 $GHOST_CONTENT/themes || echo 'Error changing ownership of $GHOST_CONTENT/themes directory to 1000:1000' && true
             fi
 
-            # Check if the directory owner UID is 1000, if not, change the owner to 1000 recursively.
-            if [ "$(stat -c %u $GHOST_CONTENT)" != "1000" ]; then
-              echo "Changing ownership of the ghost content directory"
-              chown -Rf 1000:1000 $GHOST_CONTENT || true
+            echo 'Check if the directory $GHOST_CONTENT/public ownership is different from UID 1000 and GID 1000, if so, change it to 1000:1000 recursively and verbose.'
+            if [ "$(stat -c '%u:%g' $GHOST_CONTENT/public)" != "1000:1000" ]; then
+              echo 'Changing ownership of $GHOST_CONTENT/public directory to 1000:1000'
+              chown -Rf 1000:1000 $GHOST_CONTENT/public || echo 'Error changing ownership of $GHOST_CONTENT/public directory to 1000:1000' && true
             fi
-            echo 'Finished init container, bye!'
-            exit 0
-
-
         volumeMounts:
-        - name: ghost-k8s-static-ghost
+        - name: k8s-ghost-content
           mountPath: /var/lib/ghost/content
           readOnly: false
 
@@ -122,17 +123,20 @@ spec:
         env:
         - name: NODE_ENV
           value: production
+        - name: TZ
+          value: America/Santiago
         resources:
           limits:
-            cpu: 1000m
-            memory: 1Gi
+            cpu: 800m
+            memory: 800Mi
           requests:
             cpu: 100m
-            memory: 100Mi
+            memory: 200Mi
 
         volumeMounts:
-        - name: ghost-k8s-static-ghost
+        - name: k8s-ghost-content
           mountPath: /var/lib/ghost/content
+          readOnly: false
         - name: ghost-config-prod
           readOnly: true
           mountPath: /var/lib/ghost/config.production.json
@@ -164,6 +168,9 @@ spec:
       securityContext: {}
       schedulerName: default-scheduler
   strategy:
-    type: Recreate
-  revisionHistoryLimit: 2
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 3
+  revisionHistoryLimit: 3
   progressDeadlineSeconds: 600

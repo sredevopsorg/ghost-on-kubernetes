@@ -14,14 +14,11 @@ USER root
 
 RUN apt-get update && apt-get install --no-install-recommends --no-install-suggests -y libvips-dev ca-certificates && \
     update-ca-certificates
-# && \
-#    rm -rf /var/lib/apt/lists/*
 
 # Install the latest version of Ghost CLI globally and clean the npm cache
 RUN yarn config set network-timeout 60000 && \
 		npm config set fetch-timeout 60000 && \
-		yarn global add ghost-cli@latest || npm install -g ghost-cli@latest
-#RUN yarn cache clean --force && npm cache clean --force 
+		yarn global add ghost-cli@latest
 
 # Define the GHOST_VERSION build argument and set it as an environment variable
 ARG GHOST_VERSION
@@ -53,6 +50,7 @@ RUN mv -v $GHOST_CONTENT $GHOST_CONTENT_ORIGINAL && \
     mkdir -pv $GHOST_CONTENT && \
     chown -Rfv node:node $GHOST_CONTENT_ORIGINAL && \
     chown -Rfv node:node $GHOST_CONTENT && \
+    chown -fv node:node $GHOST_INSTALL && \
     chmod 1777 $GHOST_CONTENT
 
 # Switch back to the "node" user
@@ -73,9 +71,11 @@ COPY --from=build-env $GHOST_INSTALL $GHOST_INSTALL
 # It's going to be handled with an init container that will copy the content from the original content directory to the new content directory.
 WORKDIR $GHOST_INSTALL
 VOLUME $GHOST_CONTENT
+COPY --chown=1000:1000 entrypoint.js current/entrypoint.js
+
 
 # Expose port 2368 for Ghost
 EXPOSE 2368
 
 # Set the command to start Ghost
-CMD ["current/index.js"]
+CMD ["current/entrypoint.js"]
