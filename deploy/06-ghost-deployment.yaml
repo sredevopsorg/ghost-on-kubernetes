@@ -96,7 +96,7 @@ spec:
 
       containers:
       - name: ghost-k8s
-        image: ghcr.io/sredevopsorg/ghost-on-kubernetes:entrypoint-tests
+        image: ghcr.io/sredevopsorg/ghost-on-kubernetes:main
         imagePullPolicy: Always
         ports:
         - name: ghk3s
