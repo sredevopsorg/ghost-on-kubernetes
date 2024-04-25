@@ -25,15 +25,12 @@ var copyRecursiveSync = function(src, dest) {
 };
 
 // Define sources and destinations for both themes named "casper" and "source".
-const sourcePath = path.join(__dirname, "content.orig", "themes", "source");
-const destinationPath = path.join("/var/lib/ghost", "content", "themes", "source");
-const sourcePathCasper = path.join(__dirname, "content.orig", "themes", "casper");
-const destinationPathCasper = path.join("/var/lib/ghost", "content", "themes", "casper");
+let sourcePath = ("/var/lib/ghost/content.orig/themes/");
+let destinationPath = ("/var/lib/ghost/content/themes");
 
 // Wrap the function in a try/catch block to handle any errors.
 try {
-  copyRecursiveSync(sourcePath, destinationPath);
-  copyRecursiveSync(sourcePathCasper, destinationPathCasper);
+  copyRecursiveSync(sourcePath, destinationPath)
   console.log("Copy successful!");
 }
 catch (error) {
