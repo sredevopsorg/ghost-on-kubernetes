@@ -67,9 +67,9 @@ jobs:
           echo ${{ steps.versions.outputs.GHOST_VERSION }} &&
           echo ${{ steps.versions.outputs.MANUAL_TAG }}
       -
-        name: Docker meta for push on main branch
+        name: Docker meta for push on entrypoint-tests branch
         id: meta-push
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/entrypoint-tests'
         uses: docker/metadata-action@v5
         with:
           images: |
@@ -78,6 +78,8 @@ jobs:
             docker.io/${{ vars.DOCKER_USER }}/${{ github.event.repository.name }}
           tags: |
             type=ref,event=branch
+            type=raw,value=v${{ steps.versions.outputs.GHOST_VERSION }}
+
       -
         name: Docker meta for workflow_dispatch
         id: meta-workflow-dispatch
@@ -123,7 +125,7 @@ jobs:
         name: Build and push version tag
         uses: docker/build-push-action@v5
         id: build-and-push
-        if: ${{ github.ref == 'refs/heads/main' || github.ref_name == 'refs/tags/v*' || github.ref == 'refs/heads/entrypoint-tests' }}
+        if: ${{ github.ref == 'refs/heads/entrypoint-tests' }}
         with:
           context: .
           platforms: linux/amd64
