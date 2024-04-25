@@ -123,7 +123,7 @@ jobs:
         name: Build and push version tag
         uses: docker/build-push-action@v5
         id: build-and-push
-        if: ${{ github.event_name == 'push' || github.head_ref == 'v*' || github.head_ref == 'main' }}
+        if: ${{ github.ref == 'refs/heads/main' || github.ref_name == 'refs/tags/v*' || github.ref == 'refs/heads/entrypoint-tests' }}
         with:
           context: .
           platforms: linux/amd64
