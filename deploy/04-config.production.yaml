@@ -7,9 +7,9 @@ type: Opaque
 stringData:
   config.production.json: |-
     {
-      "url": "http://localhost:2368",
+      "url": "https://tests.yourdomain.com",
       "admin": {
-        "url": "http://localhost:2368"
+        "url": "https://tests.yourdomain.com",
       },
       "server": {
         "port": 2368,
@@ -45,7 +45,7 @@ stringData:
           "port": "3306"
         }
       },
-      "debug": true,
+      "debug": false,
       "process": "local",
       "paths": {
         "contentPath": "/var/lib/ghost/content"

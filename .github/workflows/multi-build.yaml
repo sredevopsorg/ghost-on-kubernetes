@@ -2,8 +2,8 @@ name: CI Build Multiarch + Trivy
 
 on:
   push:
-    tags:
-      - "v*"
+    # tags:
+    #   - "v*"
     branches:
       - "main"
     paths:
@@ -74,6 +74,9 @@ jobs:
         continue-on-error: true
         with:
           images: ${{ env.GHCR_IMAGE }}
+          labels: | # Add description label for opencontainers specs to the $DOCKER_METADATA_OUTPUT_JSON variable.
+            org.opencontainers.image.description: "${{ github.event.repository.description }}"
+
           # tags: |
           #   type=raw,value=latest,enable=${{ github.event_name == 'push' || github.ref == 'refs/heads/main' || github.event.ref == 'tags/v*' }}
           #   type=raw,value=main,enable=${{ github.event_name == 'push' || github.ref == 'refs/heads/main' || github.event.ref == 'tags/v*' }}
@@ -170,7 +173,6 @@ jobs:
         id: manifest
         run: |
           docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
-            $(printf '${{ env.GHCR_IMAGE }}@sha256:%s ' *)
       -
         name: Inspect image
         id: inspect

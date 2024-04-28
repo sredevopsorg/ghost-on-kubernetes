@@ -17,6 +17,7 @@ stringData:
       },
       "mail": {
         "transport": "SMTP",
+        "from": "user@server.com",
         "options": {
           "service": "Google",
           "host": "smtp.gmail.com",

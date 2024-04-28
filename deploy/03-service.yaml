@@ -17,7 +17,7 @@ spec:
   - port: 2368
     protocol: TCP
     targetPort: 2368
-    name: ghk3s
+    name: ghk8s
   type: ClusterIP
   selector:
     app: ghost-k8s

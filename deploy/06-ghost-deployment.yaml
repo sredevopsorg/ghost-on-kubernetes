@@ -49,12 +49,11 @@ spec:
         - name: NODE_ENV
           value: production
         securityContext:
-          readOnlyRootFilesystem: false
+          readOnlyRootFilesystem: true
           allowPrivilegeEscalation: false
-          runAsNonRoot: false
         resources:
           limits:
-            cpu: 1000m
+            cpu: 900m
             memory: 1000Mi
           requests:
             cpu: 100m
@@ -89,6 +88,7 @@ spec:
               echo 'Changing ownership of $GHOST_CONTENT/public directory to 1000:1000'
               chown -Rf 1000:1000 $GHOST_CONTENT/public || echo 'Error changing ownership of $GHOST_CONTENT/public directory to 1000:1000' && true
             fi
+
         volumeMounts:
         - name: k8s-ghost-content
           mountPath: /var/lib/ghost/content
@@ -99,7 +99,7 @@ spec:
         image: ghcr.io/sredevopsorg/ghost-on-kubernetes:main
         imagePullPolicy: Always
         ports:
-        - name: ghk3s
+        - name: ghk8s
           containerPort: 2368
           protocol: TCP
 
@@ -108,7 +108,7 @@ spec:
         # livenessProbe:
         #   httpGet:
         #     path: /ghost/api/v4/admin/site/
-        #     port: ghk3s
+        #     port: ghk8s
         #     httpHeaders:
         #     - name: X-Forwarded-Proto
         #       value: https

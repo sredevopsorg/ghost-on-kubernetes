@@ -21,7 +21,6 @@ spec:
     metadata:
       labels:
         app: mysql-ghost-k8s
-        app.kubernetes.io/name: mysql-ghost-k8s
       annotations:
         container.apparmor.security.beta.kubernetes.io/mysql-ghost-k8s: runtime/default
     spec:
@@ -31,9 +30,8 @@ spec:
           allowPrivilegeEscalation: false
           privileged: false
           readOnlyRootFilesystem: true
-          runAsNonRoot: false
         image: docker.io/busybox:stable-musl
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         command:
         - /bin/sh
         - -c
@@ -42,9 +40,9 @@ spec:
           echo 'Changing ownership of mysql mount directory to 999:999'
           chown -Rfv 999:999 /mnt/mysql || echo 'Error changing ownership of mysql mount directory to 999:999' && true
           echo 'Changing ownership of tmp mount directory to 999:999'
-          chown -R 999:999 /mnt/tmp || echo 'Error changing ownership of tmp mount directory to 999:999' && true
+          chown -Rfv 999:999 /mnt/tmp || echo 'Error changing ownership of tmp mount directory to 999:999' && true
           echo 'Changing ownership of socket mount directory to 999:999'
-          chown -R 999:999 /mnt/var/run/mysqld || echo 'Error changing ownership of socket mount directory to 999:999' && true
+          chown -Rfv 999:999 /mnt/var/run/mysqld || echo 'Error changing ownership of socket mount directory to 999:999' && true
           exit 0
           
           
@@ -65,8 +63,8 @@ spec:
         # YOu can ajust the resources according to your needs
         resources:
           requests:
-            memory: 0.5Gi
-            cpu: 500m
+            memory: 0Mi
+            cpu: 0m
           limits:
             memory: 1Gi
             cpu: 900m
@@ -81,10 +79,10 @@ spec:
           runAsUser: 999
 
         image: docker.io/mysql:8.2
-        imagePullPolicy: Always # You can change this value according to your needs
+        imagePullPolicy: IfNotPresent # You can change this value according to your needs
         envFrom:
         - secretRef:
-            name: mysql-ghost-k8s
+            name: mysql-ghost-k8s-config
         resources:
           requests:
             memory: 500Mi # You can change this value according to your needs
@@ -100,6 +98,7 @@ spec:
         - name: mysql-ghost-k8s-volume
           mountPath: /var/lib/mysql
           subPath: mysql-empty-subdir
+          readOnly: false
 
         - name: mysql-ghost-k8s-tmp
           mountPath: /tmp
@@ -108,6 +107,7 @@ spec:
         - name: mysql-ghost-k8s-socket
           mountPath: /var/run/mysqld
           readOnly: false
+
       automountServiceAccountToken: false
 
       # Optional: Uncomment the following to specify node selectors
@@ -128,7 +128,7 @@ spec:
       volumes:
       - name: mysql-ghost-k8s-volume
         persistentVolumeClaim:
-          claimName: mysql-ghost-k8s
+          claimName: mysql-ghost-k8s-pvc
       - name: mysql-ghost-k8s-tmp
         emptyDir:
           sizeLimit: 128Mi

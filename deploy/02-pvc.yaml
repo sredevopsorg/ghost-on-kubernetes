@@ -23,11 +23,11 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: mysql-ghost-k8s
+  name: mysql-ghost-k8s-pvc
   namespace: ghost-k8s
   labels:
     app: mysql-ghost-k8s
-    app.kubernetes.io/name: mysql-ghost-k8s
+    app.kubernetes.io/name: mysql-ghost-k8s-pvc
     app.kubernetes.io/instance: ghost-k8s
     app.kubernetes.io/version: "5.8"
     app.kubernetes.io/component: database-storage
@@ -41,4 +41,4 @@ spec:
   - ReadWriteMany # Change this to ReadWriteOnce if your storageClassName does not support ReadWriteMany
   resources:
     requests:
-      storage: 2Gi
+      storage: 1Gi
