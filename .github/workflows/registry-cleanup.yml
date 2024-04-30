@@ -1,0 +1,34 @@
+name: Delete old container images
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * *"  # every day at midnight
+
+
+jobs:
+  clean-ghcr:
+    name: Delete old unused container images
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete 'dev' containers older than a week
+        uses: sredevopsorg/container-retention-policy@v2
+        with:
+          image-names: python-dev, js-dev
+          cut-off: A week ago UTC
+          account-type: org
+          org-name: sredevopsorg  
+          keep-at-least: 3
+          untagged-only: false
+          token: ${{ secrets.GHCR_PASS }}
+
+      - name: Delete all test containers older than a month, using a wildcard
+        uses: sredevopsorg/container-retention-policy@v2
+        with:
+          image-names: python-test*, js-test*
+          cut-off: One month ago UTC
+          account-type: org
+          org-name: sredevopsorg
+          keep-at-least: 3
+          skip-tags: main
+          token: ${{ secrets.GHCR_PASS }}
