@@ -17,8 +17,13 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@a4aa98b93cab29d9b1101a6143fb8bce00e2eac4 # v2.7.1
+        with:
+          egress-policy: audit
+
       - name: Delete 'ghost-on-kubernetes' containers older than a week
-        uses: sredevopsorg/container-retention-policy@v2
+        uses: sredevopsorg/container-retention-policy@2fa6104b297f90fc3b487b4576ae431867f493cb # v2.0.0
         with:
           image-names: ghost-on-kubernetes
           cut-off: A week ago UTC
@@ -31,7 +36,7 @@ jobs:
           skip-tags: main
 
       - name: Delete all test containers older than a month, using a wildcard
-        uses: sredevopsorg/container-retention-policy@v2
+        uses: sredevopsorg/container-retention-policy@2fa6104b297f90fc3b487b4576ae431867f493cb # v2.0.0
         with:
           image-names: ghost-on-kubernetes
           cut-off: One month ago UTC
