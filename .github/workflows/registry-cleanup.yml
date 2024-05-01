@@ -2,19 +2,15 @@ name: Delete old container images
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "0 0 * * *"  # every day at midnight
-
-
 jobs:
   clean-ghcr:
     name: Delete old unused container images
     runs-on: ubuntu-latest
     steps:
-      - name: Delete 'dev' containers older than a week
+      - name: Delete 'ghost-on-kubernetes' containers older than a week
         uses: sredevopsorg/container-retention-policy@v2
         with:
-          image-names: python-dev, js-dev
+          image-names: ghost-on-kubernetes
           cut-off: A week ago UTC
           account-type: org
           org-name: sredevopsorg  
@@ -25,7 +21,7 @@ jobs:
       - name: Delete all test containers older than a month, using a wildcard
         uses: sredevopsorg/container-retention-policy@v2
         with:
-          image-names: python-test*, js-test*
+          image-names: ghost-on-kubernetes
           cut-off: One month ago UTC
           account-type: org
           org-name: sredevopsorg
