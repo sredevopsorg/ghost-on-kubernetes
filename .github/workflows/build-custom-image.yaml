@@ -1,49 +1,43 @@
-name: Build custom single amd64 image
+name: Custom Ghost version, manual tag (amd64)
 
 on:
   workflow_dispatch:
     inputs:
       manual-tag:
         description: 'Manual Tag'
-        required: false
+        required: true
         default: 'custom'
         type: string
       ghost_version:
         description: 'Ghost version'
-        required: false
-        default: '5.80.2'
+        required: true
+        default: '5.82.4'
         type: string
 
 permissions:
   contents: read
 
 jobs:
-  docker:
+  build-custom-version:
     runs-on: ubuntu-latest
 
     permissions:
       contents: read
       packages: write
-      id-token: write # needed for signing the images with GitHub OIDC Token
 
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@a4aa98b93cab29d9b1101a6143fb8bce00e2eac4 # v2.7.1
         with:
           egress-policy: audit
-
       -
         name: Checkout
         uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
         with:
           fetch-depth: 1
-
-      # -
-      #   name: Set up QEMU
-      #   uses: docker/setup-qemu-action@v3
-      #   with:
-      #     platforms: linux/amd64
-
+          ref: ${{ github.ref }}
+          persist-credentials: false
+          
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@d70bba72b1f3fd22344832f00baa16ece964efeb # v3.3.0
@@ -56,35 +50,15 @@ jobs:
       - 
         name: Set up GHOST_VERSION and MANUAL_TAG values, depending on event type (push or workflow_dispatch)
         id: versions
-        env:
-          GITHUB_EVENT_NAME: ${{ github.event_name }}
         run: |
-          if [ ${{ env.GITHUB_EVENT_NAME }} == workflow_dispatch ]; then
-            echo "GHOST_VERSION=${{ github.event.inputs.ghost_version }}" >> $GITHUB_OUTPUT
-            echo "MANUAL_TAG=${{ github.event.inputs.manual-tag }}" >> $GITHUB_OUTPUT
-          else
-            echo "GHOST_VERSION=$(curl -s https://api.github.com/repos/tryghost/ghost/releases/latest | jq '.name' | sed 's/\"//g')" >> $GITHUB_OUTPUT
-          fi
+          echo "GHOST_VERSION=${{ github.event.inputs.ghost_version }}" >> $GITHUB_OUTPUT
+          echo "MANUAL_TAG=${{ github.event.inputs.manual-tag }}" >> $GITHUB_OUTPUT
 
       - name: Show GHOST_VERSION
         continue-on-error: true
         run: |
           echo ${{ steps.versions.outputs.GHOST_VERSION }} &&
           echo ${{ steps.versions.outputs.MANUAL_TAG }}
-      -
-        name: Docker meta for push on main or tag
-        id: meta-push
-        if: github.event_name == 'push' || github.head_ref == 'v*' || github.head_ref == 'main'
-        uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81 # v5.5.1
-        with:
-          images: |
-            ghcr.io/${{ github.repository }}
-            quay.io/${{ vars.QUAY_ORG }}/${{ github.event.repository.name }}
-            docker.io/${{ vars.DOCKER_USER }}/${{ github.event.repository.name }}
-          tags: |
-            type=ref,event=branch
-            type=ref,event=tag
-            type=raw,value=main
       -
         name: Docker meta for workflow_dispatch
         id: meta-workflow-dispatch
@@ -94,24 +68,21 @@ jobs:
           images: |
             ghcr.io/${{ github.repository }}
             quay.io/${{ vars.QUAY_ORG }}/${{ github.event.repository.name }}
-            docker.io/${{ vars.DOCKER_USER }}/${{ github.event.repository.name }}
+            docker.io/${{ secrets.DOCKER_USER }}/${{ github.event.repository.name }}
           tags: |
             type=ref,event=branch
             type=raw,value=${{ steps.versions.outputs.MANUAL_TAG }}
             type=raw,value=v${{ steps.versions.outputs.GHOST_VERSION }}
-
       -
         name: Login to DockerHub
         uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
-        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         with:
           registry: docker.io
-          username: ${{ vars.DOCKER_USER }}
+          username: ${{ secrets.DOCKER_USER }}
           password: ${{ secrets.DOCKER_PASS }}
       -
         name: Login to GitHub Container Registry
         uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
-        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -120,28 +91,10 @@ jobs:
         name: Login to Quay Container Registry
         uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
         continue-on-error: true
-        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         with:
           registry: quay.io
           username: ${{ vars.QUAY_USER }}  
           password: ${{ secrets.QUAY_PASS }}
-
-      -
-        name: Build and push version tag
-        uses: docker/build-push-action@2cdde995de11925a030ce8070c3d77a52ffcf1c0 # v5.3.0
-        id: build-and-push
-        if: ${{ github.event_name == 'push' || github.head_ref == 'v*' || github.head_ref == 'main' }}
-        with:
-          context: .
-          platforms: linux/amd64
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          provenance: true
-          sbom: true
-          push: true
-          tags: ${{ steps.meta-push.outputs.tags }}
-          labels: ${{ steps.meta-push.outputs.labels }}
-          build-args: GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }} 
 
       -
         name: Build and push
@@ -158,17 +111,6 @@ jobs:
           push: true
           tags: ${{ steps.meta-workflow-dispatch.outputs.tags }}
           labels: ${{ steps.meta-workflow-dispatch.outputs.labels }}
-          build-args: GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }} 
-
-      -
-        name: Build pull request
-        uses: docker/build-push-action@2cdde995de11925a030ce8070c3d77a52ffcf1c0 # v5.3.0
-        id: build-pr
-        if: github.event_name == 'pull_request'
-        with:
-          context: .
-          platforms: linux/amd64
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          push: false
           build-args: GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }}
+
+
