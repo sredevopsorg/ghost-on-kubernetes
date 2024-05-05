@@ -19,10 +19,8 @@ on:
       ghost_version:
         description: 'Ghost version'
         required: false
-        default: '5.81.1'
+        default: '5.82.6'
         type: string
-
-permissions: write-all
 
 env:
   GHCR_IMAGE: ghcr.io/${{ github.repository }}
@@ -32,6 +30,12 @@ env:
 jobs:
   build:
     runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      security-events: write
+
     strategy:
       fail-fast: true
       matrix:
@@ -79,14 +83,6 @@ jobs:
         continue-on-error: true
         with:
           images: ${{ env.GHCR_IMAGE }}
-          labels: | # Add description label for opencontainers specs to the $DOCKER_METADATA_OUTPUT_JSON variable.
-            org.opencontainers.image.description: "${{ github.event.repository.description }}"
-
-          # tags: |
-          #   type=raw,value=latest,enable=${{ github.event_name == 'push' || github.ref == 'refs/heads/main' || github.event.ref == 'tags/v*' }}
-          #   type=raw,value=main,enable=${{ github.event_name == 'push' || github.ref == 'refs/heads/main' || github.event.ref == 'tags/v*' }}
-          #   type=raw,value=${{ steps.versions.outputs.MANUAL_TAG }},enable=${{ github.event_name == 'workflow_dispatch' }}
-          #   type=raw,value=v${{ steps.versions.outputs.GHOST_VERSION }},enable=${{ github.event_name == 'workflow_dispatch' }}
 
       -
         name: Set up QEMU
@@ -140,6 +136,11 @@ jobs:
     runs-on: ubuntu-22.04
     needs:
       - build
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      security-events: write
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@a4aa98b93cab29d9b1101a6143fb8bce00e2eac4 # v2.7.1
@@ -167,9 +168,13 @@ jobs:
           images: ${{ env.GHCR_IMAGE }}
           tags: |
             type=raw,value=latest,enable=${{ github.event_name == 'push' || github.ref == 'refs/heads/main' || github.event.ref == 'tags/v*' }}
-            type=raw,value=main,enable=${{ github.event_name == 'push' || github.ref == 'refs/heads/main' || github.event.ref == 'tags/v*' }}
+            type=ref,value=${{ github.ref }}
+            type=ref,value=${{ github.sha }}
             type=raw,value=${{ github.env.MANUAL_TAG }},enable=${{ github.event_name == 'workflow_dispatch' }}
             type=raw,value=v${{ github.env.GHOST_VERSION }},enable=${{ github.event_name == 'workflow_dispatch' }}
+          labels: |
+            org.opencontainers.image.description: "${{ github.event.repository.description }}"
+
       -
         name: Login to GitHub Container Registry
         uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
