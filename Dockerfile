@@ -1,24 +1,22 @@
 # This Dockerfile is used to build a container image for running Ghost, a popular open-source blogging platform, on Kubernetes.
-# The image is based on the official Node.js image and uses the Distroless base image for security and minimalism.
+# The image is built with official Node 20 on Debian Bookworm (LTS Iron)  image and uses the Distroless base image for security and minimalism.
 
 # Stage 1: Build Environment
-FROM docker.io/node:iron-buster@sha256:57fe11caf946b3bdcbe370a444ab1d7102123421e62157f62516b2abd4d9b7ae AS build-env
+FROM node:iron-bookworm AS build-env
 
-ENV NODE_ENV production
-ENV DEBIAN_FRONTEND noninteractive
+ENV NODE_ENV=production DEBIAN_FRONTEND=noninteractive
 
-
-# Set the NODE_ENV environment variable to "production"
-# ENV NODE_ENV production 
 USER root
-
-RUN apt-get update && apt-get install --no-install-recommends --no-install-suggests -y libvips-dev ca-certificates && \
-    update-ca-certificates
+RUN apt update && apt install --no-install-recommends --no-install-suggests -y libvips-dev 
 
 # Install the latest version of Ghost CLI globally and clean the npm cache
 RUN yarn config set network-timeout 60000 && \
+    yarn config set inline-builds true && \
 		npm config set fetch-timeout 60000 && \
-		yarn global add ghost-cli@latest
+    npm config set progress && \
+    npm config set omit dev
+
+RUN	yarn global add ghost-cli@latest
 
 # Define the GHOST_VERSION build argument and set it as an environment variable
 ARG GHOST_VERSION
@@ -36,11 +34,14 @@ RUN mkdir -pv "$GHOST_INSTALL" && \
 # Switch to the "node" user and set the working directory to the home directory
 USER node
 # WORKDIR /home/node
+RUN yarn config set network-timeout 180000 && \
+  yarn config set inline-builds true && \
+  npm config set fetch-timeout 180000 && \
+  npm config set progress && \
+  npm config set omit dev
 
 # Install Ghost with the specified version, using MySQL as the database, and configure it without prompts, stack traces, setup, and in the specified installation directory
-RUN yarn config set network-timeout 180000 && \
-    yarn config set verbose true && \
-    ghost install $GHOST_VERSION --db mysql --dbhost mysql --no-prompt --no-stack --no-setup --dir $GHOST_INSTALL
+RUN ghost install $GHOST_VERSION --dir $GHOST_INSTALL --db mysql --dbhost mysql --no-prompt --no-stack --no-setup --color --process local
 
 # Switch back to the root user
 USER root
@@ -57,20 +58,25 @@ RUN mv -v $GHOST_CONTENT $GHOST_CONTENT_ORIGINAL && \
 USER node
 
 # Stage 2: Final Image
-FROM gcr.io/distroless/nodejs20-debian12:latest@sha256:f6fb706e8c52ea418094336f80da6f425396abf763d8d45a3fdd8a9c22cd5a08
+FROM gcr.io/distroless/nodejs20-debian12:latest AS runtime
 
 # Set the installation directory and content directory for Ghost
 ENV GHOST_INSTALL /var/lib/ghost
 ENV GHOST_CONTENT /var/lib/ghost/content
+ENV GHOST_CONTENT_ORIGINAL /var/lib/ghost/content.orig
 
 # Copy the Ghost installation directory from the build environment to the final image
 COPY --from=build-env $GHOST_INSTALL $GHOST_INSTALL
 
 # Set the working directory to the Ghost installation directory and create a volume for the content directory
 # The volume is used to persist the data across container restarts, upgrades, and migrations. 
-# It's going to be handled with an init container that will copy the content from the original content directory to the new content directory.
+# It's going to be handled with an init container that will copy the content from your original content directory to the new content directory (If there is any)
+# The CMD script will handle default themes included (Casper and Source) and init Ghost.
+
 WORKDIR $GHOST_INSTALL
 VOLUME $GHOST_CONTENT
+
+# Copy the entrypoint script to the current Ghost version.
 COPY --chown=1000:1000 entrypoint.js current/entrypoint.js
 
 

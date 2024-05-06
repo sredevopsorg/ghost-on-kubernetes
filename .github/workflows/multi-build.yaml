@@ -9,6 +9,15 @@ on:
     paths:
         - "Dockerfile"
         - .github/workflows/multi-build.yaml
+        - "entrypoint.js"
+  pull_request:
+    branches:
+      - "main"
+    paths:
+        - "Dockerfile"
+        - .github/workflows/multi-build.yaml
+        - "entrypoint.js"
+
   workflow_dispatch:
     inputs:
       manual-tag:
@@ -22,15 +31,18 @@ on:
         default: '5.82.6'
         type: string
 
-permissions: write-all
+permissions: 
+  contents: read
 
 env:
   GHCR_IMAGE: ghcr.io/${{ github.repository }}
-  DOCKER_IMAGE: docker.io/${{ vars.DOCKER_USER }}/${{ github.event.repository.name }}
+  DOCKER_IMAGE: docker.io/${{ secrets.DOCKER_USER }}/${{ github.event.repository.name }}
 
 
 jobs:
   build:
+    permissions: write-all
+
     runs-on: ubuntu-22.04
     strategy:
       fail-fast: true
@@ -76,7 +88,6 @@ jobs:
       - name: Docker meta default
         id: meta
         uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81 # v5.5.1
-        continue-on-error: true
         with:
           images: ${{ env.GHCR_IMAGE }}
           labels: | # Add description label for opencontainers specs to the $DOCKER_METADATA_OUTPUT_JSON variable.
@@ -103,11 +114,12 @@ jobs:
 
       -
         name: Login to GitHub Container Registry
+        if: ${{ github.event_name != 'pull_request' }}
         uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.GHCR_USER }}
+          password: ${{ secrets.GHCR_PASS }}
       -
         name: Build and push by digest
         id: build
@@ -140,6 +152,8 @@ jobs:
     runs-on: ubuntu-22.04
     needs:
       - build
+    permissions: write-all
+    if: ${{ github.event_name != 'pull_request' }}
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@a4aa98b93cab29d9b1101a6143fb8bce00e2eac4 # v2.7.1
@@ -172,6 +186,7 @@ jobs:
             type=raw,value=v${{ github.env.GHOST_VERSION }},enable=${{ github.event_name == 'workflow_dispatch' }}
       -
         name: Login to GitHub Container Registry
+        if: github.event_name != 'pull_request'
         uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
         with:
           registry: ghcr.io
@@ -179,6 +194,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       -
         name: Create manifest list and pushs
+        if: github.event_name != 'pull_request'
         working-directory: /tmp/digests
         id: manifest
         run: |
@@ -186,12 +202,14 @@ jobs:
             $(printf '${{ env.GHCR_IMAGE }}@sha256:%s ' *)
       -
         name: Inspect image
+        if: github.event_name != 'pull_request'
         id: inspect
         run: |
           docker buildx imagetools inspect ${{ env.GHCR_IMAGE }}:${{ steps.meta.outputs.version }}
 
 
       - name: Run Trivy vulnerability scanner
+        if: github.event_name != 'pull_request'
         uses: aquasecurity/trivy-action@7088d18dcb87884bc7b5a4000d5517d758e9aa13 # master
         continue-on-error: true
         with:
@@ -205,6 +223,7 @@ jobs:
 
 
       - name: Upload Trivy scan results to GitHub Security tab
+        if: github.event_name != 'pull_request'
         uses: github/codeql-action/upload-sarif@41857bab356c91c1decab862427445155c08ca39 # main
         continue-on-error: true
         with:
@@ -213,6 +232,7 @@ jobs:
 
       -
         name: Login to Docker Hub
+        if: github.event_name != 'pull_request'
         uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
         continue-on-error: true
         with:
@@ -221,8 +241,10 @@ jobs:
 
       -
         name: Push to Docker Hub
+        if: github.event_name != 'pull_request'
         continue-on-error: true
         run: |
           docker buildx imagetools create \
             --tag ${{ env.DOCKER_IMAGE }}:${{ steps.meta.outputs.version }} \
+            --tag ${{ env.DOCKER_IMAGE }}:latest \
             ${{ env.GHCR_IMAGE }}:${{ steps.meta.outputs.version }}
