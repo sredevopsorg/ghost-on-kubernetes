@@ -2,12 +2,19 @@ name: Run Trivy scans
 
 on:
   workflow_dispatch:
+    inputs:
+      manual-tag:
+        description: 'Manual Tag'
+        required: true
+        default: 'main'
+        type: string
   
   workflow_run:
     workflows: ['multi-build', 'build-custom-image' ]
     types: [completed]
     branches:
       - 'main'
+
 
 jobs:
   trivy:
@@ -19,6 +26,7 @@ jobs:
       contents: read
       actions: read
       id-token: write
+      security-events: write
 
     steps:
       - name: Harden Runner
@@ -26,12 +34,12 @@ jobs:
         with:
           egress-policy: audit
 
-      - name: Run Trivy vulnerability scanner
-        if: github.event_name != 'pull_request'
+      - name: Trivy Scan for Workflow Dispatch
         uses: aquasecurity/trivy-action@7088d18dcb87884bc7b5a4000d5517d758e9aa13 # master
-        continue-on-error: true
+        id: trivy-workflow-dispatch
+        if: github.event_name == 'workflow_dispatch'
         with:
-          image-ref: ${{ github.repository }}
+          image-ref: 'ghcr.io/${{ github.repository }}:${{ github.event.inputs.manual-tag }}'
           format: 'sarif'
           output: 'trivy-results.sarif'
           scan-type: 'image'
@@ -39,11 +47,23 @@ jobs:
           ignore-unfixed: true
           severity: 'CRITICAL,HIGH'
 
+      - name: Trivy Scan for Workflow Run
+        uses: aquasecurity/trivy-action@7088d18dcb87884bc7b5a4000d5517d758e9aa13 # master
+        id: trivy-workflow-run
+        if: github.event_name == 'workflow_run'
+        with:
+          image-ref: 'ghcr.io/${{ github.repository }}:${{ github.event.workflow_run.head_commit.id }}'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          scan-type: 'image'
+          github-pat: '${{ github.token }}'
+          ignore-unfixed: true
+          severity: 'CRITICAL,HIGH'
 
       - name: Upload Trivy scan results to GitHub Security tab
-        if: github.event_name != 'pull_request'
         uses: github/codeql-action/upload-sarif@41857bab356c91c1decab862427445155c08ca39 # main
-        continue-on-error: true
+        continue-on-error: false
+        if: steps.trivy-workflow-dispatch.outputs.trivy-results != '' || steps.trivy-workflow-run.outputs.trivy-results != ''
         with:
           sarif_file: 'trivy-results.sarif'
 
