@@ -1,0 +1,49 @@
+name: Run Trivy scans
+
+on:
+  workflow_dispatch:
+  
+  workflow_run:
+    workflows: ['multi-build', 'build-custom-image' ]
+    types: [completed]
+    branches:
+      - 'main'
+
+jobs:
+  trivy:
+    name: Run Trivy Scans
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      repository-projects: read
+      contents: read
+      actions: read
+      id-token: write
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@a4aa98b93cab29d9b1101a6143fb8bce00e2eac4 # v2.7.1
+        with:
+          egress-policy: audit
+
+      - name: Run Trivy vulnerability scanner
+        if: github.event_name != 'pull_request'
+        uses: aquasecurity/trivy-action@7088d18dcb87884bc7b5a4000d5517d758e9aa13 # master
+        continue-on-error: true
+        with:
+          image-ref: ${{ github.repository }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          scan-type: 'image'
+          github-pat: '${{ github.token }}'
+          ignore-unfixed: true
+          severity: 'CRITICAL,HIGH'
+
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        if: github.event_name != 'pull_request'
+        uses: github/codeql-action/upload-sarif@41857bab356c91c1decab862427445155c08ca39 # main
+        continue-on-error: true
+        with:
+          sarif_file: 'trivy-results.sarif'
+
