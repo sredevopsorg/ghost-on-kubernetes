@@ -1,12 +1,12 @@
 name: Build Multiarch
 on:
-  push:
-    branches:
-      - "main"
-    paths:
-        - "Dockerfile"
-        - ".github/workflows/multi-build.yaml"
-        - "entrypoint.js"
+  release:
+    types:
+      - published
+#    paths:
+#        - "Dockerfile"
+#        - ".github/workflows/multi-build.yaml"
+#        - "entrypoint.js"
   workflow_dispatch:
     inputs:
       manual-tag:
@@ -22,6 +22,8 @@ on:
 
 permissions: 
   contents: read
+  actions: read
+  statuses: read
 
 env:
   GHCR_IMAGE: ghcr.io/${{ github.repository }}
@@ -30,7 +32,16 @@ env:
 
 jobs:
   build:
-    permissions: write-all
+    permissions:
+      attestations: write
+      actions: write
+      id-token: write
+      statuses: write
+      checks: write
+      contents: write
+      packages: write
+      security-events: write
+      
 
     runs-on: ubuntu-22.04
     strategy:
@@ -78,10 +89,12 @@ jobs:
       - name: Docker meta default
         id: meta
         uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81 # v5.5.1
+        env:
+          DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
         with:
           images: ${{ env.GHCR_IMAGE }}
-          labels: | # Add description label for opencontainers specs to the $DOCKER_METADATA_OUTPUT_JSON variable.
-            org.opencontainers.image.description: "${{ github.event.repository.description }}"
+          #labels: | # Add description label for opencontainers specs to the $DOCKER_METADATA_OUTPUT_JSON variable.
+          #  org.opencontainers.image.description: "${{ github.event.repository.description }}"
 
           # tags: |
           #   type=raw,value=latest,enable=${{ github.event_name == 'push' || github.ref == 'refs/heads/main' || github.event.ref == 'tags/v*' }}
@@ -117,6 +130,7 @@ jobs:
           context: .
           platforms: ${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}
+          annotations: ${{ steps.meta.outputs.annotations }}
           build-args: GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }} 
           outputs: type=image,name=${{ env.GHCR_IMAGE }},push-by-digest=true,name-canonical=true,push=true
           provenance: false
@@ -141,7 +155,17 @@ jobs:
     runs-on: ubuntu-22.04
     needs:
       - build
-    permissions: write-all
+
+    permissions:
+      attestations: write
+      actions: write
+      id-token: write
+      statuses: write
+      checks: write
+      contents: write
+      packages: write
+      security-events: write
+      
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@a4aa98b93cab29d9b1101a6143fb8bce00e2eac4 # v2.7.1
@@ -164,13 +188,17 @@ jobs:
         name: Docker meta
         id: meta
         uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81 # v5.5.1
+        env:
+          DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index        
         with:
           images: ${{ env.GHCR_IMAGE }}
           tags: |
-            type=raw,value=latest,enable=${{ github.event_name == 'push' || github.ref == 'refs/heads/main' || github.event.ref == 'tags/v*' }}
-            type=raw,value=main,enable=${{ github.event_name == 'push' || github.ref == 'refs/heads/main' || github.event.ref == 'tags/v*' }}
+            type=raw,value=latest,enable=${{ github.event_name == 'release' || github.ref == 'refs/heads/main' || github.event.ref == 'tags/v*' }}
+            type=raw,value=main,enable=${{ github.event_name == 'release' || github.ref == 'refs/heads/main' || github.event.ref == 'tags/v*' }}
             type=raw,value=${{ github.env.MANUAL_TAG }},enable=${{ github.event_name == 'workflow_dispatch' }}
             type=raw,value=v${{ github.env.GHOST_VERSION }},enable=${{ github.event_name == 'workflow_dispatch' }}
+          
+            
       -
         name: Login to GitHub Container Registry
         uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
