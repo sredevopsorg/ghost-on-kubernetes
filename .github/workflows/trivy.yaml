@@ -35,7 +35,7 @@ jobs:
           egress-policy: audit
 
       - name: Trivy Scan for Workflow Dispatch
-        uses: aquasecurity/trivy-action@7088d18dcb87884bc7b5a4000d5517d758e9aa13 # master
+        uses: aquasecurity/trivy-action@b2933f565dbc598b29947660e66259e3c7bc8561 # master
         id: trivy-workflow-dispatch
         if: github.event_name == 'workflow_dispatch'
         with:
@@ -48,7 +48,7 @@ jobs:
           severity: 'CRITICAL,HIGH'
 
       - name: Trivy Scan for Workflow Run
-        uses: aquasecurity/trivy-action@7088d18dcb87884bc7b5a4000d5517d758e9aa13 # master
+        uses: aquasecurity/trivy-action@b2933f565dbc598b29947660e66259e3c7bc8561 # master
         id: trivy-workflow-run
         if: github.event_name == 'workflow_run'
         with:
