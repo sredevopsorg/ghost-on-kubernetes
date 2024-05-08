@@ -89,8 +89,6 @@ jobs:
       - name: Docker meta default
         id: meta
         uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81 # v5.5.1
-        env:
-          DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
         with:
           images: ${{ env.GHCR_IMAGE }}
           #labels: | # Add description label for opencontainers specs to the $DOCKER_METADATA_OUTPUT_JSON variable.
