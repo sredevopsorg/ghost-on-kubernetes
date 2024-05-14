@@ -45,7 +45,7 @@ jobs:
 
     runs-on: ubuntu-22.04
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         platform:
           - linux/amd64
@@ -161,7 +161,6 @@ jobs:
 
     permissions:
       attestations: write
-
       actions: write
       checks: write
       contents: write
@@ -205,9 +204,9 @@ jobs:
           annotations: ${{ github.job.build.steps.meta.outputs.annotations || github.job.build.steps.meta.outputs.json.annotations }}
           labels: ${{ github.job.build.steps.meta.outputs.labels || github.job.build.steps.meta.outputs.json.labels }}
           tags: |
-            type=ref,value=main,enable=${{ github.event_name == 'release' || github.ref == 'refs/heads/main' || github.event.ref == 'tags/v*' }}
-            type=raw,value=latest,enable=${{ github.event_name == 'release' || github.ref == 'refs/heads/main' || github.event.ref == 'tags/v*' }}
-            type=raw,value=${{ github.env.MANUAL_TAG }},enable=${{ github.event_name == 'workflow_dispatch' || github.env.MANUAL_TAG != '' }}
+            type=raw,value=main,enable={{is_default_branch}}
+            type=raw,value=latest,enable=${{ github.event_name == 'release' }}
+            type=raw,value=${{ github.env.MANUAL_TAG }},enable=${{ github.event_name == 'workflow_dispatch' }}
             type=raw,value=v${{ github.job.build.steps.versions.outputs.GHOST_VERSION }},enable=${{ github.event_name == 'workflow_dispatch' }}          
       -
         name: Login to GitHub Container Registry
