@@ -15,7 +15,6 @@ jobs:
   clean-ghcr:
     name: Delete old unused container images
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@a4aa98b93cab29d9b1101a6143fb8bce00e2eac4 # v2.7.1
@@ -34,3 +33,4 @@ jobs:
           token-type: github-token
           token: ${{ github.token }}
           skip-tags: main
+          

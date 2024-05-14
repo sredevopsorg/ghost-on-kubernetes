@@ -165,7 +165,6 @@ jobs:
 
     permissions:
       attestations: write
-
       actions: write
       checks: write
       contents: write
