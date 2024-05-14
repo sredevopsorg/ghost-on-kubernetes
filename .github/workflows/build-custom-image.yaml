@@ -1,4 +1,4 @@
-name: Custom Ghost version, manual tag (amd64)
+name: build-custom-image
 
 on:
   workflow_dispatch:
@@ -11,7 +11,7 @@ on:
       ghost_version:
         description: 'Ghost version'
         required: true
-        default: '5.82.4'
+        default: '5.82.9'
         type: string
 
 jobs:
@@ -24,6 +24,9 @@ jobs:
       id-token: write
       actions: read
       attestations: write
+      security-events: write
+      repository-projects: read
+
 
     steps:
       - name: Harden Runner

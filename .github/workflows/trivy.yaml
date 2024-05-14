@@ -8,13 +8,12 @@ on:
         required: true
         default: 'main'
         type: string
-  
-  workflow_run:
-    workflows: ['multi-build', 'build-custom-image' ]
-    types: [completed]
-    branches:
-      - 'main'
+  workflow_call:
 
+  workflow_run:
+    workflows: ["multi-build", "build-custom-image"]
+    types:
+      - completed
 
 jobs:
   trivy:
@@ -49,10 +48,10 @@ jobs:
 
       - name: Trivy Scan for Workflow Run
         uses: aquasecurity/trivy-action@b2933f565dbc598b29947660e66259e3c7bc8561 # master
-        id: trivy-workflow-run
-        if: github.event_name == 'workflow_run'
+        id: trivy-workflow
+        if: github.event_name != 'workflow_dispatch'
         with:
-          image-ref: 'ghcr.io/${{ github.repository }}:${{ github.event.workflow_run.head_commit.id }}'
+          image-ref: 'ghcr.io/${{ github.repository }}'
           format: 'sarif'
           output: 'trivy-results.sarif'
           scan-type: 'image'
@@ -63,7 +62,6 @@ jobs:
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@08487dbb935885da4494ab75f3072fa0ebe0853e # main
         continue-on-error: false
-        if: always()
         with:
           sarif_file: 'trivy-results.sarif'
 
