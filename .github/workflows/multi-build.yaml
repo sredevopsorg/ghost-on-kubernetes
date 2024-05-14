@@ -96,9 +96,6 @@ jobs:
         uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81 # v5.5.1
         with:
           images: ${{ env.GHCR_IMAGE }}
-          annotations: |
-            org.opencontainers.image.description=${{ github.event.repository.description }}
-
       -
         name: Set up QEMU
         uses: docker/setup-qemu-action@68827325e0b33c7199eb31dd4e31fbe9023e06e3 # v3.0.0
@@ -195,15 +192,10 @@ jobs:
         name: Docker meta
         id: meta
         uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81 # v5.5.1
-        env:
-          DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
         with:
           images: ${{ env.GHCR_IMAGE }}
           annotations: |
             type=org.opencontainers.image.description,value=${{ github.event.repository.description }}
-            type=org.opencontainers.image.url,value=${{ github.event.repository.html_url }}
-            type=org.opencontainers.image.source,value=${{ github.event.repository.clone_url }}
-            type=org.opencontainers.image.vendor,value=${{ github.event.organization.login }}
           tags: |
             type=raw,value=main,enable={{is_default_branch}}
             type=raw,value=latest,enable={{is_default_branch}}
@@ -221,9 +213,7 @@ jobs:
         working-directory: /tmp/digests
         id: manifest
         run: |
-              docker buildx imagetools create \
-                --annotation org.opencontainers.image.description="${{ github.event.repository.description }}" \
-                $(jq -cr '.tags | map("--tag " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+              docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
                 $(printf '${{ env.GHCR_IMAGE }}@sha256:%s ' *)
 #            $(jq -cr '.annotations | map("--annotation " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
       -
