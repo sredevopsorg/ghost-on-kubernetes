@@ -12,12 +12,12 @@ on:
     inputs:
       manual-tag:
         description: 'Manual Tag'
-        required: false
+        required: true
         default: 'manual'
         type: string
       ghost_version:
         description: 'Ghost version'
-        required: false
+        required: true
         default: '5.82.9'
         type: string
   workflow_call:
@@ -45,7 +45,7 @@ jobs:
 
     runs-on: ubuntu-22.04
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         platform:
           - linux/amd64
@@ -57,8 +57,6 @@ jobs:
         run: |
           platform=${{ matrix.platform }}
           echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
-          echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_OUTPUTS
-
       - 
         name: Harden Runner
         uses: step-security/harden-runner@a4aa98b93cab29d9b1101a6143fb8bce00e2eac4 # v2.7.1
@@ -96,15 +94,8 @@ jobs:
       - name: Docker meta default
         id: meta
         uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81 # v5.5.1
-        env:
-          DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
         with:
           images: ${{ env.GHCR_IMAGE }}
-          labels: |
-            org.opencontainers.image.description=${{ github.event.repository.description }}
-          annotations: |
-            org.opencontainers.image.description=${{ github.event.repository.description }}
-
       -
         name: Set up QEMU
         uses: docker/setup-qemu-action@68827325e0b33c7199eb31dd4e31fbe9023e06e3 # v3.0.0
@@ -165,7 +156,6 @@ jobs:
 
     permissions:
       attestations: write
-
       actions: write
       checks: write
       contents: write
@@ -202,17 +192,15 @@ jobs:
         name: Docker meta
         id: meta
         uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81 # v5.5.1
-        env:
-          DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
         with:
           images: ${{ env.GHCR_IMAGE }}
-          annotations: ${{ github.job.build.steps.meta.outputs.annotations || github.job.build.steps.meta.outputs.json.annotations }}
-          labels: ${{ github.job.build.steps.meta.outputs.labels || github.job.build.steps.meta.outputs.json.labels }}
+          annotations: |
+            type=org.opencontainers.image.description,value=${{ github.event.repository.description }}
           tags: |
-            type=ref,value=main,enable=${{ github.event_name == 'release' || github.ref == 'refs/heads/main' || github.event.ref == 'tags/v*' }}
-            type=raw,value=latest,enable=${{ github.event_name == 'release' || github.ref == 'refs/heads/main' || github.event.ref == 'tags/v*' }}
-            type=raw,value=${{ github.env.MANUAL_TAG }},enable=${{ github.event_name == 'workflow_dispatch' || github.env.MANUAL_TAG != '' }}
-            type=raw,value=v${{ github.job.build.steps.versions.outputs.GHOST_VERSION }},enable=${{ github.event_name == 'workflow_dispatch' }}          
+            type=raw,value=main,enable={{is_default_branch}}
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=${{ github.event.inputs.manual-tag }},enable=${{ github.event_name == 'workflow_dispatch' }}
+
       -
         name: Login to GitHub Container Registry
         uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
@@ -225,10 +213,9 @@ jobs:
         working-directory: /tmp/digests
         id: manifest
         run: |
-          docker buildx imagetools create \
-            $(jq -cr '.tags | map("--tag " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
-            $(jq -cr '.annotations | map("--annotation " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
-          $(printf '${{ env.GHCR_IMAGE }}@sha256:%s ' *)
+              docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+                $(printf '${{ env.GHCR_IMAGE }}@sha256:%s ' *)
+#            $(jq -cr '.annotations | map("--annotation " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
       -
         name: Inspect image
         id: inspect
