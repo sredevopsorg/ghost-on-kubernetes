@@ -14,6 +14,9 @@ on:
         default: '5.82.9'
         type: string
 
+permissions:
+  contents: read
+
 jobs:
   build-custom-version:
     runs-on: ubuntu-latest
