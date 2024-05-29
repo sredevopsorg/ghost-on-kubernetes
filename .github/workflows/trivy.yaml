@@ -15,6 +15,9 @@ on:
     types:
       - completed
 
+permissions:
+  contents: read
+
 jobs:
   trivy:
     name: Run Trivy Scans
