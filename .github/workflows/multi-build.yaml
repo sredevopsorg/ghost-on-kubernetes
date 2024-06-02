@@ -197,11 +197,11 @@ jobs:
         uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81 # v5.5.1
         with:
           images: ${{ env.GHCR_IMAGE }}
-          annotations: |
-            type=org.opencontainers.image.description,value=${{ github.event.repository.description }}
+#          annotations: |
+#            type=org.opencontainers.image.description,value=${{ github.event.repository.description }}
           tags: |
-            type=raw,value=main,enable={{is_default_branch}}
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=main
+            type=raw,value=latest
             type=raw,value=${{ github.event.inputs.manual-tag }},enable=${{ github.event_name == 'workflow_dispatch' }}
 
       -
