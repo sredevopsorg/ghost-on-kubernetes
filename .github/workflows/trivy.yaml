@@ -5,7 +5,7 @@ on:
     inputs:
       manual-tag:
         description: 'Manual Tag'
-        required: true
+        required: false
         default: 'main'
         type: string
   workflow_call:
@@ -25,8 +25,8 @@ jobs:
     permissions:
       packages: write
       repository-projects: read
-      contents: read
-      actions: read
+      contents: write
+      actions: write
       id-token: write
       security-events: write
 
@@ -46,25 +46,25 @@ jobs:
           output: 'trivy-results.sarif'
           scan-type: 'image'
           github-pat: '${{ github.token }}'
-          ignore-unfixed: true
-          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: false
+          severity: 'UNKNOWN,CRITICAL,HIGH'
+
 
       - name: Trivy Scan for Workflow Run
         uses: aquasecurity/trivy-action@fd25fed6972e341ff0007ddb61f77e88103953c2 # v0.21.0
         id: trivy-workflow
         if: github.event_name != 'workflow_dispatch'
         with:
-          image-ref: 'ghcr.io/${{ github.repository }}'
+          image-ref: 'ghcr.io/${{ github.repository }}:latest'
           format: 'sarif'
           output: 'trivy-results.sarif'
           scan-type: 'image'
           github-pat: '${{ github.token }}'
-          ignore-unfixed: true
-          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: false
+          severity: 'UNKNOWN,CRITICAL,HIGH'
 
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@a095bf2a16b83cb3b52e6adba696c70f41e82864 # main
+        uses: github/codeql-action/upload-sarif@v2
         continue-on-error: false
         with:
           sarif_file: 'trivy-results.sarif'
-
