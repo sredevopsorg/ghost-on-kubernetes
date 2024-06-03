@@ -2,7 +2,7 @@
 # The image is built with official Node 20 on Debian Bookworm (LTS Iron)  image and uses the Distroless base image for security and minimalism.
 
 # Stage 1: Build Environment
-FROM node:iron-bookworm AS build-env
+FROM node:iron-bookworm@sha256:ab71b9da5ba19445dc5bb76bf99c218941db2c4d70ff4de4e0d9ec90920bfe3f AS build-env
 
 ENV NODE_ENV=production DEBIAN_FRONTEND=noninteractive
 
@@ -58,7 +58,7 @@ RUN mv -v $GHOST_CONTENT $GHOST_CONTENT_ORIGINAL && \
 USER node
 
 # Stage 2: Final Image
-FROM gcr.io/distroless/nodejs20-debian12:latest AS runtime
+FROM gcr.io/distroless/nodejs20-debian12:latest@sha256:1b210ce3c1983aca04be9647b073e494bb75f02902a3ad086537fab72807ee73 AS runtime
 
 # Set the installation directory and content directory for Ghost
 ENV GHOST_INSTALL /var/lib/ghost

@@ -4,18 +4,20 @@ on:
   workflow_dispatch:
 
 permissions:
-  packages: write
-  repository-projects: read
   contents: read
-  actions: read
-  id-token: write
 
 
 jobs:
   clean-ghcr:
     name: Delete old unused container images
     runs-on: ubuntu-latest
-    continue-on-error: true
+    permissions:
+      packages: write
+      repository-projects: read
+      contents: read
+      actions: read
+      id-token: write
+
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@f086349bfa2bd1361f7909c78558e816508cdc10 # v2.8.0
@@ -23,7 +25,7 @@ jobs:
           egress-policy: audit
 
       - name: Delete 'ghost-on-kubernetes' containers older than a week
-        uses: sredevopsorg/container-retention-policy@main # v2.0.1
+        uses: sredevopsorg/container-retention-policy@4aa1833d7b7493ee2bd6964f4b33913d5819ce0d # main
         with:
           image-names: ghost-on-kubernetes
           cut-off: A week ago UTC

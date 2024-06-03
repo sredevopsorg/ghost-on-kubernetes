@@ -26,6 +26,9 @@ on:
 env:
   GHCR_IMAGE: ghcr.io/${{ github.repository }}
   DOCKER_IMAGE: docker.io/${{ secrets.DOCKER_USER }}/${{ github.event.repository.name }}
+permissions:
+  contents: read
+
 jobs:
   build:
     permissions:
@@ -113,7 +116,7 @@ jobs:
 
       -
         name: Login to GitHub Container Registry
-        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
+        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
         with:
           registry: ghcr.io
           username: ${{ secrets.GHCR_USER }}
@@ -194,16 +197,16 @@ jobs:
         uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81 # v5.5.1
         with:
           images: ${{ env.GHCR_IMAGE }}
-          annotations: |
-            type=org.opencontainers.image.description,value=${{ github.event.repository.description }}
+#          annotations: |
+#            type=org.opencontainers.image.description,value=${{ github.event.repository.description }}
           tags: |
-            type=raw,value=main,enable={{is_default_branch}}
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=main
+            type=raw,value=latest
             type=raw,value=${{ github.event.inputs.manual-tag }},enable=${{ github.event_name == 'workflow_dispatch' }}
 
       -
         name: Login to GitHub Container Registry
-        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
+        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -225,7 +228,7 @@ jobs:
 
       -
         name: Login to Docker Hub
-        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
+        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
         continue-on-error: true
         with:
           username: ${{ secrets.DOCKER_USER }}
