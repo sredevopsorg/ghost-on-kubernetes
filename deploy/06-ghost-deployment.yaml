@@ -42,6 +42,7 @@ spec:
       - name: ghost-k8s-init
         image: docker.io/busybox:stable-musl
         env:
+
         - name: GHOST_INSTALL
           value: /var/lib/ghost
         - name: GHOST_CONTENT
@@ -64,18 +65,15 @@ spec:
           - |
             set -e
 
-            # Check if the following directories exists under $GHOST_CONTENT directory, if not, create them and then change the ownership to 1000:1000
             export DIRS="files logs apps themes data public settings images media"
+            echo 'Check if base dirs exists, if not, create them'
+            echo "Directories to check: $DIRS"
             for dir in $DIRS; do
               if [ ! -d $GHOST_CONTENT/$dir ]; then
                 echo "Creating $GHOST_CONTENT/$dir directory"
-                mkdir -pv $GHOST_CONTENT/$dir && chown -Rf 1000:1000 $GHOST_CONTENT/$dir || echo "Error creating $GHOST_CONTENT/$dir directory" && true
+                mkdir -pv $GHOST_CONTENT/$dir && chown -Rfv 1000:1000 $GHOST_CONTENT/$dir || echo "Error creating $GHOST_CONTENT/$dir directory" && true
               fi
             done
-
-
-            echo 'Delete and clean $GHOST_CONTENT/public directory and recreate it'
-            rm -rfv $GHOST_CONTENT/public && mkdir -pv $GHOST_CONTENT/public || echo 'Error deleting and cleaning $GHOST_CONTENT/public directory and recreating it' && true
 
             echo 'Check if the directory $GHOST_CONTENT/themes ownership is different from UID 1000 and GID 1000, if so, change it to 1000:1000 recursively and verbose.'
             if [ "$(stat -c '%u:%g' $GHOST_CONTENT/themes)" != "1000:1000" ]; then
@@ -86,7 +84,7 @@ spec:
             echo 'Check if the directory $GHOST_CONTENT/public ownership is different from UID 1000 and GID 1000, if so, change it to 1000:1000 recursively and verbose.'
             if [ "$(stat -c '%u:%g' $GHOST_CONTENT/public)" != "1000:1000" ]; then
               echo 'Changing ownership of $GHOST_CONTENT/public directory to 1000:1000'
-              chown -Rf 1000:1000 $GHOST_CONTENT/public || echo 'Error changing ownership of $GHOST_CONTENT/public directory to 1000:1000' && true
+              chown -Rfv 1000:1000 $GHOST_CONTENT/public || echo 'Error changing ownership of $GHOST_CONTENT/public directory to 1000:1000' && true
             fi
 
         volumeMounts:
@@ -104,6 +102,20 @@ spec:
           protocol: TCP
 
         # You should uncomment the following lines in production. Change the values according to your environment.
+        # readinessProbe:
+        #   httpGet:
+        #     path: /ghost/api/v4/admin/site/
+        #     port: ghk8s
+        #     httpHeaders:
+        #     - name: X-Forwarded-Proto
+        #       value: https
+        #     - name: Host
+        #       value: tests.yourdomain.com
+        #   periodSeconds: 3600
+        #   timeoutSeconds: 5
+        #   successThreshold: 1
+        #   failureThreshold: 1
+        #   initialDelaySeconds: 60
 
         # livenessProbe:
         #   httpGet:
@@ -150,8 +162,9 @@ spec:
           runAsNonRoot: true
           runAsUser: 1000
 
+
       restartPolicy: Always
-      terminationGracePeriodSeconds: 15
+      terminationGracePeriodSeconds: 30
       dnsPolicy: ClusterFirst
       # Optional: Uncomment the following to specify node selectors
       # affinity:
@@ -170,7 +183,7 @@ spec:
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxUnavailable: 1
+      maxUnavailable: 0
       maxSurge: 3
-  revisionHistoryLimit: 3
+  revisionHistoryLimit: 4
   progressDeadlineSeconds: 600
