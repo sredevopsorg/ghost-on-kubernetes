@@ -9,7 +9,7 @@ stringData:
     {
       "url": "https://tests.yourdomain.com",
       "admin": {
-        "url": "https://tests.yourdomain.com",
+        "url": "https://tests.yourdomain.com"
       },
       "server": {
         "port": 2368,
@@ -49,5 +49,11 @@ stringData:
       "process": "local",
       "paths": {
         "contentPath": "/var/lib/ghost/content"
+      },
+      "privacy": {
+        "useUpdateCheck": false,
+        "useGravatar": false,
+        "useRpcPing": false,
+        "useStructuredData": true
       }
     }
