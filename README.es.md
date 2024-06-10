@@ -58,7 +58,7 @@ git checkout -b my-branch --no-track --detach
 
 ## 1. Comprobar las configuraciones de ejemplo
 
-- Hay algunos archivos de configuración de ejemplo en el [directorio `examples`](./examples/). Utilizamos la configuración almacenada como `kind: Secret` en el espacio de nombres `ghost-k8s` para la configuración de Ghost y MySQL. Existen dos archivos de configuración de ejemplo:
+- Hay algunos archivos de configuración de ejemplo en el [directorio `examples`](./examples/). Utilizamos la configuración almacenada como `kind: Secret` en el espacio de nombres `ghost-on-kubernetes` para la configuración de Ghost y MySQL. Existen dos archivos de configuración de ejemplo:
 
   - `config.development.sample.yaml`: Este archivo de configuración es para el entorno de desarrollo de Ghost. Utiliza SQLite como base de datos. Puede ser útil si desea probar la configuración de Ghost antes de implementarla en un entorno de producción.
   
@@ -76,8 +76,8 @@ git checkout -b my-branch --no-track --detach
     apiVersion: v1
     kind: Secret
     metadata:
-      name: mysql-ghost-k8s
-      namespace: ghost-k8s
+      name: mysql-ghost-on-kubernetes
+      namespace: ghost-on-kubernetes
     type: Opaque
     stringData:
       MYSQL_DATABASE: mysql-db-name # Igual que en deploy/04-config.production.yaml
@@ -119,10 +119,10 @@ kubectl apply -f deploy/07-ghost-ingress.yaml
 
 ```bash
 # Obtener la dirección IP de entrada
-kubectl get ing -n ghost-k8s -o wide 
+kubectl get ing -n ghost-on-kubernetes -o wide 
 
 # O bien, cree un reenvío de puertos para acceder al Ghost CMS
-kubectl port-forward -n ghost-k8s svc/ghost-k8s 2368:2368
+kubectl port-forward -n ghost-on-kubernetes svc/ghost-on-kubernetes 2368:2368
 
 ```
 

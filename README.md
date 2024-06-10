@@ -62,7 +62,7 @@ git checkout -b my-branch --no-track --detach
 
 ### 1. Check the example configurations
 
-- There are some example configuration files in the [examples](./examples/) directory. We use the stored configuration as a `kind: Secret` in the `ghost-k8s` namespace for Ghost and MySQL configuration. There are two example configuration files:
+- There are some example configuration files in the [examples](./examples/) directory. We use the stored configuration as a `kind: Secret` in the `ghost-on-kubernetes` namespace for Ghost and MySQL configuration. There are two example configuration files:
 
   - `config.development.sample.yaml`: This configuration file is for the Ghost development environment. It uses SQLite as the database. It can be useful if you want to test the Ghost configuration before implementing it in a production environment.
 
@@ -82,8 +82,8 @@ git checkout -b my-branch --no-track --detach
 apiVersion: v1
 kind: Secret
 metadata:
-  name: mysql-ghost-k8s
-  namespace: ghost-k8s
+  name: mysql-ghost-on-kubernetes
+  namespace: ghost-on-kubernetes
 type: Opaque
 stringData:
   MYSQL_DATABASE: mysql-db-name # Same as in deploy/04-config.production.yaml
@@ -114,10 +114,10 @@ kubectl apply -f ./deploy
 
 ```bash
 # Get the ingress IP, if you have configured the Ingress
-kubectl get ingress -n ghost-k8s -o wide 
+kubectl get ingress -n ghost-on-kubernetes -o wide 
 
 # Alternatively, create a port-forwarding rule to access the Ghost CMS
-kubectl port-forward -n ghost-k8s service/service-ghost-k8s 2368:2368
+kubectl port-forward -n ghost-on-kubernetes service/service-ghost-on-kubernetes 2368:2368
 ```
 
 ### 5. Open your browser and access your Ghost CMS
