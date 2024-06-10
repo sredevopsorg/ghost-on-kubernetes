@@ -199,19 +199,37 @@ jobs:
           driver-opts: |
             network=host
       -
+        name: Set up GHOST_VERSION and MANUAL_TAG values, depending on event type (push or workflow_dispatch)
+        id: versions
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if [ ${{ env.GITHUB_EVENT_NAME }} == workflow_dispatch ]; then
+            echo "GHOST_VERSION=${{ github.event.inputs.ghost_version }}" >> $GITHUB_OUTPUT
+            echo "MANUAL_TAG=${{ github.event.inputs.manual-tag }}" >> $GITHUB_OUTPUT
+            echo "GHOST_VERSION=${{ github.event.inputs.ghost_version }}" >> $GITHUB_ENV
+            echo "MANUAL_TAG=${{ github.event.inputs.manual-tag }}" >> $GITHUB_ENV
+          else
+            echo "GHOST_VERSION=$(curl -s https://api.github.com/repos/tryghost/ghost/releases/latest | jq '.name' | sed 's/\"//g')" >> $GITHUB_OUTPUT
+            echo "GHOST_VERSION=$(curl -s https://api.github.com/repos/tryghost/ghost/releases/latest | jq '.name' | sed 's/\"//g')" >> $GITHUB_ENV
+          fi
+
+      -
         name: Docker meta
         id: meta
         uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81 # v5.5.1
         env:
-          REPO_DESCRIPTION_TRUNCATED: $(echo "${{ github.event.repository.description }}" | head -c 255) # Truncate to 255 characters
+          GHOST_VERSION: "v${{ steps.versions.outputs.GHOST_VERSION }}"
         with:
           images: ${{ env.GHCR_IMAGE }}
           annotations: |
             type=org.opencontainers.image.description,value=${{ github.event.repository.description }}
           tags: |
-            type=ref,value=main,enable=${{ github.event_name != 'workflow_dispatch' }}
+            type=raw,value=main,enable=${{ github.event_name != 'workflow_dispatch' }}
             type=raw,value=latest,enable=${{ github.event_name != 'workflow_dispatch' }}
+            type=raw,value=${{ env.GHOST_VERSION }},enable=${{ github.event_name != 'workflow_dispatch' }}
             type=raw,value=${{ github.event.inputs.manual-tag }},enable=${{ github.event_name == 'workflow_dispatch' }}
+
 
       -
         name: Login to GitHub Container Registry
