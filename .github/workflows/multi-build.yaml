@@ -1,9 +1,15 @@
 name: multi-build
 on:
-  release:
-    types:
-      - released
-      - edited
+  push:
+    tags:
+      - v*
+
+
+  
+  # release:
+  #   types:
+  #     - released
+  #     - edited
 #    paths:
 #        - "Dockerfile"
 #        - ".github/workflows/multi-build.yaml"
@@ -99,6 +105,7 @@ jobs:
         uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81 # v5.5.1
         with:
           images: ${{ env.GHCR_IMAGE }}
+
       -
         name: Set up QEMU
         uses: docker/setup-qemu-action@68827325e0b33c7199eb31dd4e31fbe9023e06e3 # v3.0.0
@@ -135,8 +142,8 @@ jobs:
           build-args: GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }} 
           outputs: type=image,name=${{ env.GHCR_IMAGE }},push-by-digest=true,name-canonical=true,push=true,oci-mediatypes=true
           provenance: false
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,ignore-error=true
+          cache-to: type=gha,ignore-error=true
       -
         name: Export digest
         run: |
@@ -150,7 +157,7 @@ jobs:
           name: digests-${{ env.PLATFORM_PAIR }}
           path: /tmp/digests/*
           if-no-files-found: error
-          retention-days: 1
+          retention-days: 5
 
   merge:
     runs-on: ubuntu-22.04
@@ -195,13 +202,15 @@ jobs:
         name: Docker meta
         id: meta
         uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81 # v5.5.1
+        env:
+          REPO_DESCRIPTION_TRUNCATED: $(echo "${{ github.event.repository.description }}" | head -c 255) # Truncate to 255 characters
         with:
           images: ${{ env.GHCR_IMAGE }}
-#          annotations: |
-#            type=org.opencontainers.image.description,value=${{ github.event.repository.description }}
+          annotations: |
+            type=org.opencontainers.image.description,value=${{ github.event.repository.description }}
           tags: |
-            type=raw,value=main
-            type=raw,value=latest
+            type=ref,value=main,enable=${{ github.event_name != 'workflow_dispatch' }}
+            type=raw,value=latest,enable=${{ github.event_name != 'workflow_dispatch' }}
             type=raw,value=${{ github.event.inputs.manual-tag }},enable=${{ github.event_name == 'workflow_dispatch' }}
 
       -
@@ -218,7 +227,7 @@ jobs:
         run: |
               docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
                 $(printf '${{ env.GHCR_IMAGE }}@sha256:%s ' *)
-#            $(jq -cr '.annotations | map("--annotation " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+
       -
         name: Inspect image
         id: inspect

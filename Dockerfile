@@ -65,6 +65,8 @@ ENV GHOST_INSTALL /var/lib/ghost
 ENV GHOST_CONTENT /var/lib/ghost/content
 ENV GHOST_CONTENT_ORIGINAL /var/lib/ghost/content.orig
 
+USER node
+
 # Copy the Ghost installation directory from the build environment to the final image
 COPY --from=build-env $GHOST_INSTALL $GHOST_INSTALL
 

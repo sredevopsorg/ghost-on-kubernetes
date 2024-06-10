@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: ghost-config-development
-  namespace: ghost-k8s
+  namespace: ghost-on-kubernetes
 type: Opaque
 stringData:
   config.development.json: |-
