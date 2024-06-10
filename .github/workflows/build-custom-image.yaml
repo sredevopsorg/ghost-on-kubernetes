@@ -11,7 +11,7 @@ on:
       ghost_version:
         description: 'Ghost version'
         required: true
-        default: '5.82.9'
+        default: '5.84.2'
         type: string
 
 permissions:
@@ -29,6 +29,7 @@ jobs:
       attestations: write
       security-events: write
       repository-projects: read
+
 
 
     steps:
@@ -87,8 +88,8 @@ jobs:
         uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ github.token }}
+          username: ${{ secrets.GHCR_USER }}
+          password: ${{ secrets.GHCR_PASS }}
       -
         name: Login to Quay Container Registry
         uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
@@ -113,5 +114,6 @@ jobs:
           tags: ${{ steps.meta-workflow-dispatch.outputs.tags }}
           labels: ${{ steps.meta-workflow-dispatch.outputs.labels }}
           build-args: GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }}
+
 
 

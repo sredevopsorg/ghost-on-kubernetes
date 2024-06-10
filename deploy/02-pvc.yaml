@@ -2,14 +2,14 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: k8s-ghost-content
-  namespace: ghost-k8s
+  namespace: ghost-on-kubernetes
   labels:
-    app: ghost-k8s
-    app.kubernetes.io/name: ghost-k8s
-    app.kubernetes.io/instance: ghost-k8s
+    app: ghost-on-kubernetes
+    app.kubernetes.io/name: ghost-on-kubernetes
+    app.kubernetes.io/instance: ghost-on-kubernetes
     app.kubernetes.io/version: "5.8"
     app.kubernetes.io/component: storage
-    app.kubernetes.io/part-of: ghost-k8s
+    app.kubernetes.io/part-of: ghost-on-kubernetes
     app.kubernetes.io/managed-by: sredevopsorg
 spec:
   storageClassName: longhorn-rwx # Change this to your storageClassName
@@ -23,15 +23,15 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: mysql-ghost-k8s-pvc
-  namespace: ghost-k8s
+  name: mysql-ghost-on-kubernetes-pvc
+  namespace: ghost-on-kubernetes
   labels:
-    app: mysql-ghost-k8s
-    app.kubernetes.io/name: mysql-ghost-k8s-pvc
-    app.kubernetes.io/instance: ghost-k8s
+    app: mysql-ghost-on-kubernetes
+    app.kubernetes.io/name: mysql-ghost-on-kubernetes-pvc
+    app.kubernetes.io/instance: ghost-on-kubernetes
     app.kubernetes.io/version: "5.8"
     app.kubernetes.io/component: database-storage
-    app.kubernetes.io/part-of: ghost-k8s
+    app.kubernetes.io/part-of: ghost-on-kubernetes
     app.kubernetes.io/managed-by: sredevopsorg
 
 spec:

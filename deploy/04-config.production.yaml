@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: ghost-config-prod
-  namespace: ghost-k8s
+  namespace: ghost-on-kubernetes
 type: Opaque
 stringData:
   config.production.json: |-
@@ -38,7 +38,7 @@ stringData:
         "client": "mysql",
         "connection": 
         {
-          "host": "service-mysql-ghost-k8s",
+          "host": "service-mysql-ghost-on-kubernetes",
           "user": "mysql-db-user",
           "password": "mysql-db-password",
           "database": "mysql-db-name",

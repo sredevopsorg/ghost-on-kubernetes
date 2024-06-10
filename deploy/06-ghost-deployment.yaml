@@ -1,27 +1,27 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ghost-k8s
-  namespace: ghost-k8s
+  name: ghost-on-kubernetes
+  namespace: ghost-on-kubernetes
   labels:
-    app: ghost-k8s
-    app.kubernetes.io/name: ghost-k8s
-    app.kubernetes.io/instance: ghost-k8s
+    app: ghost-on-kubernetes
+    app.kubernetes.io/name: ghost-on-kubernetes
+    app.kubernetes.io/instance: ghost-on-kubernetes
     app.kubernetes.io/version: "5.8"
     app.kubernetes.io/component: ghost
-    app.kubernetes.io/part-of: ghost-k8s
+    app.kubernetes.io/part-of: ghost-on-kubernetes
     app.kubernetes.io/managed-by: sredevopsorg
     
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: ghost-k8s
+      app: ghost-on-kubernetes
   template:
     metadata:
-      namespace: ghost-k8s
+      namespace: ghost-on-kubernetes
       labels:
-        app: ghost-k8s
+        app: ghost-on-kubernetes
     spec:
       automountServiceAccountToken: false # Disable automounting of service account token
       volumes:
@@ -39,7 +39,7 @@ spec:
           sizeLimit: 64Mi
 
       initContainers:
-      - name: ghost-k8s-init
+      - name: ghost-on-kubernetes-init
         image: docker.io/busybox:stable-musl
         env:
 
@@ -71,21 +71,16 @@ spec:
             for dir in $DIRS; do
               if [ ! -d $GHOST_CONTENT/$dir ]; then
                 echo "Creating $GHOST_CONTENT/$dir directory"
-                mkdir -pv $GHOST_CONTENT/$dir && chown -Rfv 1000:1000 $GHOST_CONTENT/$dir || echo "Error creating $GHOST_CONTENT/$dir directory" && true
+                mkdir -pv $GHOST_CONTENT/$dir && chown -Rfv 1000:1000 $GHOST_CONTENT/$dir || echo "Error creating $GHOST_CONTENT/$dir directory"
               fi
             done
 
-            echo 'Check if the directory $GHOST_CONTENT/themes ownership is different from UID 1000 and GID 1000, if so, change it to 1000:1000 recursively and verbose.'
-            if [ "$(stat -c '%u:%g' $GHOST_CONTENT/themes)" != "1000:1000" ]; then
-              echo 'Changing ownership of $GHOST_CONTENT/themes directory to 1000:1000'
-              chown -Rf 1000:1000 $GHOST_CONTENT/themes || echo 'Error changing ownership of $GHOST_CONTENT/themes directory to 1000:1000' && true
-            fi
+            echo "Changing ownership of $GHOST_CONTENT/themes directory"
+            chown -Rfv 1000:1000 $GHOST_CONTENT/themes || echo "Error changing ownership of $GHOST_CONTENT themes directory"
 
-            echo 'Check if the directory $GHOST_CONTENT/public ownership is different from UID 1000 and GID 1000, if so, change it to 1000:1000 recursively and verbose.'
-            if [ "$(stat -c '%u:%g' $GHOST_CONTENT/public)" != "1000:1000" ]; then
-              echo 'Changing ownership of $GHOST_CONTENT/public directory to 1000:1000'
-              chown -Rfv 1000:1000 $GHOST_CONTENT/public || echo 'Error changing ownership of $GHOST_CONTENT/public directory to 1000:1000' && true
-            fi
+            echo "Changing ownership of $GHOST_CONTENT/public directory"
+            chown -Rfv 1000:1000 $GHOST_CONTENT/public || echo "Error changing ownership of $GHOST_CONTENT public directory"
+
 
         volumeMounts:
         - name: k8s-ghost-content
@@ -93,7 +88,7 @@ spec:
           readOnly: false
 
       containers:
-      - name: ghost-k8s
+      - name: ghost-on-kubernetes
         image: ghcr.io/sredevopsorg/ghost-on-kubernetes:main
         imagePullPolicy: Always
         ports:

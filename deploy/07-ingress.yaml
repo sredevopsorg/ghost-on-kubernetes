@@ -1,15 +1,15 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: ghost-k8s-ingress
-  namespace: ghost-k8s
+  name: ghost-on-kubernetes-ingress
+  namespace: ghost-on-kubernetes
   labels:
-    app: ghost-k8s
-    app.kubernetes.io/name: ghost-k8s
-    app.kubernetes.io/instance: ghost-k8s
+    app: ghost-on-kubernetes
+    app.kubernetes.io/name: ghost-on-kubernetes
+    app.kubernetes.io/instance: ghost-on-kubernetes
     app.kubernetes.io/version: "5.8"
     app.kubernetes.io/component: ingress
-    app.kubernetes.io/part-of: ghost-k8s
+    app.kubernetes.io/part-of: ghost-on-kubernetes
     app.kubernetes.io/managed-by: sredevopsorg
 spec:
   ingressClassName: traefik # Or your ingress controller 
@@ -27,7 +27,7 @@ spec:
         pathType: ImplementationSpecific
         backend:
           service:
-            name: service-ghost-k8s
+            name: service-ghost-on-kubernetes
             port:
               name: ghk8s
   # Optional:
@@ -38,7 +38,7 @@ spec:
   #       pathType: ImplementationSpecific
   #       backend:
   #         service:
-  #           name: service-ghost-k8s
+  #           name: service-ghost-on-kubernetes
   #           port:
   #             name: ghk8s
 
