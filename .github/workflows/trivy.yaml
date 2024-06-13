@@ -33,15 +33,13 @@ jobs:
       id-token: write
       security-events: write
 
-    steps:          
-      - name: Checkout code
-        uses: actions/checkout@v3
-        
+    steps:                  
       - name: Harden Runner
         uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
         with:
           egress-policy: audit
-
+      - name: Checkout code
+        uses: actions/checkout@v3
 
       - name: Trivy Scan for Workflow Dispatch
         uses: aquasecurity/trivy-action@0.22.0
@@ -60,9 +58,9 @@ jobs:
       - name: Trivy Scan for Workflow Run
         uses: aquasecurity/trivy-action@0.22.0
         id: trivy-workflow
-        if: ${{ github.event_name == push || github.event_name == workflow_dispatch }}
+        if: github.event_name == 'workflow_run'
         with:
-          image-ref: 'ghcr.io/${{ github.repository }}:latest'
+          image-ref: 'ghcr.io/${{ github.repository }}:main'
           format: 'sarif'
           output: 'trivy-results.sarif'
           scan-type: 'image'
@@ -73,7 +71,8 @@ jobs:
 
       - name: Run Trivy vulnerability scanner in repo mode
         uses: aquasecurity/trivy-action@0.22.0
-        if: ${{ github.event_name == push || github.event_name == workflow_dispatch }}
+        id: trivy-repo
+        
         with:
           scan-type: 'fs'
           ignore-unfixed: true
@@ -84,5 +83,6 @@ jobs:
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v3
         continue-on-error: false
+        if: always()
         with:
           sarif_file: 'trivy-results.sarif'
