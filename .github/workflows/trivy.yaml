@@ -33,14 +33,15 @@ jobs:
       id-token: write
       security-events: write
 
-    steps:
+    steps:          
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
       - name: Harden Runner
         uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
         with:
           egress-policy: audit
-          
-      - name: Checkout code
-        uses: actions/checkout@v3
+
 
       - name: Trivy Scan for Workflow Dispatch
         uses: aquasecurity/trivy-action@0.22.0
@@ -72,7 +73,7 @@ jobs:
 
       - name: Run Trivy vulnerability scanner in repo mode
         uses: aquasecurity/trivy-action@0.22.0
-        if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+        if: ${{ github.event_name == push || github.event_name == workflow_dispatch }}
         with:
           scan-type: 'fs'
           ignore-unfixed: true
