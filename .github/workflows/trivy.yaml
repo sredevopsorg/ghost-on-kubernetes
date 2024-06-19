@@ -39,11 +39,6 @@ jobs:
       pull-requests: write
 
     steps:                  
-      - name: Harden Runner
-        uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
-        with:
-          egress-policy: audit
-          
       - name: Checkout code
         uses: actions/checkout@v4
         #if: ${{ github.event_name != 'workflow_run' && github.event_name != 'workflow_dispatch' }}
@@ -87,18 +82,8 @@ jobs:
   trivy-repo:
     name: Run Trivy Repo
     runs-on: ubuntu-latest
-    permissions:
-      packages: write
-      repository-projects: read
-      contents: read
-      actions: read
-      id-token: write
-      security-events: write
-      attestations: write
-      statuses: write
-      checks: write
-      pull-requests: write
-
+    permissions: wwrite-all
+  
     steps:           
       - name: Checkout code
         uses: actions/checkout@v4
@@ -112,7 +97,7 @@ jobs:
           scan-type: image
           format: 'github'
           output: 'dependency-results.sbom.json'
-          github-pat: ${{ secrets.GITHUB_TOKEN }} # or ${{ secrets.github_pat_name }} if you're using a PAT
+          github-pat: ${{ secrets.GHCR_PASS }}
           severity: "HIGH,CRITICAL"
           scanners: "vuln"
 
@@ -120,5 +105,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: trivy-sbom-report
-          path: '${{ github.workspace }}/dependency-results.sbom.json'
-          retention-days: 20 # 90 is the default
+          path: 'dependency-results.sbom.json'
+          retention-days: 5 # 90 is the default
+          
