@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      
   workflow_dispatch:
     inputs:
       manual-tag:
@@ -28,21 +29,24 @@ jobs:
     permissions:
       packages: write
       repository-projects: read
-      contents: write
-      actions: write
+      contents: read
+      actions: read
       id-token: write
       security-events: write
       attestations: write
       statuses: write
       checks: write
-      pull-requests: read
+      pull-requests: write
 
     steps:                  
       - name: Harden Runner
         uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
         with:
           egress-policy: audit
-
+          
+      - name: Checkout code
+        uses: actions/checkout@v4
+        #if: ${{ github.event_name != 'workflow_run' && github.event_name != 'workflow_dispatch' }}
 
       - name: Trivy Scan for Workflow Dispatch
         uses: aquasecurity/trivy-action@0.23.0
@@ -54,7 +58,7 @@ jobs:
           output: 'trivy-results.sarif'
           scan-type: 'image'
           github-pat: '${{ github.token }}'
-          ignore-unfixed: true
+          #ignore-unfixed: true
           severity: 'HIGH,CRITICAL'
 
 
@@ -63,30 +67,58 @@ jobs:
         id: trivy-workflow
         if: github.event_name == 'workflow_run'
         with:
-          image-ref: 'ghcr.io/${{ github.repository }}:main'
+          image-ref: 'ghcr.io/${{ github.repository }}:latest'
           format: 'sarif'
           output: 'trivy-results.sarif'
           scan-type: 'image'
           github-pat: '${{ github.token }}'
-          ignore-unfixed: true
+          #ignore-unfixed: true
           severity: 'HIGH,CRITICAL'
-          
-      - name: Checkout code
-        uses: actions/checkout@v4
-        if: ${{ github.event_name != 'workflow_run' && github.event_name != 'workflow_dispatch' }}
-      - name: Run Trivy vulnerability scanner in repo mode
-        uses: aquasecurity/trivy-action@0.23.0
-        id: trivy-repo
-        with:
-          scan-type: 'fs'
-          ignore-unfixed: true
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-          severity: 'HIGH,CRITICAL'
+
 
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v3
-        continue-on-error: false
+        continue-on-error: true
         #if: always()
         with:
           sarif_file: 'trivy-results.sarif'
+
+          
+  trivy-repo:
+    name: Run Trivy Repo
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      repository-projects: read
+      contents: read
+      actions: read
+      id-token: write
+      security-events: write
+      attestations: write
+      statuses: write
+      checks: write
+      pull-requests: write
+
+    steps:           
+      - name: Checkout code
+        uses: actions/checkout@v4
+        #if: ${{ github.event_name != 'workflow_run' && github.event_name != 'workflow_dispatch' }}
+
+
+      - name: Scan image in a private registry
+        uses: aquasecurity/trivy-action@0.23.0
+        with:
+          image-ref: 'ghcr.io/${{ github.repository }}:latest'
+          scan-type: image
+          format: 'github'
+          output: 'dependency-results.sbom.json'
+          github-pat: ${{ secrets.GITHUB_TOKEN }} # or ${{ secrets.github_pat_name }} if you're using a PAT
+          severity: "HIGH,CRITICAL"
+          scanners: "vuln"
+
+      - name: Upload trivy report as a Github artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-sbom-report
+          path: '${{ github.workspace }}/dependency-results.sbom.json'
+          retention-days: 20 # 90 is the default
