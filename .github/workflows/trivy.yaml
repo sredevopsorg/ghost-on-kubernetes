@@ -78,11 +78,10 @@ jobs:
         with:
           sarif_file: 'trivy-results.sarif'
 
-          
   trivy-repo:
     name: Run Trivy Repo
     runs-on: ubuntu-latest
-    permissions: wwrite-all
+    permissions: write-all
   
     steps:           
       - name: Checkout code
