@@ -60,6 +60,7 @@ RUN mv -v $GHOST_CONTENT $GHOST_CONTENT_ORIGINAL && \
 USER node
 
 # Stage 2: Final Image
+#FROM gcr.io/distroless/nodejs20-debian12:latest@sha256:1b210ce3c1983aca04be9647b073e494bb75f02902a3ad086537fab72807ee73 AS runtime
 FROM gcr.io/distroless/nodejs20-debian12@sha256:1b210ce3c1983aca04be9647b073e494bb75f02902a3ad086537fab72807ee73 AS runtime
 
 # Set the installation directory and content directory for Ghost
