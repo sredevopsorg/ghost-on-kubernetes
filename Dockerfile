@@ -25,9 +25,9 @@ ARG GHOST_VERSION
 ENV GHOST_VERSION $GHOST_VERSION 
 
 # Set the installation directory, content directory, and original content directory for Ghost
-ENV GHOST_INSTALL /var/lib/ghost
-ENV GHOST_CONTENT /var/lib/ghost/content
-ENV GHOST_CONTENT_ORIGINAL /var/lib/ghost/content.orig
+ENV GHOST_INSTALL=/var/lib/ghost
+ENV GHOST_CONTENT=/var/lib/ghost/content
+ENV GHOST_CONTENT_ORIGINAL=/var/lib/ghost/content.orig
 
 # Create the Ghost installation directory and set the owner to the "node" user
 RUN mkdir -pv "$GHOST_INSTALL" && \
@@ -60,13 +60,12 @@ RUN mv -v $GHOST_CONTENT $GHOST_CONTENT_ORIGINAL && \
 USER node
 
 # Stage 2: Final Image
-#FROM gcr.io/distroless/nodejs20-debian12:latest@sha256:1b210ce3c1983aca04be9647b073e494bb75f02902a3ad086537fab72807ee73 AS runtime
 FROM gcr.io/distroless/nodejs20-debian12@sha256:1b210ce3c1983aca04be9647b073e494bb75f02902a3ad086537fab72807ee73 AS runtime
 
 # Set the installation directory and content directory for Ghost
-ENV GHOST_INSTALL /var/lib/ghost
-ENV GHOST_CONTENT /var/lib/ghost/content
-ENV GHOST_CONTENT_ORIGINAL /var/lib/ghost/content.orig
+ENV GHOST_INSTALL=/var/lib/ghost
+ENV GHOST_CONTENT=/var/lib/ghost/content
+ENV GHOST_CONTENT_ORIGINAL=/var/lib/ghost/content.orig
 
 USER node
 
