@@ -24,7 +24,7 @@ on:
       ghost_version:
         description: 'Ghost version'
         required: true
-        default: '5.82.9'
+        default: '5.86.2'
         type: string
   workflow_call:
 
@@ -49,7 +49,7 @@ jobs:
       pages: none
       pull-requests: read
       repository-projects: read
-      security-events: write
+      security-events: read
       statuses: write
 
     runs-on: ubuntu-22.04
@@ -105,6 +105,8 @@ jobs:
         uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81 # v5.5.1
         with:
           images: ${{ env.GHCR_IMAGE }}
+          annotations: |
+            type=org.opencontainers.image.description,value=${{ github.event.repository.description }}
 
       -
         name: Set up QEMU
@@ -157,7 +159,7 @@ jobs:
           name: digests-${{ env.PLATFORM_PAIR }}
           path: /tmp/digests/*
           if-no-files-found: error
-          retention-days: 5
+          retention-days: 15
 
   merge:
     runs-on: ubuntu-22.04
@@ -177,7 +179,7 @@ jobs:
       pages: none
       pull-requests: read
       repository-projects: read
-      security-events: write
+      security-events: read
       statuses: write
       
     steps:
