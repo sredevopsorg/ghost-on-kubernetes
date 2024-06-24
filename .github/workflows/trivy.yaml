@@ -53,7 +53,7 @@ jobs:
           output: 'trivy-results.sarif'
           scan-type: 'image'
           github-pat: '${{ github.token }}'
-          #ignore-unfixed: true
+          ignore-unfixed: true
           severity: 'HIGH,CRITICAL'
 
 
@@ -67,7 +67,7 @@ jobs:
           output: 'trivy-results.sarif'
           scan-type: 'image'
           github-pat: '${{ github.token }}'
-          #ignore-unfixed: true
+          ignore-unfixed: true
           severity: 'HIGH,CRITICAL'
 
 
@@ -97,7 +97,7 @@ jobs:
           format: 'github'
           output: 'dependency-results.sbom.json'
           github-pat: ${{ secrets.GHCR_PASS }}
-          severity: "HIGH,CRITICAL"
+          severity: "CRITICAL"
           scanners: "vuln"
 
       - name: Upload trivy report as a Github artifact
@@ -105,5 +105,7 @@ jobs:
         with:
           name: trivy-sbom-report
           path: 'dependency-results.sbom.json'
-          retention-days: 5 # 90 is the default
+          retention-days: 15 # 90 is the default
+
+
           

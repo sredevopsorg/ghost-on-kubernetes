@@ -6,10 +6,12 @@ FROM node:iron-bookworm@sha256:02cd2205818f121c13612721876f28c18bd50148bb8af532e
 
 ENV NODE_ENV=production DEBIAN_FRONTEND=noninteractive
 
+# Update sources and install libvips to build some dependencies later
+
 USER root
 RUN apt update && apt install --no-install-recommends --no-install-suggests -y libvips-dev 
 
-# Install the latest version of Ghost CLI globally and clean the npm cache
+# Install the latest version of Ghost CLI globally and config some workarounds to build arm64 version in Github without timeout failures
 RUN yarn config set network-timeout 60000 && \
     yarn config set inline-builds true && \
 		npm config set fetch-timeout 60000 && \
@@ -23,17 +25,17 @@ ARG GHOST_VERSION
 ENV GHOST_VERSION $GHOST_VERSION 
 
 # Set the installation directory, content directory, and original content directory for Ghost
-ENV GHOST_INSTALL /var/lib/ghost
-ENV GHOST_CONTENT /var/lib/ghost/content
-ENV GHOST_CONTENT_ORIGINAL /var/lib/ghost/content.orig
+ENV GHOST_INSTALL=/var/lib/ghost
+ENV GHOST_CONTENT=/var/lib/ghost/content
+ENV GHOST_CONTENT_ORIGINAL=/var/lib/ghost/content.orig
 
 # Create the Ghost installation directory and set the owner to the "node" user
 RUN mkdir -pv "$GHOST_INSTALL" && \
     chown node:node "$GHOST_INSTALL"
 
-# Switch to the "node" user and set the working directory to the home directory
+# Switch to the "node" user
 USER node
-# WORKDIR /home/node
+# Workarounds to build arm64 version in Github without timeout failures
 RUN yarn config set network-timeout 180000 && \
   yarn config set inline-builds true && \
   npm config set fetch-timeout 180000 && \
@@ -52,18 +54,18 @@ RUN mv -v $GHOST_CONTENT $GHOST_CONTENT_ORIGINAL && \
     chown -Rfv node:node $GHOST_CONTENT_ORIGINAL && \
     chown -Rfv node:node $GHOST_CONTENT && \
     chown -fv node:node $GHOST_INSTALL && \
-    chmod 1777 $GHOST_CONTENT
+    chmod 1775 $GHOST_CONTENT
 
 # Switch back to the "node" user
 USER node
 
 # Stage 2: Final Image
-FROM gcr.io/distroless/nodejs20-debian12:latest@sha256:1b210ce3c1983aca04be9647b073e494bb75f02902a3ad086537fab72807ee73 AS runtime
+FROM gcr.io/distroless/nodejs20-debian12@sha256:1b210ce3c1983aca04be9647b073e494bb75f02902a3ad086537fab72807ee73 AS runtime
 
 # Set the installation directory and content directory for Ghost
-ENV GHOST_INSTALL /var/lib/ghost
-ENV GHOST_CONTENT /var/lib/ghost/content
-ENV GHOST_CONTENT_ORIGINAL /var/lib/ghost/content.orig
+ENV GHOST_INSTALL=/var/lib/ghost
+ENV GHOST_CONTENT=/var/lib/ghost/content
+ENV GHOST_CONTENT_ORIGINAL=/var/lib/ghost/content.orig
 
 USER node
 
