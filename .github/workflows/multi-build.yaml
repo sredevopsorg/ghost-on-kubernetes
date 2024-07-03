@@ -1,6 +1,12 @@
 name: multi-build
 on:
   push:
+    branches: 
+    - main
+    paths: 
+    - ./Dockerfile
+    - ./entrypoint.js
+    
     tags:
       - v*
 
