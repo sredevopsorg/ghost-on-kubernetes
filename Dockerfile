@@ -2,7 +2,7 @@
 # The image is built with official Node 20 on Debian Bookworm (LTS Iron)  image and uses the Distroless base image for security and minimalism.
 
 # Stage 1: Build Environment
-FROM node:iron-bookworm@sha256:a12ce152ab63dbeb232fcbcd0e9fdfbee6e6443d57785915967893ce9e7c58ba AS build-env
+FROM node:iron-bookworm@sha256:93d2e801dabc677ea0b30b47d3d729fab63ecb20be7ac0ab204cc3c65731297a AS build-env
 
 ENV NODE_ENV=production DEBIAN_FRONTEND=noninteractive
 
