@@ -55,6 +55,7 @@ jobs:
           github-pat: '${{ github.token }}'
           ignore-unfixed: true
           severity: 'HIGH,CRITICAL'
+          vuln-type: 'os'
 
 
       - name: Trivy Scan for Workflow Run
@@ -69,7 +70,7 @@ jobs:
           github-pat: '${{ github.token }}'
           ignore-unfixed: true
           severity: 'HIGH,CRITICAL'
-
+          vuln-type: 'os'
 
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v3
@@ -82,6 +83,7 @@ jobs:
     name: Run Trivy Repo
     runs-on: ubuntu-latest
     permissions: write-all
+    
   
     steps:           
       - name: Checkout code
@@ -92,14 +94,14 @@ jobs:
       - name: Scan image in a private registry
         uses: aquasecurity/trivy-action@0.23.0
         with:
-          image-ref: 'ghcr.io/${{ github.repository }}:latest'
+          image-ref: 'ghcr.io/${{ github.repository }}:main'
           scan-type: image
           format: 'github'
           output: 'dependency-results.sbom.json'
           github-pat: ${{ secrets.GHCR_PASS }}
           severity: "CRITICAL"
           scanners: "vuln"
-
+          vuln-type: 'os'
       - name: Upload trivy report as a Github artifact
         uses: actions/upload-artifact@v4
         with:
