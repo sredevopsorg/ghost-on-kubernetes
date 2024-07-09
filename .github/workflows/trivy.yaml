@@ -44,7 +44,7 @@ jobs:
         #if: ${{ github.event_name != 'workflow_run' && github.event_name != 'workflow_dispatch' }}
 
       - name: Trivy Scan for Workflow Dispatch
-        uses: aquasecurity/trivy-action@0.23.0
+        uses: aquasecurity/trivy-action@0.24.0
         id: trivy-workflow-dispatch
         if: github.event_name == 'workflow_dispatch'
         with:
@@ -59,7 +59,7 @@ jobs:
 
 
       - name: Trivy Scan for Workflow Run
-        uses: aquasecurity/trivy-action@0.23.0
+        uses: aquasecurity/trivy-action@0.24.0
         id: trivy-workflow
         if: github.event_name == 'workflow_run'
         with:
@@ -92,7 +92,7 @@ jobs:
 
 
       - name: Scan image in a private registry
-        uses: aquasecurity/trivy-action@0.23.0
+        uses: aquasecurity/trivy-action@0.24.0
         with:
           image-ref: 'ghcr.io/${{ github.repository }}:main'
           scan-type: image
