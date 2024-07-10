@@ -7,7 +7,7 @@ metadata:
     app: ghost-on-kubernetes
     app.kubernetes.io/name: ghost-on-kubernetes
     app.kubernetes.io/instance: ghost-on-kubernetes
-    app.kubernetes.io/version: "5.8"
+    app.kubernetes.io/version: "5.87"
     app.kubernetes.io/component: ghost
     app.kubernetes.io/part-of: ghost-on-kubernetes
     app.kubernetes.io/managed-by: sredevopsorg
@@ -167,7 +167,7 @@ spec:
       #     requiredDuringSchedulingIgnoredDuringExecution:
       #       nodeSelectorTerms:
       #         - matchExpressions:
-      #             - key: static
+      #             - key: node-role.kubernetes.io/worker
       #               operator: In
       #               values:
       #                 - "true"
@@ -175,6 +175,7 @@ spec:
 
       securityContext: {}
       schedulerName: default-scheduler
+  minReadySeconds: 15
   strategy:
     type: RollingUpdate
     rollingUpdate:

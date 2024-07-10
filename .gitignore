@@ -85,35 +85,5 @@ Temporary Items
 
 # Custom rules (everything added below won't be overriden by 'Generate .gitignore File' if you use 'Update' option)
 
-***.local
-**/**/*.local
-**/**/**/*.local
-backups-ghost/**
-persistence/**
-
-node_modules/
-**/node_modules/
-***/dist/
-deployment/config.json
-themes/elclaustro-casper/okteto.yml
-deployment/04-service-elclaustro.okteto.yaml
-deployment/05-ghost-elclaustro.okteto.yaml
-themes/elclaustro-casper/yarn.lock
-kubernetes-deployment/config.json
-dockermount/
-
-test/
-**.local.**
-ghost-upstream/
-content/
-config.production.json
-config.development.json
-mysql/
-ghost-local.db
-**/**/*local*
-.monokle
-.monokle
+***/*.local*
 docker-compose.yml
-trustr-production-promote.yaml
-trustr-staging-build-monorepo.yaml
-trustr-staging-build-not-monorepo.yaml

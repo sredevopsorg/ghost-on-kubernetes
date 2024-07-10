@@ -7,7 +7,7 @@ metadata:
     app: ghost-on-kubernetes
     app.kubernetes.io/name: ghost-on-kubernetes
     app.kubernetes.io/instance: ghost-on-kubernetes
-    app.kubernetes.io/version: "5.8"
+    app.kubernetes.io/version: "5.87"
     app.kubernetes.io/component: storage
     app.kubernetes.io/part-of: ghost-on-kubernetes
     app.kubernetes.io/managed-by: sredevopsorg
@@ -29,7 +29,7 @@ metadata:
     app: mysql-ghost-on-kubernetes
     app.kubernetes.io/name: mysql-ghost-on-kubernetes-pvc
     app.kubernetes.io/instance: ghost-on-kubernetes
-    app.kubernetes.io/version: "5.8"
+    app.kubernetes.io/version: "5.87"
     app.kubernetes.io/component: database-storage
     app.kubernetes.io/part-of: ghost-on-kubernetes
     app.kubernetes.io/managed-by: sredevopsorg
