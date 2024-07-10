@@ -139,8 +139,8 @@ jobs:
           build-args: GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }} 
           outputs: type=image,name=${{ env.GHCR_IMAGE }},push-by-digest=true,name-canonical=true,push=true,oci-mediatypes=true
           provenance: false
-          cache-from: type=gha,ignore-error=true
-          cache-to: type=gha,ignore-error=true
+          cache-from: type=gha,ignore-error=true,mode=max
+          cache-to: type=gha,ignore-error=true,mode=max
       -
         name: Export digest
         run: |
@@ -243,7 +243,7 @@ jobs:
         run: |
               docker buildx imagetools create \
                 $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
-                --annotation='index:org.opencontainers.image.description="Ghost on Kubernetes by SREDevOps.org' \
+                --annotation='index:org.opencontainers.image.description="Ghost on Kubernetes by SREDevOps.org"' \
                   $(printf '${{ env.GHCR_IMAGE }}@sha256:%s ' *)
 
       -
@@ -251,6 +251,7 @@ jobs:
         working-directory: /tmp/digests
         id: manifest
         if: steps.manifest-annotate.outcome == 'failure'
+        continue-on-error: false
         run: |
               docker buildx imagetools create  $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
                 $(printf '${{ env.GHCR_IMAGE }}@sha256:%s ' *)

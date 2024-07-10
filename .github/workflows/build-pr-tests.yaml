@@ -11,13 +11,13 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-     packages: read
-     contents: read
-     actions: read
-     statuses: write
-     checks: write
-     pull-requests: read
-     attestations: write
+      packages: read
+      contents: read
+      actions: read
+      statuses: write
+      checks: write
+      pull-requests: read
+      attestations: write
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
@@ -60,8 +60,8 @@ jobs:
         with:
           context: .
           platforms: linux/amd64
-          cache-from: type=gha
-          cache-to: type=gha
+          cache-from: type=gha,mode=max
+          cache-to: type=gha,mode=max
           provenance: true
           sbom: true
           push: false
