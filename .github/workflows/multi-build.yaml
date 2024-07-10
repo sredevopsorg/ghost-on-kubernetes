@@ -4,22 +4,11 @@ on:
     branches: 
     - main
     paths: 
-    - ./Dockerfile
-    - ./entrypoint.js
-    
+    - Dockerfile
+    - entrypoint.js
     tags:
       - v*
 
-
-  
-  # release:
-  #   types:
-  #     - released
-  #     - edited
-#    paths:
-#        - "Dockerfile"
-#        - ".github/workflows/multi-build.yaml"
-#        - "entrypoint.js"
   workflow_dispatch:
     inputs:
       manual-tag:
@@ -252,8 +241,8 @@ jobs:
         id: manifest
         run: |
               docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+              --annotation "index:org.opencontainers.image.description="Ghost on Kubernetes by SREDevOps.org" \
                 $(printf '${{ env.GHCR_IMAGE }}@sha256:%s ' *)
-
       -
         name: Inspect image
         id: inspect
