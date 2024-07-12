@@ -25,8 +25,8 @@ var copyRecursiveSync = function(src, dest) {
 };
 
 // Define sources and destinations for both themes named "casper" and "source".
-let sourcePath = ("/var/lib/ghost/content.orig/themes/");
-let destinationPath = ("/var/lib/ghost/content/themes");
+let sourcePath = ("/home/node/app/ghost/content.orig/themes/");
+let destinationPath = ("/home/node/app/ghost/content/themes");
 
 // Wrap the function in a try/catch block to handle any errors.
 try {

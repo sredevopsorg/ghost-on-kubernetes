@@ -48,7 +48,7 @@ stringData:
       "debug": false,
       "process": "local",
       "paths": {
-        "contentPath": "/var/lib/ghost/content"
+        "contentPath": "/home/node/app/ghost/content"
       },
       "privacy": {
         "useUpdateCheck": false,

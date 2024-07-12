@@ -44,9 +44,9 @@ spec:
         env:
 
         - name: GHOST_INSTALL
-          value: /var/lib/ghost
+          value: /home/node/app/ghost
         - name: GHOST_CONTENT
-          value: /var/lib/ghost/content
+          value: /home/node/app/ghost/content
         - name: NODE_ENV
           value: production
         securityContext:
@@ -84,7 +84,7 @@ spec:
 
         volumeMounts:
         - name: k8s-ghost-content
-          mountPath: /var/lib/ghost/content
+          mountPath: /home/node/app/ghost/content
           readOnly: false
 
       containers:
@@ -142,11 +142,11 @@ spec:
 
         volumeMounts:
         - name: k8s-ghost-content
-          mountPath: /var/lib/ghost/content
+          mountPath: /home/node/app/ghost/content
           readOnly: false
         - name: ghost-config-prod
           readOnly: true
-          mountPath: /var/lib/ghost/config.production.json
+          mountPath: /home/node/app/ghost/config.production.json
           subPath: config.production.json
         - name: tmp # This is the temporary volume mount to allow loading themes
           mountPath: /tmp

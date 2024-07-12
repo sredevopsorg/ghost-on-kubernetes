@@ -4,7 +4,7 @@
 # Stage 1: Build Environment
 FROM node:iron-bookworm@sha256:786005cf39792f7046bcd66491056c26d2dbcc669c072d1a1e4ef4fcdddd26eb AS build-env
 
-ENV NODE_ENV=production DEBIAN_FRONTEND=noninteractive
+ENV NODE_ENV=production  NPM_CONFIG_LOGLEVEL=info
 
 # Update sources and install libvips to build some dependencies later
 
@@ -15,20 +15,20 @@ USER node
 # Install the latest version of Ghost CLI globally and config some workarounds to build arm64 version in Github without timeout failures
 RUN yarn config set network-timeout 60000 && \
     yarn config set inline-builds true && \
-		npm config set fetch-timeout 60000 && \
+    npm config set fetch-timeout 60000 && \
     npm config set progress && \
     npm config set omit dev
 
 RUN	yarn global add ghost-cli@latest
 
 # Define the GHOST_VERSION build argument and set it as an environment variable
-ARG GHOST_VERSION
-ENV GHOST_VERSION=$GHOST_VERSION 
+ARG GHOST_VERSION 
+ENV GHOST_VERSION=$GHOST_VERSION  
 
 # Set the installation directory, content directory, and original content directory for Ghost
-ENV GHOST_INSTALL=/var/lib/ghost
-ENV GHOST_CONTENT=/var/lib/ghost/content
-ENV GHOST_CONTENT_ORIGINAL=/var/lib/ghost/content.orig
+ENV GHOST_INSTALL=/home/node/app/ghost
+ENV GHOST_CONTENT=/home/node/app/ghost/content
+ENV GHOST_CONTENT_ORIGINAL=/home/node/app/ghost/content.orig
 
 # Create the Ghost installation directory and set the owner to the "node" user
 RUN mkdir -pv "$GHOST_INSTALL" && \
@@ -38,7 +38,7 @@ RUN mkdir -pv "$GHOST_INSTALL" && \
 # USER node
 # Workarounds to build arm64 version in Github without timeout failures
 RUN yarn config set network-timeout 180000 && \
-      npm config set fetch-timeout 180000
+    npm config set fetch-timeout 180000
   #yarn config set inline-builds true && \
   #npm config set progress && \
   #npm config set omit dev
@@ -55,7 +55,7 @@ RUN mv -v $GHOST_CONTENT $GHOST_CONTENT_ORIGINAL && \
     chown -Rfv node:node $GHOST_CONTENT_ORIGINAL && \
     chown -Rfv node:node $GHOST_CONTENT && \
     chown -fv node:node $GHOST_INSTALL && \
-    chmod -v 1755 $GHOST_CONTENT
+    chmod -v 1775 $GHOST_CONTENT
 
 # Switch back to the "node" user
 # USER node
@@ -64,9 +64,9 @@ RUN mv -v $GHOST_CONTENT $GHOST_CONTENT_ORIGINAL && \
 FROM gcr.io/distroless/nodejs20-debian12@sha256:08d0b6846a21812d07a537eff956acc1bc38a7440a838ce6730515f8d3cd5d9e AS runtime
 
 # Set the installation directory and content directory for Ghost
-ENV GHOST_INSTALL=/var/lib/ghost
-ENV GHOST_CONTENT=/var/lib/ghost/content
-ENV GHOST_CONTENT_ORIGINAL=/var/lib/ghost/content.orig
+ENV GHOST_INSTALL=/home/node/app/ghost
+ENV GHOST_CONTENT=/home/node/app/ghost/content
+ENV GHOST_CONTENT_ORIGINAL=/home/node/app/ghost/content.orig
 
 USER node
 
