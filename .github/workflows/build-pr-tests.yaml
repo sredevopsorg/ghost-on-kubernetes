@@ -1,32 +1,23 @@
 name: Build tests
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened, edited]
-    branches:
-      - main
-    paths:
-      - Dockerfile
-      - entrypoint.js
-  
-  push:
-    branches-ignore:
-      - main
-    tags-ignore:
-      - v*
+  pull_request_target:
+    branches: main
     paths: 
     - Dockerfile
     - entrypoint.js
 
-
-permissions:
-  contents: read
-
 jobs:
   build:
     runs-on: ubuntu-latest
-
-
+    permissions:
+      packages: read
+      contents: read
+      actions: read
+      statuses: write
+      checks: write
+      pull-requests: read
+      attestations: write
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
@@ -37,6 +28,8 @@ jobs:
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           fetch-depth: 1
+          ref: ${{ github.ref }}
+          persist-credentials: false
           
       -
         name: Set up Docker Buildx
@@ -56,14 +49,21 @@ jobs:
         continue-on-error: true
         run: echo ${{ steps.versions.outputs.GHOST_VERSION }} 
       -
+        name: Docker meta for workflow_dispatch
+        id: meta-workflow-dispatch
+        uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81 # v5.5.1
+
+      -
         name: Build
         uses: docker/build-push-action@1a162644f9a7e87d8f4b053101d1d9a712edc18c # v6.3.0
-        id: build-pr
+        id: build-and-push-workflow-dispatch
         with:
           context: .
           platforms: linux/amd64
           cache-from: type=gha,mode=max
           cache-to: type=gha,mode=max
+          provenance: true
+          sbom: true
           push: false
           build-args: GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }}
           
