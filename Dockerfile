@@ -8,8 +8,9 @@ ENV NODE_ENV=production DEBIAN_FRONTEND=noninteractive
 
 # Update sources and install libvips to build some dependencies later
 
-#USER root
-#RUN apt update && apt install --no-install-recommends --no-install-suggests -y libvips-dev 
+# USER root
+# RUN apt update && apt install --no-install-recommends --no-install-suggests -y libvips-dev 
+USER node
 
 # Install the latest version of Ghost CLI globally and config some workarounds to build arm64 version in Github without timeout failures
 RUN yarn config set network-timeout 60000 && \
@@ -34,7 +35,7 @@ RUN mkdir -pv "$GHOST_INSTALL" && \
     chown node:node "$GHOST_INSTALL"
 
 # Switch to the "node" user
-USER node
+# USER node
 # Workarounds to build arm64 version in Github without timeout failures
 RUN yarn config set network-timeout 180000 && \
       npm config set fetch-timeout 180000
@@ -50,14 +51,14 @@ RUN ghost install $GHOST_VERSION --dir $GHOST_INSTALL --db mysql --dbhost mysql 
 
 # Move the original content directory to a backup location, create a new content directory, set the correct ownership and permissions, and switch back to the "node" user
 RUN mv -v $GHOST_CONTENT $GHOST_CONTENT_ORIGINAL && \
-    mkdir -pv $GHOST_CONTENT && \
+    mkdir -v $GHOST_CONTENT && \
     chown -Rfv node:node $GHOST_CONTENT_ORIGINAL && \
     chown -Rfv node:node $GHOST_CONTENT && \
     chown -fv node:node $GHOST_INSTALL && \
-    chmod 1755 $GHOST_CONTENT
+    chmod -v 1755 $GHOST_CONTENT
 
 # Switch back to the "node" user
-#USER node
+# USER node
 
 # Stage 2: Final Image
 FROM gcr.io/distroless/nodejs20-debian12@sha256:08d0b6846a21812d07a537eff956acc1bc38a7440a838ce6730515f8d3cd5d9e AS runtime
