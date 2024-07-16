@@ -38,7 +38,7 @@ RUN mkdir -pv "$GHOST_INSTALL" && \
 # USER node
 # Workarounds to build arm64 version in Github without timeout failures
 RUN yarn config set network-timeout 180000 && \
-    npm config set fetch-timeout 180000
+    npm config set fetch-timeout 180000 && \
     yarn config set inline-builds true && \
     npm config set progress && \
     npm config set omit dev
