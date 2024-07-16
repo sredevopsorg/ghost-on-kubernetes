@@ -4,22 +4,9 @@
 # Stage 1: Build Environment
 FROM node:iron-bookworm@sha256:786005cf39792f7046bcd66491056c26d2dbcc669c072d1a1e4ef4fcdddd26eb AS build-env
 
-ENV NODE_ENV=production NPM_CONFIG_LOGLEVEL=info
-
-# Update sources and install libvips to build some dependencies later
-
-# USER root
-# RUN apt update && apt install --no-install-recommends --no-install-suggests -y libvips-dev 
 USER node
-
-# Install the latest version of Ghost CLI globally and config some workarounds to build arm64 version in Github without timeout failures
-RUN yarn config set network-timeout 60000 && \
-    yarn config set inline-builds true && \
-    npm config set fetch-timeout 60000 && \
-    npm config set progress && \
-    npm config set omit dev
-
-RUN	yarn global add ghost-cli@latest || npm i -g ghost-cli@latest
+SHELL ["/bin/bash", "-c"]
+ENV NODE_ENV=production NPM_CONFIG_LOGLEVEL=info
 
 # Define the GHOST_VERSION build argument and set it as an environment variable
 ARG GHOST_VERSION 
@@ -30,18 +17,20 @@ ENV GHOST_INSTALL=/home/node/app/ghost
 ENV GHOST_CONTENT=/home/node/app/ghost/content
 ENV GHOST_CONTENT_ORIGINAL=/home/node/app/ghost/content.orig
 
-# Create the Ghost installation directory and set the owner to the "node" user
-RUN mkdir -pv "$GHOST_INSTALL" && \
-    chown node:node "$GHOST_INSTALL"
 
-# Switch to the "node" user
-# USER node
-# Workarounds to build arm64 version in Github without timeout failures
-RUN yarn config set network-timeout 180000 && \
-    npm config set fetch-timeout 180000 && \
+# Install the latest version of Ghost CLI globally and config some workarounds to build arm64 version in Github without timeout failures
+RUN yarn config set network-timeout 60000 && \
     yarn config set inline-builds true && \
+    npm config set fetch-timeout 60000 && \
     npm config set progress && \
     npm config set omit dev
+
+# Create the Ghost installation directory and set the owner to the "node" user
+RUN mkdir -pv "$GHOST_INSTALL"
+
+
+RUN	npm i -g ghost-cli@latest || yarn global add ghost-cli@latest
+
 
 # Install Ghost with the specified version, using MySQL as the database, and configure it without prompts, stack traces, setup, and in the specified installation directory
 RUN ghost install $GHOST_VERSION --dir $GHOST_INSTALL --db mysql --dbhost mysql --no-prompt --no-stack --no-setup --color --process local || npx ghost-cli install $GHOST_VERSION --dir $GHOST_INSTALL --db mysql --dbhost mysql --no-prompt --no-stack --no-setup --color --process local
