@@ -4,7 +4,7 @@
 # Stage 1: Build Environment
 FROM node:iron-bookworm@sha256:786005cf39792f7046bcd66491056c26d2dbcc669c072d1a1e4ef4fcdddd26eb AS build-env
 
-ENV NODE_ENV=production  NPM_CONFIG_LOGLEVEL=info
+ENV NODE_ENV=production NPM_CONFIG_LOGLEVEL=info
 
 # Update sources and install libvips to build some dependencies later
 
@@ -19,7 +19,7 @@ RUN yarn config set network-timeout 60000 && \
     npm config set progress && \
     npm config set omit dev
 
-RUN	yarn global add ghost-cli@latest
+RUN	yarn global add ghost-cli@latest || npm i -g ghost-cli@latest
 
 # Define the GHOST_VERSION build argument and set it as an environment variable
 ARG GHOST_VERSION 
@@ -39,12 +39,12 @@ RUN mkdir -pv "$GHOST_INSTALL" && \
 # Workarounds to build arm64 version in Github without timeout failures
 RUN yarn config set network-timeout 180000 && \
     npm config set fetch-timeout 180000
-  #yarn config set inline-builds true && \
-  #npm config set progress && \
-  #npm config set omit dev
+    yarn config set inline-builds true && \
+    npm config set progress && \
+    npm config set omit dev
 
 # Install Ghost with the specified version, using MySQL as the database, and configure it without prompts, stack traces, setup, and in the specified installation directory
-RUN ghost install $GHOST_VERSION --dir $GHOST_INSTALL --db mysql --dbhost mysql --no-prompt --no-stack --no-setup --color --process local
+RUN ghost install $GHOST_VERSION --dir $GHOST_INSTALL --db mysql --dbhost mysql --no-prompt --no-stack --no-setup --color --process local || npx ghost-cli install $GHOST_VERSION --dir $GHOST_INSTALL --db mysql --dbhost mysql --no-prompt --no-stack --no-setup --color --process local
 
 # Switch back to the root user
 #USER root
