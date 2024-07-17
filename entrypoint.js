@@ -26,8 +26,11 @@ var copyRecursiveSync = function(src, dest) {
 };
 
 // Define sources and destinations for both themes named "casper" and "source".
-let sourcePath = "/home/nonroot/app/ghost/content.orig/themes/";
-let destinationPath = "/home/nonroot/app/ghost/content/themes";
+          // Get an environment variable that specifies the path for sourcePath + "/content/themes" 
+let sourcePath = process.env.GHOST_CONTENT_ORIGINAL + "/content/themes";
+console.log("Source path: ", sourcePath);
+let destinationPath = process.env.GHOST_CONTENT + "/content/themes/";s
+console.log("Destination path: ", destinationPath);
 
 // Wrap the function in a try/catch block to handle any errors.
 try {

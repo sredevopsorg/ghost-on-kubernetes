@@ -4,7 +4,6 @@
 # Stage 1: Build Environment
 FROM node:iron-bookworm@sha256:786005cf39792f7046bcd66491056c26d2dbcc669c072d1a1e4ef4fcdddd26eb AS build-env
 
-USER node
 SHELL ["/bin/bash", "-c"]
 ENV NODE_ENV=production NPM_CONFIG_LOGLEVEL=info
 
@@ -13,10 +12,12 @@ ARG GHOST_VERSION
 ENV GHOST_VERSION=$GHOST_VERSION  
 
 # Set the installation directory, content directory, and original content directory for Ghost
-ENV GHOST_INSTALL=/home/node/app/ghost
-ENV GHOST_CONTENT=/home/node/app/ghost/content
-ENV GHOST_CONTENT_ORIGINAL=/home/node/app/ghost/content.orig
+ENV GHOST_INSTALL=/home/nonroot/app/ghost
+ENV GHOST_CONTENT=/home/nonroot/app/ghost/content
+ENV GHOST_CONTENT_ORIGINAL=/home/nonroot/app/ghost/content.orig
 
+RUN mkdir -pv "$GHOST_INSTALL" || sudo mkdir -pv "$GHOST_INSTALL" && \
+    chown -Rfv 65532:65532 "$GHOST_INSTALL" || sudo chown -Rfv nonroot:nonroot "$GHOST_INSTALL"
 
 # Install the latest version of Ghost CLI globally and config some workarounds to build arm64 version in Github without timeout failures
 RUN yarn config set network-timeout 60000 && \
@@ -26,32 +27,33 @@ RUN yarn config set network-timeout 60000 && \
     npm config set omit dev
 
 # Create the Ghost installation directory and set the owner to the "node" user
-RUN mkdir -pv "$GHOST_INSTALL"
 
 
-RUN	npm i -g ghost-cli@latest || yarn global add ghost-cli@latest
+# RUN	npm i -g ghost-cli@latest || yarn global add ghost-cli@latest
 
 
 # Install Ghost with the specified version, using MySQL as the database, and configure it without prompts, stack traces, setup, and in the specified installation directory
-RUN ghost install $GHOST_VERSION --dir $GHOST_INSTALL --db mysql --dbhost mysql --no-prompt --no-stack --no-setup --color --process local || npx ghost-cli install $GHOST_VERSION --dir $GHOST_INSTALL --db mysql --dbhost mysql --no-prompt --no-stack --no-setup --color --process local
+# RUN ghost install $GHOST_VERSION --dir $GHOST_INSTALL --db mysql --dbhost mysql --no-prompt --no-stack --no-setup --color --process local || 
+
+RUN npx ghost-cli install $GHOST_VERSION --dir $GHOST_INSTALL --db mysql --dbhost mysql --no-prompt --no-stack --no-setup --color --process local
 
 
 # Move the original content directory to a backup location, create a new content directory, set the correct ownership and permissions, and switch back to the "node" user
 RUN mv -v $GHOST_CONTENT $GHOST_CONTENT_ORIGINAL && \
     mkdir -v $GHOST_CONTENT && \
-    chown -Rfv node:node $GHOST_CONTENT_ORIGINAL && \
-    chown -Rfv node:node $GHOST_CONTENT && \
-    chown -fv node:node $GHOST_INSTALL && \
-    chmod -v 1775 $GHOST_CONTENT
+    chown -Rfv nonroot:nobody $GHOST_CONTENT_ORIGINAL && \
+    chown -Rfv nonroot:nobody $GHOST_CONTENT && \
+    chown -fv nonroot:nobody $GHOST_INSTALL && \
+    chmod -v 0775 $GHOST_CONTENT
 
 # Switch back to the "node" user
 # USER node
 
 # Stage 2: Final Image
-FROM gcr.io/distroless/nodejs20-debian12@sha256:08d0b6846a21812d07a537eff956acc1bc38a7440a838ce6730515f8d3cd5d9e AS runtime
+FROM gcr.io/distroless/nodejs20-debian12-nonroot
 
 # Set the installation directory and content directory for Ghost
-ENV GHOST_INSTALL_SRC=/home/node/app/ghost
+ENV GHOST_INSTALL_SRC=/home/nonroot/app/ghost
 ENV GHOST_INSTALL=/home/nonroot/app/ghost
 ENV GHOST_CONTENT=/home/nonroot/app/ghost/content
 ENV GHOST_CONTENT_ORIGINAL=/home/nonroot/app/ghost/content.orig
