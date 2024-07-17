@@ -44,9 +44,9 @@ spec:
         env:
 
         - name: GHOST_INSTALL
-          value: /home/node/app/ghost
+          value: /home/nonroot/app/ghost
         - name: GHOST_CONTENT
-          value: /home/node/app/ghost/content
+          value: /home/nonroot/app/ghost/content
         - name: NODE_ENV
           value: production
         securityContext:
@@ -71,20 +71,20 @@ spec:
             for dir in $DIRS; do
               if [ ! -d $GHOST_CONTENT/$dir ]; then
                 echo "Creating $GHOST_CONTENT/$dir directory"
-                mkdir -pv $GHOST_CONTENT/$dir && chown -Rfv 1000:1000 $GHOST_CONTENT/$dir || echo "Error creating $GHOST_CONTENT/$dir directory"
+                mkdir -pv $GHOST_CONTENT/$dir && chown -Rfv 65532:65532 $GHOST_CONTENT/$dir || echo "Error creating $GHOST_CONTENT/$dir directory"
               fi
             done
 
             echo "Changing ownership of $GHOST_CONTENT/themes directory"
-            chown -Rfv 1000:1000 $GHOST_CONTENT/themes || echo "Error changing ownership of $GHOST_CONTENT themes directory"
+            chown -Rfv 65532:65532 $GHOST_CONTENT/themes || echo "Error changing ownership of $GHOST_CONTENT themes directory"
 
             echo "Changing ownership of $GHOST_CONTENT/public directory"
-            chown -Rfv 1000:1000 $GHOST_CONTENT/public || echo "Error changing ownership of $GHOST_CONTENT public directory"
+            chown -Rfv 65532:65532 $GHOST_CONTENT/public || echo "Error changing ownership of $GHOST_CONTENT public directory"
 
 
         volumeMounts:
         - name: k8s-ghost-content
-          mountPath: /home/node/app/ghost/content
+          mountPath: /home/nonroot/app/ghost/content
           readOnly: false
 
       containers:
@@ -142,11 +142,11 @@ spec:
 
         volumeMounts:
         - name: k8s-ghost-content
-          mountPath: /home/node/app/ghost/content
+          mountPath: /home/nonroot/app/ghost/content
           readOnly: false
         - name: ghost-config-prod
           readOnly: true
-          mountPath: /home/node/app/ghost/config.production.json
+          mountPath: /home/nonroot/app/ghost/config.production.json
           subPath: config.production.json
         - name: tmp # This is the temporary volume mount to allow loading themes
           mountPath: /tmp
@@ -155,7 +155,7 @@ spec:
           readOnlyRootFilesystem: true
           allowPrivilegeEscalation: false
           runAsNonRoot: true
-          runAsUser: 1000
+          runAsUser: 65532
 
 
       restartPolicy: Always
