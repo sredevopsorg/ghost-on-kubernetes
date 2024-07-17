@@ -35,8 +35,6 @@ RUN	npm i -g ghost-cli@latest || yarn global add ghost-cli@latest
 # Install Ghost with the specified version, using MySQL as the database, and configure it without prompts, stack traces, setup, and in the specified installation directory
 RUN ghost install $GHOST_VERSION --dir $GHOST_INSTALL --db mysql --dbhost mysql --no-prompt --no-stack --no-setup --color --process local || npx ghost-cli install $GHOST_VERSION --dir $GHOST_INSTALL --db mysql --dbhost mysql --no-prompt --no-stack --no-setup --color --process local
 
-# Switch back to the root user
-#USER root
 
 # Move the original content directory to a backup location, create a new content directory, set the correct ownership and permissions, and switch back to the "node" user
 RUN mv -v $GHOST_CONTENT $GHOST_CONTENT_ORIGINAL && \
@@ -53,14 +51,15 @@ RUN mv -v $GHOST_CONTENT $GHOST_CONTENT_ORIGINAL && \
 FROM gcr.io/distroless/nodejs20-debian12@sha256:08d0b6846a21812d07a537eff956acc1bc38a7440a838ce6730515f8d3cd5d9e AS runtime
 
 # Set the installation directory and content directory for Ghost
-ENV GHOST_INSTALL=/home/node/app/ghost
-ENV GHOST_CONTENT=/home/node/app/ghost/content
-ENV GHOST_CONTENT_ORIGINAL=/home/node/app/ghost/content.orig
+ENV GHOST_INSTALL_SRC=/home/node/app/ghost
+ENV GHOST_INSTALL=/home/nonroot/app/ghost
+ENV GHOST_CONTENT=/home/nonroot/app/ghost/content
+ENV GHOST_CONTENT_ORIGINAL=/home/nonroot/app/ghost/content.orig
 
-USER node
+USER nonroot
 
 # Copy the Ghost installation directory from the build environment to the final image
-COPY --from=build-env $GHOST_INSTALL $GHOST_INSTALL
+COPY --from=build-env $GHOST_INSTALL_SRC $GHOST_INSTALL
 
 # Set the working directory to the Ghost installation directory and create a volume for the content directory
 # The volume is used to persist the data across container restarts, upgrades, and migrations. 
@@ -71,7 +70,7 @@ WORKDIR $GHOST_INSTALL
 VOLUME $GHOST_CONTENT
 
 # Copy the entrypoint script to the current Ghost version.
-COPY --chown=1000:1000 entrypoint.js current/entrypoint.js
+COPY --chown=65532 entrypoint.js current/entrypoint.js
 
 
 # Expose port 2368 for Ghost
