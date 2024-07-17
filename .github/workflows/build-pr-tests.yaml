@@ -2,7 +2,7 @@ name: Build tests
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, edited]
+    types: [opened, reopened, edited]
     branches:
       - main
     paths:

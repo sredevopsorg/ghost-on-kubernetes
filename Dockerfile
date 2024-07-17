@@ -4,6 +4,7 @@
 # Stage 1: Build Environment
 FROM node:iron-bookworm@sha256:786005cf39792f7046bcd66491056c26d2dbcc669c072d1a1e4ef4fcdddd26eb AS build-env
 
+USER node
 SHELL ["/bin/bash", "-c"]
 ENV NODE_ENV=production NPM_CONFIG_LOGLEVEL=info
 
@@ -30,7 +31,6 @@ RUN yarn config set network-timeout 60000 && \
 
 
 # RUN	npm i -g ghost-cli@latest || yarn global add ghost-cli@latest
-
 
 # Install Ghost with the specified version, using MySQL as the database, and configure it without prompts, stack traces, setup, and in the specified installation directory
 # RUN ghost install $GHOST_VERSION --dir $GHOST_INSTALL --db mysql --dbhost mysql --no-prompt --no-stack --no-setup --color --process local || 
