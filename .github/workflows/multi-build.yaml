@@ -188,7 +188,7 @@ jobs:
       pull-requests: read
       repository-projects: read
       security-events: read
-      statuses: write
+      statuses: read
       
     steps:
       - name: Harden Runner
