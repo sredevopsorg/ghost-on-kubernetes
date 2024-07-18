@@ -3,8 +3,16 @@
 
 # Stage 1: Build Environment
 FROM node:iron-bookworm@sha256:786005cf39792f7046bcd66491056c26d2dbcc669c072d1a1e4ef4fcdddd26eb AS build-env
+USER root
+# Create a new user and group named "nonroot" with the UID 65532 and GID 65532, not a member of the root, sudo, and sys groups, and set the home directory to /home/nonroot.
+# This user is used to run the Ghost application in the container for security reasons.
+RUN groupadd -g 65532 nonroot && \
+    useradd -u 65532 -g 65532 -d /home/nonroot nonroot && \
+    usermod -aG nonroot nonroot && \
+    mkdir -pv /home/nonroot && \
+    chown -Rfv 65532:65532 /home/nonroot
 
-USER node
+USER nonroot
 SHELL ["/bin/bash", "-c"]
 ENV NODE_ENV=production NPM_CONFIG_LOGLEVEL=info
 
@@ -17,9 +25,8 @@ ENV GHOST_INSTALL=/home/nonroot/app/ghost
 ENV GHOST_CONTENT=/home/nonroot/app/ghost/content
 ENV GHOST_CONTENT_ORIGINAL=/home/nonroot/app/ghost/content.orig
 
-RUN mkdir -pv "$GHOST_INSTALL" || sudo mkdir -pv "$GHOST_INSTALL" && \
-    chown -Rfv 65532:65532 "$GHOST_INSTALL" || sudo chown -Rfv nonroot:nonroot "$GHOST_INSTALL"
-
+RUN mkdir -pv "$GHOST_INSTALL"
+    
 # Install the latest version of Ghost CLI globally and config some workarounds to build arm64 version in Github without timeout failures
 RUN yarn config set network-timeout 60000 && \
     yarn config set inline-builds true && \
@@ -41,23 +48,22 @@ RUN npx ghost-cli install $GHOST_VERSION --dir $GHOST_INSTALL --db mysql --dbhos
 # Move the original content directory to a backup location, create a new content directory, set the correct ownership and permissions, and switch back to the "node" user
 RUN mv -v $GHOST_CONTENT $GHOST_CONTENT_ORIGINAL && \
     mkdir -v $GHOST_CONTENT && \
-    chown -Rfv nonroot:nobody $GHOST_CONTENT_ORIGINAL && \
-    chown -Rfv nonroot:nobody $GHOST_CONTENT && \
-    chown -fv nonroot:nobody $GHOST_INSTALL && \
+    # chown -Rfv 65532 $GHOST_CONTENT_ORIGINAL && \
+    # chown -Rfv 65532 $GHOST_CONTENT && \
+    # chown -fv 65532 $GHOST_INSTALL && \
     chmod -v 0775 $GHOST_CONTENT
 
 # Switch back to the "node" user
 # USER node
 
 # Stage 2: Final Image
-FROM gcr.io/distroless/nodejs20-debian12:nonroot
+FROM gcr.io/distroless/nodejs20-debian12
 
 # Set the installation directory and content directory for Ghost
 ENV GHOST_INSTALL_SRC=/home/nonroot/app/ghost
 ENV GHOST_INSTALL=/home/nonroot/app/ghost
 ENV GHOST_CONTENT=/home/nonroot/app/ghost/content
 ENV GHOST_CONTENT_ORIGINAL=/home/nonroot/app/ghost/content.orig
-
 USER nonroot
 
 # Copy the Ghost installation directory from the build environment to the final image
