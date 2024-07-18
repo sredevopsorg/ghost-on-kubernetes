@@ -27,13 +27,13 @@ stringData:
       "database": {
         "client": "sqlite3",
         "connection": {
-          "filename": "/var/lib/ghost/content/data/ghost-dev.db"
+          "filename": "/home/nonroot/app/ghost/content/data/ghost-dev.db"
         }
       },
       "debug": true,
       "process": "local",
       "paths": {
-        "contentPath": "/var/lib/ghost/content"
+        "contentPath": "/home/nonroot/app/ghost/content"
       },
       "privacy": {
         "useUpdateCheck": false,

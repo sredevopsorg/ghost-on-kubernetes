@@ -48,7 +48,7 @@ stringData:
       "debug": true,
       "process": "local",
       "paths": {
-        "contentPath": "/var/lib/ghost/content"
+        "contentPath": "/home/nonroot/app/ghost/content"
       }
     }
     

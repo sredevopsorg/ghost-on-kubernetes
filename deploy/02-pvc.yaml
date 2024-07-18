@@ -12,10 +12,10 @@ metadata:
     app.kubernetes.io/part-of: ghost-on-kubernetes
     app.kubernetes.io/managed-by: sredevopsorg
 spec:
-  storageClassName: longhorn-rwx # Change this to your storageClassName
+  storageClassName: local-path # Change this to your storageClassName
   volumeMode: Filesystem
   accessModes:
-  - ReadWriteMany # Change this to your accessModes if needed, we suggest ReadWriteMany so we can scale the deployment later.
+  - ReadWriteOnce # Change this to your accessModes if needed, we suggest ReadWriteOnce so we can scale the deployment later.
   resources:
     requests:
       storage: 1Gi
@@ -35,10 +35,10 @@ metadata:
     app.kubernetes.io/managed-by: sredevopsorg
 
 spec:
-  storageClassName: longhorn-rwx # Change this to your storageClassName
+  storageClassName: local-path # Change this to your storageClassName
   volumeMode: Filesystem
   accessModes:
-  - ReadWriteMany # Change this to ReadWriteOnce if your storageClassName does not support ReadWriteMany
+  - ReadWriteOnce # Change this to ReadWriteOnce if your storageClassName does not support ReadWriteOnce
   resources:
     requests:
       storage: 1Gi

@@ -1,10 +1,10 @@
 # Ghost on Kubernetes by SREDevOps.Org
 
-<center><a href="https://sredevops.org" target="_blank" rel="noopener noreferrer"><img src="https://github.com/sredevopsorg/.github/assets/34670018/6878e00f-635c-4553-8df7-3b20406fdb4f" alt="SREDevOps.org" width="60%" align="center" /></a></center>
+<center><a href="https://sredevops.org" target="_blank" rel="noopener"><img src="https://github.com/sredevopsorg/.github/assets/34670018/6878e00f-635c-4553-8df7-3b20406fdb4f" alt="SREDevOps.org" width="60%" align="center" /></a></center>
 
 **Community for SRE, DevOps, Cloud Native, GNU/Linux, and more. 🌎**
 
-[![Build Multiarch](https://github.com/sredevopsorg/ghost-on-kubernetes/actions/workflows/multi-build.yaml/badge.svg?branch=main)](https://github.com/sredevopsorg/ghost-on-kubernetes/actions/workflows/multi-build.yaml) | [![Image Size](https://ghcr-badge.egpl.dev/sredevopsorg/ghost-on-kubernetes/size?color=%2344cc11&tag=main&label=main+image+size)](https://github.com/sredevopsorg/ghost-on-kubernetes/pkgs/container/ghost-on-kubernetes) | [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/sredevopsorg/ghost-on-kubernetes/badge)](https://securityscorecards.dev/viewer/?uri=github.com/sredevopsorg/ghost-on-kubernetes) | ![Fork this repository](https://img.shields.io/github/forks/sredevopsorg/ghost-on-kubernetes?style=social) | ![Star this repository](https://img.shields.io/github/stars/sredevopsorg/ghost-on-kubernetes?style=social) | [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/8888/badge)](https://www.bestpractices.dev/projects/8888)
+[![Build Multiarch](https://github.com/sredevopsorg/ghost-on-kubernetes/actions/workflows/multi-build.yaml/badge.svg?branch=main)](https://github.com/sredevopsorg/ghost-on-kubernetes/actions/workflows/multi-build.yaml) | [![Image Size](https://ghcr-badge.egpl.dev/sredevopsorg/ghost-on-kubernetes/size?color=%2344cc11&tag=main&label=main+image+size)](https://github.com/sredevopsorg/ghost-on-kubernetes/pkgs/container/ghost-on-kubernetes) | [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/sredevopsorg/ghost-on-kubernetes/badge)](https://securityscorecards.dev/viewer/?uri=github.com/sredevopsorg/ghost-on-kubernetes) | [![Fork this repository](https://img.shields.io/github/forks/sredevopsorg/ghost-on-kubernetes?style=social)](https://github.com/sredevopsorg/ghost-on-kubernetes/fork) | [![Star this repository](https://img.shields.io/github/stars/sredevopsorg/ghost-on-kubernetes?style=social)](https://github.com/sredevopsorg/ghost-on-kubernetes/stargazers) | [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/8888/badge)](https://www.bestpractices.dev/projects/8888)
 
 > This repository implements Ghost CMS v5.xx.x from [@TryGhost (upstream)](https://github.com/TryGhost/Ghost) on Kubernetes, with our custom image, which has significant improvements to be used on Kubernetes. See this whole README for more information.
 
@@ -23,8 +23,129 @@ We've made some significant updates to improve the security and efficiency of ou
 1. **Multi-arch support**: The images are now multi-arch, with [support for amd64 and arm64](#arm64-compatible).
 2. **Distroless Image**: We use [@GoogleContainerTools](https://github.com/GoogleContainerTools)'s [Distroless NodeJS](https://github.com/GoogleContainerTools/distroless/blob/main/examples/nodejs/Dockerfile) as the execution environment for the final image. Distroless images are minimal images that contain only the necessary components to run the application, making them more secure and efficient than traditional images.
 3. **MySQL StatefulSet**: We've changed the MySQL implementation to a StatefulSet. This provides stable network identifiers and persistent storage, which is important for databases like MySQL that need to maintain state.
-4. **Init Container**: We've added an init container to the Ghost deployment. This container is responsible for setting up the necessary configuration files and directories before the main Ghost container starts, ensuring the right directories are created, correct ownership for user node inside distroless container UID/GID to 1000:1000. Check [deploy/06-ghost-deployment.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/06-ghost-deployment.yaml) for details on these changes.
-5. **Entrypoint Script**: We've introduced a new entrypoint script that runs as the non-privileged user inside the distroless container. This script is responsible for updating the default themes then starts the Ghost application. This script is executed by the Node user without privileges within the Distroless container, which updates default themes and starts the Ghost application, operation which is performed into the distroless container itself. [entrypoint.js](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/entrypoint.js)
+4. **Init Container**: We've added an init container to the Ghost deployment. This container is responsible for setting up the necessary configuration files and directories before the main Ghost container starts, ensuring the right directories are created, correct ownership for user node inside distroless container UID/GID to 65532, and the correct permissions are set.  Check [deploy/06-ghost-deployment.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/06-ghost-deployment.yaml) for details on these changes.
+5. **Entrypoint Script**: We've introduced a new entrypoint script that runs as the non-privileged user inside the distroless container. This script is responsible for updating the default themes then starts the Ghost application. This script is executed by the nonroot user without privileges within the Distroless container, which updates default themes and starts the Ghost application, operation performed into the distroless container in runtime. [entrypoint.js](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/entrypoint.js)
+
+```Dockerfile
+#
+# This Dockerfile is used to build a container image for running Ghost, a popular open-source blogging platform, on Kubernetes.
+# The image is built with the official Node 20 on Debian Bookworm (LTS Iron) image and uses the Distroless base image for security and minimalism.
+#
+# Stage 1: Build Environment
+# In this stage, the build environment is set up and the necessary dependencies are installed.
+# The Ghost version is defined as a build argument and set as an environment variable.
+# The installation directory, content directory, and original content directory for Ghost are also set as environment variables.
+# The Ghost CLI is installed globally and configured with some workarounds to build the arm64 version in GitHub without timeout failures.
+# Ghost is then installed with the specified version, using MySQL as the database, and configured without prompts, stack traces, and setup.
+# The original content directory is moved to a backup location, a new content directory is created, and the correct ownership and permissions are set.
+#
+# Stage 2: Final Image
+# In this stage, the final image is created using the Distroless base image.
+# The Ghost installation directory is copied from the build environment to the final image.
+# The working directory is set to the Ghost installation directory and a volume is created for the content directory.
+# The entrypoint script is copied to the current Ghost version.
+# Port 2368 is exposed for Ghost.
+# The command is set to start Ghost with the entrypoint script.
+#
+# For more information, refer to the GitHub repository: https://github.com/sredevopsorg/ghost-on-kubernetes
+
+# Stage 1: Build Environment
+FROM node:iron-bookworm@sha256:786005cf39792f7046bcd66491056c26d2dbcc669c072d1a1e4ef4fcdddd26eb AS build-env
+...
+
+# Stage 2: Final Image
+FROM gcr.io/distroless/nodejs20-debian12
+...
+# This Dockerfile is used to build a container image for running Ghost, a popular open-source blogging platform, on Kubernetes.
+# The image is built with official Node 20 on Debian Bookworm (LTS Iron)  image and uses the Distroless base image for security and minimalism.
+
+# Stage 1: Build Environment
+FROM node:iron-bookworm@sha256:786005cf39792f7046bcd66491056c26d2dbcc669c072d1a1e4ef4fcdddd26eb AS build-env
+USER root
+# Create a new user and group named "nonroot" with the UID 65532 and GID 65532, not a member of the root, sudo, and sys groups, and set the home directory to /home/nonroot.
+# This user is used to run the Ghost application in the container for security reasons.
+RUN groupadd -g 65532 nonroot && \
+    useradd -u 65532 -g 65532 -d /home/nonroot nonroot && \
+    usermod -aG nonroot nonroot && \
+    mkdir -pv /home/nonroot && \
+    chown -Rfv 65532:65532 /home/nonroot
+
+USER nonroot
+SHELL ["/bin/bash", "-c"]
+ENV NODE_ENV=production NPM_CONFIG_LOGLEVEL=info
+
+# Define the GHOST_VERSION build argument and set it as an environment variable
+ARG GHOST_VERSION 
+ENV GHOST_VERSION=$GHOST_VERSION  
+
+# Set the installation directory, content directory, and original content directory for Ghost
+ENV GHOST_INSTALL=/home/nonroot/app/ghost
+ENV GHOST_CONTENT=/home/nonroot/app/ghost/content
+ENV GHOST_CONTENT_ORIGINAL=/home/nonroot/app/ghost/content.orig
+
+RUN mkdir -pv "$GHOST_INSTALL"
+    
+# Install the latest version of Ghost CLI globally and config some workarounds to build arm64 version in Github without timeout failures
+RUN yarn config set network-timeout 60000 && \
+    yarn config set inline-builds true && \
+    npm config set fetch-timeout 60000 && \
+    npm config set progress && \
+    npm config set omit dev
+
+# Create the Ghost installation directory and set the owner to the "node" user
+
+
+# RUN npm i -g ghost-cli@latest || yarn global add ghost-cli@latest
+
+# Install Ghost with the specified version, using MySQL as the database, and configure it without prompts, stack traces, setup, and in the specified installation directory
+# RUN ghost install $GHOST_VERSION --dir $GHOST_INSTALL --db mysql --dbhost mysql --no-prompt --no-stack --no-setup --color --process local || 
+
+RUN npx ghost-cli install $GHOST_VERSION --dir $GHOST_INSTALL --db mysql --dbhost mysql --no-prompt --no-stack --no-setup --color --process local
+
+
+# Move the original content directory to a backup location, create a new content directory, set the correct ownership and permissions, and switch back to the "node" user
+RUN mv -v $GHOST_CONTENT $GHOST_CONTENT_ORIGINAL && \
+    mkdir -v $GHOST_CONTENT && \
+    # chown -Rfv 65532 $GHOST_CONTENT_ORIGINAL && \
+    # chown -Rfv 65532 $GHOST_CONTENT && \
+    # chown -fv 65532 $GHOST_INSTALL && \
+    chmod -v 0775 $GHOST_CONTENT
+
+# Switch back to the "node" user
+# USER node
+
+# Stage 2: Final Image
+FROM gcr.io/distroless/nodejs20-debian12
+
+# Set the installation directory and content directory for Ghost
+ENV GHOST_INSTALL_SRC=/home/nonroot/app/ghost
+ENV GHOST_INSTALL=/home/nonroot/app/ghost
+ENV GHOST_CONTENT=/home/nonroot/app/ghost/content
+ENV GHOST_CONTENT_ORIGINAL=/home/nonroot/app/ghost/content.orig
+USER nonroot
+
+# Copy the Ghost installation directory from the build environment to the final image
+COPY --from=build-env $GHOST_INSTALL_SRC $GHOST_INSTALL
+
+# Set the working directory to the Ghost installation directory and create a volume for the content directory
+# The volume is used to persist the data across container restarts, upgrades, and migrations. 
+# It's going to be handled with an init container that will copy the content from your original content directory to the new content directory (If there is any)
+# The CMD script will handle default themes included (Casper and Source) and init Ghost.
+
+WORKDIR $GHOST_INSTALL
+VOLUME $GHOST_CONTENT
+
+# Copy the entrypoint script to the current Ghost version.
+COPY --chown=65532 entrypoint.js current/entrypoint.js
+
+
+# Expose port 2368 for Ghost
+EXPOSE 2368
+
+# Set the command to start Ghost with the entrypoint (See https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/entrypoint.js)
+CMD ["current/entrypoint.js"]
+```
+
 
 ## Features
 
