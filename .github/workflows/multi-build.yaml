@@ -3,9 +3,11 @@ on:
   push:
     branches: 
     - main
+    - attestations
     paths: 
     - Dockerfile
     - entrypoint.js
+    - .github/workflows/multi-build.yaml
     tags:
       - v*
 
@@ -19,7 +21,7 @@ on:
       ghost_version:
         description: 'Ghost version'
         required: true
-        default: '5.86.2'
+        default: '5.88.0'
         type: string
   workflow_call:
 
@@ -32,6 +34,7 @@ permissions:
 
 jobs:
   build:
+    if: ${{ github.actor == github.event.repository.owner.login }} || ${{ github.actor == 'ngeorger' }}
     permissions:
       actions: write
       checks: write
@@ -46,43 +49,39 @@ jobs:
       repository-projects: read
       security-events: read
       statuses: read
+      attestations: write
+
 
     runs-on: ubuntu-22.04
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         platform:
           - linux/amd64
           - linux/arm64
     steps:
+
+      - 
+        name: Harden Runner
+        uses: step-security/harden-runner@0d381219ddf674d61a7572ddd19d7941e271515c # v2.9.0
+        with:
+          egress-policy: audit
+
       -
         name: Prepare
         id: prepare
         run: |
           platform=${{ matrix.platform }}
           echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
-      - 
-        name: Harden Runner
-        uses: step-security/harden-runner@0d381219ddf674d61a7572ddd19d7941e271515c # v2.9.0
-        with:
-          egress-policy: block
-          allowed-endpoints: >
-            api.github.com:443
-            auth.docker.io:443
-            deb.debian.org:80
-            gcr.io:443
-            ghcr.io:443
-            github.com:443
-            nodejs.org:443
-            objects.githubusercontent.com:443
-            production.cloudflare.docker.com:443
-            registry-1.docker.io:443
-            registry.npmjs.org:443
-            registry.yarnpkg.com:443
-            storage.googleapis.com:443
+
       -
         name: Checkout
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          repository: ${{ github.repository }}
+          ref: ${{ github.ref || github.sha }}
+          fetch-tags: true
+
       -
         name: Set up GHOST_VERSION and MANUAL_TAG values, depending on event type (push or workflow_dispatch)
         id: versions
@@ -102,19 +101,34 @@ jobs:
       -
         name: Show Ghost version
         continue-on-error: true
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
         run: |
+          if [ ${{ env.GITHUB_EVENT_NAME }} == workflow_dispatch ]; then
+              echo "output of step for GHOST_VERSION=$GHOST_VERSION"
+              echo "output of step for MANUAL_TAG=$MANUAL_TAG"
+          else
               echo "output of step for GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }}"
-              echo "output of step for MANUAL_TAG=${{ steps.versions.outputs.MANUAL_TAG }}"
-              echo "output of env for GHOST_VERSION=\"$(echo $GHOST_VERSION)\""
-              echo "output of env for MANUAL_TAG=\"$(echo $MANUAL_TAG)\""
+          fi
 
       - name: Docker meta default
         id: meta
         uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81 # v5.5.1
         with:
-          images: ${{ env.GHCR_IMAGE }}
+          images: |
+            ${{ env.GHCR_IMAGE }}
           annotations: |
             type=org.opencontainers.image.description,value=${{ github.event.repository.description }}
+            type=org.opencontainers.image.url,value=${{ github.event.repository.html_url }}
+            type=org.opencontainers.image.source,value=${{ github.event.repository.clone_url }}
+            type=org.opencontainers.image.documentation,value=${{ github.event.repository.html_url }}/blob/main/README.md
+            type=org.opencontainers.image.authors,value=${{ github.event.repository.owner.email }}
+            type=org.opencontainers.image.licenses,value=${{ github.event.repository.license.spdx_id }}
+            type=org.opencontainers.image.title,value=${{ github.event.repository.name }}
+            type=org.opencontainers.image.version,value=${{ steps.versions.outputs.GHOST_VERSION }}
+            type=org.opencontainers.image.created,value=${{ github.workflow_ref.created_at }}
+            type=org.opencontainers.image.vendor,value=${{ github.event.repository.organization }}
+            type=io.artifacthub.package.readme-url,value=${{ github.event.repository.html_url }}/blob/main/README.md
 
       -
         name: Set up QEMU
@@ -234,6 +248,17 @@ jobs:
           images: ${{ env.GHCR_IMAGE }}
           annotations: |
             type=org.opencontainers.image.description,value=${{ github.event.repository.description }}
+            type=org.opencontainers.image.url,value=${{ github.event.repository.html_url }}
+            type=org.opencontainers.image.source,value=${{ github.event.repository.clone_url }}
+            type=org.opencontainers.image.documentation,value=${{ github.event.repository.html_url }}/blob/main/README.md
+            type=org.opencontainers.image.authors,value=${{ github.event.repository.owner.email }}
+            type=org.opencontainers.image.licenses,value=${{ github.event.repository.license.spdx_id }}
+            type=org.opencontainers.image.title,value=${{ github.event.repository.name }}
+            type=org.opencontainers.image.version,value=${{ steps.versions.outputs.GHOST_VERSION }}
+            type=org.opencontainers.image.created,value=${{ github.workflow_ref.created_at }}
+            type=org.opencontainers.image.vendor,value=${{ github.event.repository.organization }}
+            type=io.artifacthub.package.readme-url,value=${{ github.event.repository.html_url }}/blob/main/README.md
+
           tags: |
             type=raw,value=main,enable=${{ github.event_name != 'workflow_dispatch' }}
             type=raw,value=latest,enable=${{ github.event_name != 'workflow_dispatch' }}
@@ -253,10 +278,22 @@ jobs:
         working-directory: /tmp/digests
         id: manifest-annotate
         continue-on-error: true
+        env:
+          GHOST_VERSION: "v${{ steps.versions.outputs.GHOST_VERSION }}"
         run: |
               docker buildx imagetools create \
                 $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
-                --annotation='index:org.opencontainers.image.description="Ghost on Kubernetes by SREDevOps.org https://sredevops.org "' \
+                --annotation type=org.opencontainers.image.description,value=${{ github.event.repository.description }} \
+                --annotation type=org.opencontainers.image.url,value=${{ github.event.repository.html_url }} \
+                --annotation type=org.opencontainers.image.source,value=${{ github.event.repository.clone_url }} \
+                --annotation type=org.opencontainers.image.documentation,value=${{ github.event.repository.html_url }}/blob/main/README.md \
+                --annotation type=org.opencontainers.image.authors,value=${{ github.event.repository.owner.email }} \
+                --annotation type=org.opencontainers.image.licenses,value=${{ github.event.repository.license.spdx_id }} \
+                --annotation type=org.opencontainers.image.title,value=${{ github.event.repository.name }} \
+                --annotation type=org.opencontainers.image.version,value=${{ steps.versions.outputs.GHOST_VERSION }} \
+                --annotation type=org.opencontainers.image.created,value=${{ github.workflow_ref.created_at }} \
+                --annotation type=org.opencontainers.image.vendor,value=${{ github.event.repository.organization }} \
+                --annotation type=io.artifacthub.package.readme-url,value=${{ github.event.repository.html_url }}/blob/main/README.md \
                   $(printf '${{ env.GHCR_IMAGE }}@sha256:%s ' *)
 
       -
