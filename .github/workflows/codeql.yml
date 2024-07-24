@@ -14,8 +14,14 @@ name: "CodeQL"
 on:
   push:
     branches: [ "main" ]
+    paths:
+      - "./Dockerfile"
+      - "**.js"
   pull_request:
     branches: [ "main" ]
+    paths:
+      - "./Dockerfile"
+      - "**.js"
   schedule:
     - cron: '42 16 * * 2'
 
