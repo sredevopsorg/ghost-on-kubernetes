@@ -10,6 +10,9 @@ on:
     - .github/workflows/multi-build.yaml
     tags:
       - v*
+  release:
+    types:
+      - edited
 
   workflow_dispatch:
     inputs:
@@ -21,7 +24,7 @@ on:
       ghost_version:
         description: 'Ghost version'
         required: true
-        default: '5.88.0'
+        default: '5.88.1'
         type: string
   workflow_call:
 
@@ -77,10 +80,6 @@ jobs:
       -
         name: Checkout
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-        with:
-          repository: ${{ github.repository }}
-          ref: ${{ github.ref || github.sha }}
-          fetch-tags: true
 
       -
         name: Set up GHOST_VERSION and MANUAL_TAG values, depending on event type (push or workflow_dispatch)
@@ -118,17 +117,14 @@ jobs:
           images: |
             ${{ env.GHCR_IMAGE }}
           annotations: |
-            type=org.opencontainers.image.description,value=${{ github.event.repository.description }}
-            type=org.opencontainers.image.url,value=${{ github.event.repository.html_url }}
-            type=org.opencontainers.image.source,value=${{ github.event.repository.clone_url }}
-            type=org.opencontainers.image.documentation,value=${{ github.event.repository.html_url }}/blob/main/README.md
-            type=org.opencontainers.image.authors,value=${{ github.event.repository.owner.email }}
-            type=org.opencontainers.image.licenses,value=${{ github.event.repository.license.spdx_id }}
-            type=org.opencontainers.image.title,value=${{ github.event.repository.name }}
-            type=org.opencontainers.image.version,value=${{ steps.versions.outputs.GHOST_VERSION }}
-            type=org.opencontainers.image.created,value=${{ github.workflow_ref.created_at }}
-            type=org.opencontainers.image.vendor,value=${{ github.event.repository.organization }}
-            type=io.artifacthub.package.readme-url,value=${{ github.event.repository.html_url }}/blob/main/README.md
+            type=org.opencontainers.image.description,value='${{ github.event.repository.description }}'
+            type=org.opencontainers.image.url,value='${{ github.event.repository.html_url }}'
+            type=org.opencontainers.image.source,value='${{ github.event.repository.clone_url }}'
+            type=org.opencontainers.image.documentation,value='${{ github.event.repository.html_url }}/blob/main/README.md'
+            type=org.opencontainers.image.licenses,value='${{ github.event.repository.license.spdx_id }}'
+            type=org.opencontainers.image.version,value='v${{ steps.versions.outputs.GHOST_VERSION }}'
+            type=org.opencontainers.image.vendor,value='${{ github.event.repository.organization }}'
+            io.artifacthub.package.readme-url,value='${{ github.event.repository.html_url }}/blob/main/README.md'
 
       -
         name: Set up QEMU
@@ -167,7 +163,7 @@ jobs:
           outputs: type=image,name=${{ env.GHCR_IMAGE }},push-by-digest=true,name-canonical=true,push=true,oci-mediatypes=true
           provenance: false
           cache-from: type=gha,ignore-error=true
-          cache-to: type=gha,ignore-error=true
+          cache-to: type=gha,mode=max,ignore-error=true
       -
         name: Export digest
         run: |
@@ -247,19 +243,18 @@ jobs:
         with:
           images: ${{ env.GHCR_IMAGE }}
           annotations: |
-            type=org.opencontainers.image.description,value=${{ github.event.repository.description }}
-            type=org.opencontainers.image.url,value=${{ github.event.repository.html_url }}
-            type=org.opencontainers.image.source,value=${{ github.event.repository.clone_url }}
-            type=org.opencontainers.image.documentation,value=${{ github.event.repository.html_url }}/blob/main/README.md
-            type=org.opencontainers.image.authors,value=${{ github.event.repository.owner.email }}
-            type=org.opencontainers.image.licenses,value=${{ github.event.repository.license.spdx_id }}
-            type=org.opencontainers.image.title,value=${{ github.event.repository.name }}
-            type=org.opencontainers.image.version,value=${{ steps.versions.outputs.GHOST_VERSION }}
-            type=org.opencontainers.image.created,value=${{ github.workflow_ref.created_at }}
-            type=org.opencontainers.image.vendor,value=${{ github.event.repository.organization }}
-            type=io.artifacthub.package.readme-url,value=${{ github.event.repository.html_url }}/blob/main/README.md
-
+            type=org.opencontainers.image.description,value='${{ github.event.repository.description }}'
+            type=org.opencontainers.image.url,value='${{ github.event.repository.html_url }}'
+            type=org.opencontainers.image.source,value='${{ github.event.repository.clone_url }}'
+            type=org.opencontainers.image.documentation,value='${{ github.event.repository.html_url }}/blob/main/README.md'
+            type=org.opencontainers.image.licenses,value='${{ github.event.repository.license.spdx_id }}'
+            type=org.opencontainers.image.version,value='v${{ steps.versions.outputs.GHOST_VERSION }}'
+            type=org.opencontainers.image.vendor,value='${{ github.event.repository.organization }}'
+            io.artifacthub.package.readme-url,value='${{ github.event.repository.html_url }}/blob/main/README.md'
           tags: |
+            type=ref,event=branch
+            type=ref,event=tag
+            type=sha,format=long
             type=raw,value=main,enable=${{ github.event_name != 'workflow_dispatch' }}
             type=raw,value=latest,enable=${{ github.event_name != 'workflow_dispatch' }}
             type=raw,value=${{ env.GHOST_VERSION }},enable=${{ github.event_name != 'workflow_dispatch' }}
@@ -282,18 +277,15 @@ jobs:
           GHOST_VERSION: "v${{ steps.versions.outputs.GHOST_VERSION }}"
         run: |
               docker buildx imagetools create \
-                $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
-                --annotation type=org.opencontainers.image.description,value=${{ github.event.repository.description }} \
-                --annotation type=org.opencontainers.image.url,value=${{ github.event.repository.html_url }} \
-                --annotation type=org.opencontainers.image.source,value=${{ github.event.repository.clone_url }} \
-                --annotation type=org.opencontainers.image.documentation,value=${{ github.event.repository.html_url }}/blob/main/README.md \
-                --annotation type=org.opencontainers.image.authors,value=${{ github.event.repository.owner.email }} \
-                --annotation type=org.opencontainers.image.licenses,value=${{ github.event.repository.license.spdx_id }} \
-                --annotation type=org.opencontainers.image.title,value=${{ github.event.repository.name }} \
-                --annotation type=org.opencontainers.image.version,value=${{ steps.versions.outputs.GHOST_VERSION }} \
-                --annotation type=org.opencontainers.image.created,value=${{ github.workflow_ref.created_at }} \
-                --annotation type=org.opencontainers.image.vendor,value=${{ github.event.repository.organization }} \
-                --annotation type=io.artifacthub.package.readme-url,value=${{ github.event.repository.html_url }}/blob/main/README.md \
+                  $(jq -cr '.tags | map(ascii_downcase | "-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+                  --annotation type=org.opencontainers.image.description,value='${{ github.event.repository.description }}' \
+                  --annotation type=org.opencontainers.image.url,value='${{ github.event.repository.html_url }}' \
+                  --annotation type=org.opencontainers.image.source,value='${{ github.event.repository.clone_url }}' \
+                  --annotation type=org.opencontainers.image.documentation,value='${{ github.event.repository.html_url }}/blob/main/README.md' \
+                  --annotation type=org.opencontainers.image.licenses,value='${{ github.event.repository.license.spdx_id }}' \
+                  --annotation type=org.opencontainers.image.version,value='v${{ steps.versions.outputs.GHOST_VERSION }}' \
+                  --annotation type=org.opencontainers.image.vendor,value='${{ github.event.repository.organization }}' \
+                  --annotation io.artifacthub.package.readme-url,value='${{ github.event.repository.html_url }}/blob/main/README.md' \
                   $(printf '${{ env.GHCR_IMAGE }}@sha256:%s ' *)
 
       -
