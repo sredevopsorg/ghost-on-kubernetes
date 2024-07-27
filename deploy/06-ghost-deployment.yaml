@@ -7,7 +7,7 @@ metadata:
     app: ghost-on-kubernetes
     app.kubernetes.io/name: ghost-on-kubernetes
     app.kubernetes.io/instance: ghost-on-kubernetes
-    app.kubernetes.io/version: "5.87"
+    app.kubernetes.io/version: "5.88"
     app.kubernetes.io/component: ghost
     app.kubernetes.io/part-of: ghost-on-kubernetes
     app.kubernetes.io/managed-by: sredevopsorg
@@ -89,7 +89,7 @@ spec:
 
       containers:
       - name: ghost-on-kubernetes
-        image: ghcr.io/sredevopsorg/ghost-on-kubernetes:main
+        image: ghcr.io/sredevopsorg/ghost-on-kubernetes:main # If you don't want ti get our updated images, check the static tags at http://github.com/sredevopsorg/ghost-on-kubernetes/
         imagePullPolicy: Always
         ports:
         - name: ghk8s
@@ -106,11 +106,11 @@ spec:
         #       value: https
         #     - name: Host
         #       value: tests.yourdomain.com
-        #   periodSeconds: 3600
-        #   timeoutSeconds: 5
+        #   periodSeconds: 60
+        #   timeoutSeconds: 3
         #   successThreshold: 1
-        #   failureThreshold: 1
-        #   initialDelaySeconds: 60
+        #   failureThreshold: 2
+        #   initialDelaySeconds: 30
 
         # livenessProbe:
         #   httpGet:
@@ -130,8 +130,6 @@ spec:
         env:
         - name: NODE_ENV
           value: production
-        - name: TZ
-          value: America/Santiago
         resources:
           limits:
             cpu: 800m
@@ -142,12 +140,12 @@ spec:
 
         volumeMounts:
         - name: k8s-ghost-content
-          mountPath: /home/nonroot/app/ghost/content
+          mountPath: /home/nonroot/app/ghost/content # This matches our ghost-on-kubernetes image configuration. Check the Dockerfile for more information.
           readOnly: false
-        - name: ghost-config-prod
+        - name: ghost-config-prod # Or ghost-config-development
           readOnly: true
-          mountPath: /home/nonroot/app/ghost/config.production.json
-          subPath: config.production.json
+          mountPath: /home/nonroot/app/ghost/config.production.json # Or /home/nonroot/app/ghost/config.development.json if you are using the development configuration
+          subPath: config.production.json # Or config.development.json if you are using the development configuration
         - name: tmp # This is the temporary volume mount to allow loading themes
           mountPath: /tmp
           readOnly: false
@@ -161,6 +159,7 @@ spec:
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
       dnsPolicy: ClusterFirst
+
       # Optional: Uncomment the following to specify node selectors
       # affinity:
       #   nodeAffinity:

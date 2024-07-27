@@ -3,6 +3,15 @@ kind: Secret
 metadata:
   name: ghost-config-development
   namespace: ghost-on-kubernetes
+  labels:
+    app: ghost-on-kubernetes
+    app.kubernetes.io/name: ghost-config-development
+    app.kubernetes.io/instance: ghost-on-kubernetes
+    app.kubernetes.io/version: "5.88"
+    app.kubernetes.io/component: ghost-config-development
+    app.kubernetes.io/part-of: ghost-on-kubernetes
+    app.kubernetes.io/managed-by: sredevopsorg
+
 type: Opaque
 stringData:
   config.development.json: |-
@@ -38,7 +47,7 @@ stringData:
       "privacy": {
         "useUpdateCheck": false,
         "useGravatar": false,
-        "useRpcPing": true,
+        "useRpcPing": false,
         "useStructuredData": true
       },
       "enableDeveloperExperiments": {
@@ -60,7 +69,8 @@ stringData:
       "enableStripePromoCodes": false,
       "emailAnalytics": false,
       "backgroundJobs": {
-          "emailAnalytics": false
+          "emailAnalytics": false,
+          "updateCheck": false
       }
     }
   

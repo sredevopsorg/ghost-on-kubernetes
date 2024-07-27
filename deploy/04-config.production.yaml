@@ -3,6 +3,13 @@ kind: Secret
 metadata:
   name: ghost-config-prod
   namespace: ghost-on-kubernetes
+  labels:
+    app: ghost-on-kubernetes
+    app.kubernetes.io/name: ghost-config-prod
+    app.kubernetes.io/instance: ghost-on-kubernetes
+    app.kubernetes.io/version: "5.88"
+    app.kubernetes.io/component: ghost-config-prod
+    app.kubernetes.io/part-of: ghost-on-kubernetes
 type: Opaque
 stringData:
   config.production.json: |-
@@ -45,7 +52,6 @@ stringData:
           "port": "3306"
         }
       },
-      "debug": false,
       "process": "local",
       "paths": {
         "contentPath": "/home/nonroot/app/ghost/content"
@@ -53,7 +59,7 @@ stringData:
       "privacy": {
         "useUpdateCheck": false,
         "useGravatar": false,
-        "useRpcPing": false,
+        "useRpcPing": true,
         "useStructuredData": true
       }
     }

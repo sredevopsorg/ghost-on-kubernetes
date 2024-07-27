@@ -17,8 +17,8 @@ SHELL ["/bin/bash", "-c"]
 ENV NODE_ENV=production
 
 # Define the GHOST_VERSION build argument and set it as an environment variable
-ARG GHOST_VERSION 
-ENV GHOST_VERSION=$GHOST_VERSION  
+ARG GHOST_VERSION
+ENV GHOST_VERSION=$GHOST_VERSION
 
 # Set the installation directory, content directory, and original content directory for Ghost
 ENV GHOST_INSTALL=/home/nonroot/app/ghost
@@ -33,9 +33,7 @@ RUN yarn config set network-timeout 60000 && \
     npm config set fetch-timeout 60000 && \
     npm config set omit dev
 
-RUN export ENV NODE_ENV=production && \
-    npx ghost-cli install $GHOST_VERSION --dir $GHOST_INSTALL --db mysql --dbhost mysql --no-prompt --no-stack --no-setup --color --process local
-
+RUN npx ghost-cli install $GHOST_VERSION --dir $GHOST_INSTALL --db mysql --dbhost mysql --no-prompt --no-stack --no-setup --color --process local
 
 # Move the original content directory to a backup location, create a new content directory, set the correct ownership and permissions, and switch back to the "node" user
 RUN mv -v $GHOST_CONTENT $GHOST_CONTENT_ORIGINAL && \
@@ -44,10 +42,6 @@ RUN mv -v $GHOST_CONTENT $GHOST_CONTENT_ORIGINAL && \
     chown -Rfv 65532 $GHOST_CONTENT && \
     chown -fv 65532 $GHOST_INSTALL && \
     chmod -v 1755 $GHOST_CONTENT
-
-# More info: https://ghost.org/docs/ghost-cli/#permissions
-RUN find "$GHOST_INSTALL"/* -type d -exec chmod 755 {} || echo "Failed find dirs and chmod 755" && true && \
-    find "$GHOST_INSTALL"/* -type f -exec chmod 664 {} || echo "Failed find files and chmod 664" && true
 
 # Stage 2: Final Image
 FROM gcr.io/distroless/nodejs20-debian12:latest@sha256:08d0b6846a21812d07a537eff956acc1bc38a7440a838ce6730515f8d3cd5d9e AS runtime 
