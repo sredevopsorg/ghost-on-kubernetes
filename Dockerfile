@@ -50,7 +50,7 @@ RUN find "$GHOST_INSTALL"/* -type d -exec chmod 755 {} || echo "Failed find dirs
     find "$GHOST_INSTALL"/* -type f -exec chmod 664 {} || echo "Failed find files and chmod 664" && true
 
 # Stage 2: Final Image
-FROM gcr.io/distroless/nodejs20-debian12:latest@sha256:08d0b6846a21812d07a537eff956acc1bc38a7440a838ce6730515f8d3cd5d9e AS runtime 
+FROM gcr.io/distroless/nodejs20-debian12:latest@sha256:a70f4f8e3ecaf94e04b4c8073d9a5c0b596339ac9c6016a03b676747bfb8a301 AS runtime 
 
 # Set the installation directory and content directory for Ghost
 ENV GHOST_INSTALL_SRC=/home/nonroot/app/ghost
