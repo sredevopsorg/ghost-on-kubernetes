@@ -45,9 +45,6 @@ RUN mv -v $GHOST_CONTENT $GHOST_CONTENT_ORIGINAL && \
     chown -fv 65532 $GHOST_INSTALL && \
     chmod -v 1755 $GHOST_CONTENT
 
-# More info: https://ghost.org/docs/ghost-cli/#permissions
-RUN find "$GHOST_INSTALL"/* -type d -exec chmod 755 {} || echo "Failed find dirs and chmod 755" && true && \
-    find "$GHOST_INSTALL"/* -type f -exec chmod 664 {} || echo "Failed find files and chmod 664" && true
 
 # Stage 2: Final Image
 FROM gcr.io/distroless/nodejs20-debian12:latest@sha256:a70f4f8e3ecaf94e04b4c8073d9a5c0b596339ac9c6016a03b676747bfb8a301 AS runtime 
