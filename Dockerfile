@@ -33,7 +33,7 @@ RUN yarn config set network-timeout 60000 && \
     npm config set fetch-timeout 60000 && \
     npm config set omit dev
 
-RUN export ENV NODE_ENV=production && \
+RUN export NODE_ENV=production && \
     npx ghost-cli install $GHOST_VERSION --dir $GHOST_INSTALL --db mysql --dbhost mysql --no-prompt --no-stack --no-setup --color --process local
 
 
