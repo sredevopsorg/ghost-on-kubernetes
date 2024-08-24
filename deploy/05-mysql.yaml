@@ -7,10 +7,10 @@ metadata:
     app: mysql-ghost-on-kubernetes
     app.kubernetes.io/name: mysql-ghost-on-kubernetes
     app.kubernetes.io/instance: ghost-on-kubernetes
-    app.kubernetes.io/version: "5.87"
+    app.kubernetes.io/version: '5.89'
     app.kubernetes.io/component: database
     app.kubernetes.io/part-of: ghost-on-kubernetes
-    app.kubernetes.io/managed-by: sredevopsorg
+    
 spec:
   serviceName: service-mysql-ghost-on-kubernetes
   replicas: 1
@@ -29,18 +29,18 @@ spec:
           privileged: false
           readOnlyRootFilesystem: true
         image: docker.io/busybox:stable-musl
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always # You can change this value according to your needs
         command:
         - /bin/sh
         - -c
         - |
           set -e
-          echo 'Changing ownership of mysql mount directory to 999:999'
-          chown -Rfv 999:999 /mnt/mysql || echo 'Error changing ownership of mysql mount directory to 999:999'
-          echo 'Changing ownership of tmp mount directory to 999:999'
-          chown -Rfv 999:999 /mnt/tmp || echo 'Error changing ownership of tmp mount directory to 999:999'
-          echo 'Changing ownership of socket mount directory to 999:999'
-          chown -Rfv 999:999 /mnt/var/run/mysqld || echo 'Error changing ownership of socket mount directory to 999:999'
+          echo 'Changing ownership of mysql mount directory to 65534:65534'
+          chown -Rfv 65534:65534 /mnt/mysql || echo 'Error changing ownership of mysql mount directory to 65534:65534'
+          echo 'Changing ownership of tmp mount directory to 65534:65534'
+          chown -Rfv 65534:65534 /mnt/tmp || echo 'Error changing ownership of tmp mount directory to 65534:65534'
+          echo 'Changing ownership of socket mount directory to 65534:65534'
+          chown -Rfv 65534:65534 /mnt/var/run/mysqld || echo 'Error changing ownership of socket mount directory to 65534:65534'
           
           
         volumeMounts:
@@ -73,17 +73,17 @@ spec:
           privileged: false
           readOnlyRootFilesystem: true
           runAsNonRoot: true
-          runAsUser: 999
+          runAsUser: 65534
 
         image: docker.io/mysql:8.4
-        imagePullPolicy: IfNotPresent # You can change this value according to your needs
+        imagePullPolicy: Always # You can change this value according to your needs
         envFrom:
         - secretRef:
             name: mysql-ghost-on-kubernetes-config
         resources:
           requests:
             memory: 500Mi # You can change this value according to your needs
-            cpu: 100m # You can change this value according to your needs
+            cpu: 300m # You can change this value according to your needs
           limits:
             memory: 1Gi # You can change this value according to your needs
             cpu: 900m # You can change this value according to your needs
@@ -108,15 +108,15 @@ spec:
       automountServiceAccountToken: false
 
       # Optional: Uncomment the following to specify node selectors
-      # affinity:
-      #   nodeAffinity:
-      #     requiredDuringSchedulingIgnoredDuringExecution:
-      #       nodeSelectorTerms:
-      #         - matchExpressions:
-      #             - key: node-role.kubernetes.io/worker
-      #               operator: In
-      #               values:
-      #                 - "true"
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/worker
+                    operator: In
+                    values:
+                      - 'true'
 
       securityContext:
         seccompProfile:

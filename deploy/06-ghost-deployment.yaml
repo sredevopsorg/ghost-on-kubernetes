@@ -7,12 +7,13 @@ metadata:
     app: ghost-on-kubernetes
     app.kubernetes.io/name: ghost-on-kubernetes
     app.kubernetes.io/instance: ghost-on-kubernetes
-    app.kubernetes.io/version: "5.87"
+    app.kubernetes.io/version: '5.89'
     app.kubernetes.io/component: ghost
     app.kubernetes.io/part-of: ghost-on-kubernetes
-    app.kubernetes.io/managed-by: sredevopsorg
+    
     
 spec:
+  # If you want HA for your Ghost instance, you can increase the number of replicas AFTER creation and you need to adjust the storage class. See 02-pvc.yaml for more information.
   replicas: 1
   selector:
     matchLabels:
@@ -39,10 +40,10 @@ spec:
           sizeLimit: 64Mi
 
       initContainers:
-      - name: ghost-on-kubernetes-init
+      - name: permissions-fix
+        imagePullPolicy: Always
         image: docker.io/busybox:stable-musl
         env:
-
         - name: GHOST_INSTALL
           value: /home/nonroot/app/ghost
         - name: GHOST_CONTENT
@@ -65,7 +66,7 @@ spec:
           - |
             set -e
 
-            export DIRS="files logs apps themes data public settings images media"
+            export DIRS='files logs apps themes data public settings images media'
             echo 'Check if base dirs exists, if not, create them'
             echo "Directories to check: $DIRS"
             for dir in $DIRS; do
@@ -76,10 +77,11 @@ spec:
             done
 
             echo "Changing ownership of $GHOST_CONTENT/themes directory"
-            chown -Rfv 65532:65532 $GHOST_CONTENT/themes || echo "Error changing ownership of $GHOST_CONTENT themes directory"
+            chown -Rf 65532:65532 $GHOST_CONTENT/themes || echo "Error changing ownership of $GHOST_CONTENT/themes directory"
 
             echo "Changing ownership of $GHOST_CONTENT/public directory"
-            chown -Rfv 65532:65532 $GHOST_CONTENT/public || echo "Error changing ownership of $GHOST_CONTENT public directory"
+            chown -Rf 65532:65532 $GHOST_CONTENT/public || echo "Error changing ownership of $GHOST_CONTENT public directory"
+            exit 0
 
 
         volumeMounts:
@@ -97,48 +99,46 @@ spec:
           protocol: TCP
 
         # You should uncomment the following lines in production. Change the values according to your environment.
-        # readinessProbe:
-        #   httpGet:
-        #     path: /ghost/api/v4/admin/site/
-        #     port: ghk8s
-        #     httpHeaders:
-        #     - name: X-Forwarded-Proto
-        #       value: https
-        #     - name: Host
-        #       value: tests.yourdomain.com
-        #   periodSeconds: 3600
-        #   timeoutSeconds: 5
-        #   successThreshold: 1
-        #   failureThreshold: 1
-        #   initialDelaySeconds: 60
+        readinessProbe:
+          httpGet:
+            path: /ghost/api/v4/admin/site/
+            port: ghk8s
+            httpHeaders:
+            - name: X-Forwarded-Proto
+              value: https
+            - name: Host
+              value: yourdomain.tld
+          periodSeconds: 10
+          timeoutSeconds: 3
+          successThreshold: 1
+          failureThreshold: 3
+          initialDelaySeconds: 15
 
-        # livenessProbe:
-        #   httpGet:
-        #     path: /ghost/api/v4/admin/site/
-        #     port: ghk8s
-        #     httpHeaders:
-        #     - name: X-Forwarded-Proto
-        #       value: https
-        #     - name: Host
-        #       value: tests.yourdomain.com
-        #   periodSeconds: 3600
-        #   timeoutSeconds: 3
-        #   successThreshold: 1
-        #   failureThreshold: 1
-        #   initialDelaySeconds: 60
+        livenessProbe:
+          httpGet:
+            path: /ghost/api/v4/admin/site/
+            port: ghk8s
+            httpHeaders:
+            - name: X-Forwarded-Proto
+              value: https
+            - name: Host
+              value: yourdomain.tld
+          periodSeconds: 300
+          timeoutSeconds: 3
+          successThreshold: 1
+          failureThreshold: 2
+          initialDelaySeconds: 30
 
         env:
         - name: NODE_ENV
           value: production
-        - name: TZ
-          value: America/Santiago
         resources:
           limits:
             cpu: 800m
             memory: 800Mi
           requests:
             cpu: 100m
-            memory: 200Mi
+            memory: 256Mi
 
         volumeMounts:
         - name: k8s-ghost-content
@@ -159,23 +159,20 @@ spec:
 
 
       restartPolicy: Always
-      terminationGracePeriodSeconds: 30
+      terminationGracePeriodSeconds: 15
       dnsPolicy: ClusterFirst
       # Optional: Uncomment the following to specify node selectors
-      # affinity:
-      #   nodeAffinity:
-      #     requiredDuringSchedulingIgnoredDuringExecution:
-      #       nodeSelectorTerms:
-      #         - matchExpressions:
-      #             - key: node-role.kubernetes.io/worker
-      #               operator: In
-      #               values:
-      #                 - "true"
-
-
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/worker
+                    operator: In
+                    values:
+                      - 'true'
       securityContext: {}
-      schedulerName: default-scheduler
-  minReadySeconds: 15
+  minReadySeconds: 5
   strategy:
     type: RollingUpdate
     rollingUpdate:

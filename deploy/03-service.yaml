@@ -5,12 +5,12 @@ metadata:
   namespace: ghost-on-kubernetes
   labels:
     app: ghost-on-kubernetes
-    app.kubernetes.io/name: ghost-on-kubernetes
+    app.kubernetes.io/name: service-ghost-on-kubernetes
     app.kubernetes.io/instance: ghost-on-kubernetes
-    app.kubernetes.io/version: "5.87"
-    app.kubernetes.io/component: service-ghost
+    app.kubernetes.io/version: '5.89'
+    app.kubernetes.io/component: service-frontend
     app.kubernetes.io/part-of: ghost-on-kubernetes
-    app.kubernetes.io/managed-by: sredevopsorg
+    
 
 spec:
   ports:
@@ -30,12 +30,12 @@ metadata:
   namespace: ghost-on-kubernetes
   labels:
     app: mysql-ghost-on-kubernetes
-    app.kubernetes.io/name: mysql-ghost-on-kubernetes
+    app.kubernetes.io/name: service-mysql-ghost-on-kubernetes
     app.kubernetes.io/instance: ghost-on-kubernetes
-    app.kubernetes.io/version: "5.87"
-    app.kubernetes.io/component: service-db
+    app.kubernetes.io/version: '5.89'
+    app.kubernetes.io/component: service-database
     app.kubernetes.io/part-of: ghost-on-kubernetes
-    app.kubernetes.io/managed-by: sredevopsorg
+    
 spec:
   ports:
   - port: 3306

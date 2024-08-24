@@ -7,9 +7,9 @@ type: Opaque
 stringData:
   config.production.json: |-
     {
-      "url": "https://tests.yourdomain.com",
+      "url": "https://yourdomain.tld",
       "admin": {
-        "url": "https://tests.yourdomain.com"
+        "url": "https://yourdomain.tld"
       },
       "server": {
         "port": 2368,
@@ -45,15 +45,8 @@ stringData:
           "port": "3306"
         }
       },
-      "debug": false,
       "process": "local",
       "paths": {
         "contentPath": "/home/nonroot/app/ghost/content"
-      },
-      "privacy": {
-        "useUpdateCheck": false,
-        "useGravatar": false,
-        "useRpcPing": false,
-        "useStructuredData": true
       }
     }

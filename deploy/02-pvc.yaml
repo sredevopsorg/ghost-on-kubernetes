@@ -5,17 +5,22 @@ metadata:
   namespace: ghost-on-kubernetes
   labels:
     app: ghost-on-kubernetes
-    app.kubernetes.io/name: ghost-on-kubernetes
+    app.kubernetes.io/name: k8s-ghost-content
     app.kubernetes.io/instance: ghost-on-kubernetes
-    app.kubernetes.io/version: "5.87"
+    app.kubernetes.io/version: '5.89'
     app.kubernetes.io/component: storage
     app.kubernetes.io/part-of: ghost-on-kubernetes
-    app.kubernetes.io/managed-by: sredevopsorg
+    
 spec:
-  storageClassName: local-path # Change this to your storageClassName
+  # Change this to your storageClassName, we suggest using a storageClassName that supports ReadWriteMany for production.
+  storageClassName: 'longhorn'
   volumeMode: Filesystem
+  # Change this to your accessModes. We suggest ReadWriteMany for production, ReadWriteOnce for development.
+  # With ReadWriteMany, you can have multiple replicas of Ghost, so you can achieve high availability.
+  # Note that ReadWriteMany is not supported by all storage providers and may require additional configuration.
+  # Ghost officialy doesn't support HA, they suggest using a CDN or caching. Info: https://ghost.org/docs/faq/clustering-sharding-multi-server/
   accessModes:
-  - ReadWriteOnce # Change this to your accessModes if needed, we suggest ReadWriteOnce so we can scale the deployment later.
+  - ReadWriteOnce # Change this to your accessModes if needed, we suggest ReadWriteMany so we can scale the deployment later.
   resources:
     requests:
       storage: 1Gi
@@ -29,16 +34,16 @@ metadata:
     app: mysql-ghost-on-kubernetes
     app.kubernetes.io/name: mysql-ghost-on-kubernetes-pvc
     app.kubernetes.io/instance: ghost-on-kubernetes
-    app.kubernetes.io/version: "5.87"
+    app.kubernetes.io/version: '5.89'
     app.kubernetes.io/component: database-storage
     app.kubernetes.io/part-of: ghost-on-kubernetes
-    app.kubernetes.io/managed-by: sredevopsorg
+    
 
 spec:
-  storageClassName: local-path # Change this to your storageClassName
+  storageClassName: 'longhorn' # Change this to your storageClassName
   volumeMode: Filesystem
   accessModes:
-  - ReadWriteOnce # Change this to ReadWriteOnce if your storageClassName does not support ReadWriteOnce
+  - ReadWriteOnce
   resources:
     requests:
       storage: 1Gi
