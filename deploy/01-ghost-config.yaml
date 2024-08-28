@@ -3,6 +3,13 @@ kind: Secret
 metadata:
   name: ghost-config-prod
   namespace: ghost-on-kubernetes
+  labels:
+    app: ghost-on-kubernetes
+    app.kubernetes.io/name: ghost-config-prod
+    app.kubernetes.io/instance: ghost-on-kubernetes
+    app.kubernetes.io/version: '5.92'
+    app.kubernetes.io/component: ghost-config
+    app.kubernetes.io/part-of: ghost-on-kubernetes
 type: Opaque
 stringData:
   config.production.json: |-
@@ -38,7 +45,7 @@ stringData:
         "client": "mysql",
         "connection": 
         {
-          "host": "service-mysql-ghost-on-kubernetes",
+          "host": "ghost-on-kubernetes-mysql-service",
           "user": "mysql-db-user",
           "password": "mysql-db-password",
           "database": "mysql-db-name",

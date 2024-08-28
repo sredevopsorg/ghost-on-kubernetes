@@ -7,7 +7,7 @@ metadata:
     app: ghost-on-kubernetes
     app.kubernetes.io/name: ghost-on-kubernetes
     app.kubernetes.io/instance: ghost-on-kubernetes
-    app.kubernetes.io/version: '5.89'
+    app.kubernetes.io/version: '5.92'
     app.kubernetes.io/component: ghost
     app.kubernetes.io/part-of: ghost-on-kubernetes
     
@@ -18,6 +18,14 @@ spec:
   selector:
     matchLabels:
       app: ghost-on-kubernetes
+  minReadySeconds: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 3
+  revisionHistoryLimit: 4
+  progressDeadlineSeconds: 600
   template:
     metadata:
       namespace: ghost-on-kubernetes
@@ -77,10 +85,10 @@ spec:
             done
 
             echo "Changing ownership of $GHOST_CONTENT/themes directory"
-            chown -Rf 65532:65532 $GHOST_CONTENT/themes || echo "Error changing ownership of $GHOST_CONTENT/themes directory"
+            chown -Rf 65532:65532 $GHOST_CONTENT/themes && echo "chown ok on thenmes" || echo "Error changing ownership of $GHOST_CONTENT/themes directory"
 
             echo "Changing ownership of $GHOST_CONTENT/public directory"
-            chown -Rf 65532:65532 $GHOST_CONTENT/public || echo "Error changing ownership of $GHOST_CONTENT public directory"
+            chown -Rf 65532:65532 $GHOST_CONTENT/public && chown ok in public|| echo "Error changing ownership of $GHOST_CONTENT public directory"
             exit 0
 
 
@@ -112,7 +120,7 @@ spec:
           timeoutSeconds: 3
           successThreshold: 1
           failureThreshold: 3
-          initialDelaySeconds: 15
+          initialDelaySeconds: 10
 
         livenessProbe:
           httpGet:
@@ -126,7 +134,7 @@ spec:
           periodSeconds: 300
           timeoutSeconds: 3
           successThreshold: 1
-          failureThreshold: 2
+          failureThreshold: 1
           initialDelaySeconds: 30
 
         env:
@@ -172,11 +180,3 @@ spec:
                     values:
                       - 'true'
       securityContext: {}
-  minReadySeconds: 5
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 0
-      maxSurge: 3
-  revisionHistoryLimit: 4
-  progressDeadlineSeconds: 600

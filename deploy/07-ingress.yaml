@@ -8,7 +8,7 @@ metadata:
     app: ghost-on-kubernetes
     app.kubernetes.io/name: ghost-on-kubernetes-ingress
     app.kubernetes.io/instance: ghost-on-kubernetes
-    app.kubernetes.io/version: '5.88'
+    app.kubernetes.io/version: '5.59'
     app.kubernetes.io/component: ingress
     app.kubernetes.io/part-of: ghost-on-kubernetes
     
@@ -28,7 +28,7 @@ spec:
         pathType: ImplementationSpecific
         backend:
           service:
-            name: service-ghost-on-kubernetes
+            name: ghost-on-kubernetes-service
             port:
               name: ghk8s
   # Optional:
@@ -39,6 +39,6 @@ spec:
   #       pathType: ImplementationSpecific
   #       backend:
   #         service:
-  #           name: service-ghost-on-kubernetes
+  #           name: ghost-on-kubernetes-service
   #           port:
   #             name: ghk8s

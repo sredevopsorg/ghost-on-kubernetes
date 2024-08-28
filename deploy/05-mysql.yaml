@@ -1,29 +1,29 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: mysql-ghost-on-kubernetes
+  name: ghost-on-kubernetes-mysql
   namespace: ghost-on-kubernetes
   labels:
-    app: mysql-ghost-on-kubernetes
-    app.kubernetes.io/name: mysql-ghost-on-kubernetes
+    app: ghost-on-kubernetes-mysql
+    app.kubernetes.io/name: ghost-on-kubernetes-mysql
     app.kubernetes.io/instance: ghost-on-kubernetes
-    app.kubernetes.io/version: '5.89'
+    app.kubernetes.io/version: '5.92'
     app.kubernetes.io/component: database
     app.kubernetes.io/part-of: ghost-on-kubernetes
     
 spec:
-  serviceName: service-mysql-ghost-on-kubernetes
+  serviceName: ghost-on-kubernetes-mysql-service
   replicas: 1
   selector:
     matchLabels:
-      app: mysql-ghost-on-kubernetes
+      app: ghost-on-kubernetes-mysql
   template:
     metadata:
       labels:
-        app: mysql-ghost-on-kubernetes
+        app: ghost-on-kubernetes-mysql
     spec:
       initContainers:
-      - name: mysql-ghost-on-kubernetes-init
+      - name: ghost-on-kubernetes-mysql-init
         securityContext:
           allowPrivilegeEscalation: false
           privileged: false
@@ -44,16 +44,16 @@ spec:
           
           
         volumeMounts:
-        - name: mysql-ghost-on-kubernetes-volume
+        - name: ghost-on-kubernetes-mysql-volume
           mountPath: /mnt/mysql
           subPath: mysql-empty-subdir
           readOnly: false
 
-        - name: mysql-ghost-on-kubernetes-tmp
+        - name: ghost-on-kubernetes-mysql-tmp
           mountPath: /mnt/tmp
           readOnly: false
 
-        - name: mysql-ghost-on-kubernetes-socket
+        - name: ghost-on-kubernetes-mysql-socket
           mountPath: /mnt/var/run/mysqld
           readOnly: false
         
@@ -67,7 +67,7 @@ spec:
             cpu: 900m
 
       containers:
-      - name: mysql-ghost-on-kubernetes
+      - name: ghost-on-kubernetes-mysql
         securityContext:
           allowPrivilegeEscalation: false
           privileged: false
@@ -79,7 +79,7 @@ spec:
         imagePullPolicy: Always # You can change this value according to your needs
         envFrom:
         - secretRef:
-            name: mysql-ghost-on-kubernetes-config
+            name: ghost-on-kubernetes-mysql-env
         resources:
           requests:
             memory: 500Mi # You can change this value according to your needs
@@ -92,16 +92,16 @@ spec:
           protocol: TCP
           name: mysqlgh
         volumeMounts:
-        - name: mysql-ghost-on-kubernetes-volume
+        - name: ghost-on-kubernetes-mysql-volume
           mountPath: /var/lib/mysql
           subPath: mysql-empty-subdir
           readOnly: false
 
-        - name: mysql-ghost-on-kubernetes-tmp
+        - name: ghost-on-kubernetes-mysql-tmp
           mountPath: /tmp
           readOnly: false
 
-        - name: mysql-ghost-on-kubernetes-socket
+        - name: ghost-on-kubernetes-mysql-socket
           mountPath: /var/run/mysqld
           readOnly: false
 
@@ -123,12 +123,12 @@ spec:
           type: RuntimeDefault
 
       volumes:
-      - name: mysql-ghost-on-kubernetes-volume
+      - name: ghost-on-kubernetes-mysql-volume
         persistentVolumeClaim:
-          claimName: mysql-ghost-on-kubernetes-pvc
-      - name: mysql-ghost-on-kubernetes-tmp
+          claimName: ghost-on-kubernetes-mysql-pvc
+      - name: ghost-on-kubernetes-mysql-tmp
         emptyDir:
           sizeLimit: 128Mi
-      - name: mysql-ghost-on-kubernetes-socket
+      - name: ghost-on-kubernetes-mysql-socket
         emptyDir:
           sizeLimit: 128Mi
