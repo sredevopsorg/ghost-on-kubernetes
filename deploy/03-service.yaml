@@ -1,16 +1,16 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: service-ghost-on-kubernetes
+  name: ghost-on-kubernetes-service
   namespace: ghost-on-kubernetes
   labels:
     app: ghost-on-kubernetes
-    app.kubernetes.io/name: ghost-on-kubernetes
+    app.kubernetes.io/name: ghost-on-kubernetes-service
     app.kubernetes.io/instance: ghost-on-kubernetes
-    app.kubernetes.io/version: "5.87"
-    app.kubernetes.io/component: service-ghost
+    app.kubernetes.io/version: '5.92'
+    app.kubernetes.io/component: service-frontend
     app.kubernetes.io/part-of: ghost-on-kubernetes
-    app.kubernetes.io/managed-by: sredevopsorg
+    
 
 spec:
   ports:
@@ -26,16 +26,16 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: service-mysql-ghost-on-kubernetes
+  name: ghost-on-kubernetes-mysql-service
   namespace: ghost-on-kubernetes
   labels:
-    app: mysql-ghost-on-kubernetes
-    app.kubernetes.io/name: mysql-ghost-on-kubernetes
+    app: ghost-on-kubernetes-mysql
+    app.kubernetes.io/name: ghost-on-kubernetes-mysql-service
     app.kubernetes.io/instance: ghost-on-kubernetes
-    app.kubernetes.io/version: "5.87"
-    app.kubernetes.io/component: service-db
+    app.kubernetes.io/version: '5.92'
+    app.kubernetes.io/component: service-database
     app.kubernetes.io/part-of: ghost-on-kubernetes
-    app.kubernetes.io/managed-by: sredevopsorg
+    
 spec:
   ports:
   - port: 3306
@@ -45,5 +45,5 @@ spec:
   type: ClusterIP
   clusterIP: None
   selector:
-    app: mysql-ghost-on-kubernetes
+    app: ghost-on-kubernetes-mysql
 

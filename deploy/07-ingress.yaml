@@ -1,3 +1,4 @@
+# Optional: If you have a domain name, you can create an Ingress resource to expose your Ghost blog to the internet.
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -5,41 +6,39 @@ metadata:
   namespace: ghost-on-kubernetes
   labels:
     app: ghost-on-kubernetes
-    app.kubernetes.io/name: ghost-on-kubernetes
+    app.kubernetes.io/name: ghost-on-kubernetes-ingress
     app.kubernetes.io/instance: ghost-on-kubernetes
-    app.kubernetes.io/version: "5.87"
+    app.kubernetes.io/version: '5.59'
     app.kubernetes.io/component: ingress
     app.kubernetes.io/part-of: ghost-on-kubernetes
-    app.kubernetes.io/managed-by: sredevopsorg
+    
 spec:
   ingressClassName: traefik # Or your ingress controller 
   tls:
   - hosts:
-    - tests.yourdomain.com
+    - yourdomain.tld
     # Optional:
-    # - www.tests.yourdomain.com
-    secretName: yourdomain-com-tls
+    # - www.yourdomain.tld
+    secretName: tls-secret
   rules:
-  - host: tests.yourdomain.com
+  - host: yourdomain.tld
     http:
       paths:
       - path: /
         pathType: ImplementationSpecific
         backend:
           service:
-            name: service-ghost-on-kubernetes
+            name: ghost-on-kubernetes-service
             port:
               name: ghk8s
   # Optional:
-  # - host: www.tests.yourdomain.com
+  # - host: www.yourdomain.tld
   #   http:
   #     paths:
   #     - path: /
   #       pathType: ImplementationSpecific
   #       backend:
   #         service:
-  #           name: service-ghost-on-kubernetes
+  #           name: ghost-on-kubernetes-service
   #           port:
   #             name: ghk8s
-
-

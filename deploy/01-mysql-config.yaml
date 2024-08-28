@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ghost-on-kubernetes-mysql-env
+  namespace: ghost-on-kubernetes
+  labels:
+    app: ghost-on-kubernetes-mysql
+    app.kubernetes.io/name: ghost-on-kubernetes-mysql-env
+    app.kubernetes.io/instance: ghost-on-kubernetes
+    app.kubernetes.io/version: '5.92'
+    app.kubernetes.io/component: database-secret
+    app.kubernetes.io/part-of: ghost-on-kubernetes
+    
+type: Opaque
+stringData:
+  MYSQL_DATABASE: mysql-db-name # Same as in config.production.json
+  MYSQL_USER: mysql-db-user # Same as in config.production.json
+  MYSQL_PASSWORD: mysql-db-password # Same as in config.production.json
+  MYSQL_ROOT_PASSWORD: mysql-db-root-password # Same as in config.production.json
+  MYSQL_HOST: '%' # Same as in config.production.json
+
