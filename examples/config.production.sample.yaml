@@ -7,9 +7,9 @@ type: Opaque
 stringData:
   config.production.json: |-
     {
-      "url": "https://tests.yourdomain.com",
+      "url": "https://yourdomain.tld",
       "admin": {
-        "url": "https://tests.yourdomain.com"
+        "url": "https://yourdomain.tld"
       },
       "server": {
         "port": 2368,
@@ -38,17 +38,15 @@ stringData:
         "client": "mysql",
         "connection": 
         {
-          "host": "service-mysql-ghost-on-kubernetes",
+          "host": "ghost-on-kubernetes-mysql-service",
           "user": "mysql-db-user",
           "password": "mysql-db-password",
           "database": "mysql-db-name",
           "port": "3306"
         }
       },
-      "debug": true,
       "process": "local",
       "paths": {
         "contentPath": "/home/nonroot/app/ghost/content"
       }
     }
-    
