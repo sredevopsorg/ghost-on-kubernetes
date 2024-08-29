@@ -30,13 +30,20 @@ We've made some significant updates to improve the security and efficiency of ou
 
 ## Features
 
-- Both the Ghost and MySQL components runs as non-root user inside the Distroless container, which improves security significantly in addition to our custom image improvements.
+- Both Ghost and MySQL components run as non-root user in Kubernetes, which significantly improves security, in addition to our custom image enhancements.
 - Multi-arch support (amd64 and arm64).
-- We use the official Node 20 Iron Bookworm image as our build environment. [Dockerfile](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/Dockerfile)
-- We introduce a multi-stage build, which reduces the final image size, and improves security by removing unnecessary components from the final image.
-- [Distroless Node 20 Debian 12](https://github.com/GoogleContainerTools/distroless/blob/main/README.md) as our runtime environment for the final stage of the image.
-- Removed gosu, now everything runs as nonroot (UID/GID 65532) inside the Distroless container. This change itself reduces 2 critical vulnerabilities and 33 high vulnerabilities reported by Docker Scout in the original Ghost image (References: [Ghost Official Image](https://hub.docker.com/layers/library/ghost/5.84/images/sha256-918536e36327bef2d9dabbe520cf2a53d692b9dc01075442810f6aa9a337cd60?context=repo&tab=vulnerabilities) and [Ghost on Kubernetes Image on Docker Hub](https://hub.docker.com/layers/ngeorger/ghost-on-kubernetes/main/images/sha256-095809c153e7292ea1962419811492f188aab8e1840aa63194485e3a6d4900b2?context=explore) at the time of writing).
-- New Entrypoint flow, using a Node.js script executed by the Node user without privileges within the Distroless container, which updates default themes and starts the Ghost application, operation which is performed into the distroless container itself.
+- We use the official Node 20 Iron Bookworm image as our build environment. [Dockerfile](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/Dockerfile).
+- We introduce a multi-stage build, which reduces the final image size and improves security by removing unnecessary components from the final image.
+- [Distroless Node 20 Debian 12](https://github.com/GoogleContainerTools/distroless/blob/main/README.md) as our runtime environment for the final image stage.
+- Removed gosu, now everything runs as non-root (UID/GID 65532) inside the Distroless container. This change alone reduces 6 critical vulnerabilities and 34 high vulnerabilities reported by Docker Scout in the original Ghost image. References:
+
+  - [Ghost Official Image](https://hub.docker.com/layers/library/ghost/latest/images/sha256-7d49faada051b5bee324e5bb60f537c1be559f9573a0db67b5090b61ac5e359d?context=explore)
+    ![Docker Scout Report - Ghost Official Image](docs/images/dockerhub-ghost.png)
+
+  - [Ghost on Kubernetes Image on Docker Hub](https://hub.docker.com/layers/ngeorger/ghost-on-kubernetes/main/images/sha256-52a4bf6786bce9eb29e59174321ecbcbfd0b761991b56901205bfa9ffe49d848?context=explore)
+    ![Docker Scout Report - Ghost on Kubernetes Image](docs/images/dockerhub-ngeorger.png)
+
+- New Entrypoint flow, using a Node.js script executed by the unprivileged Node user inside the Distroless container, which updates the default themes and starts the Ghost application, an operation that is performed inside the Distroless container itself.
 - We use the latest version of Ghost 5 (when the image is built).
 
 
@@ -51,6 +58,7 @@ git clone https://github.com/sredevopsorg/ghost-on-kubernetes.git --depth 1 --br
 cd ghost-on-kubernetes
 # Create a new branch for your changes (optional but recommended).
 git checkout -b my-branch --no-track --detach
+
 
 ```
 
