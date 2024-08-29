@@ -59,6 +59,7 @@ cd ghost-on-kubernetes
 # Create a new branch for your changes (optional but recommended).
 git checkout -b my-branch --no-track --detach
 
+
 ```
 
 ### 1. Check the example configurations
