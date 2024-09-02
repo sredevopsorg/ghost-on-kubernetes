@@ -3,9 +3,13 @@ const fs = require("fs");
 const path = require("path");
 
 /**
- * Look ma, it's cp -R, but verbose.
- * @param {string} src  The path to the thing to copy.
- * @param {string} dest The path to the new copy.
+ * @description Recursively copies a directory or file from source to destination,
+ * handling directories by creating them and their contents, and files by copying
+ * them with optional cloning.
+ *
+ * @param {string} src - The source directory or file path.
+ *
+ * @param {string} dest - The destination path to copy or create files/directories.
  */
 var copyRecursiveSync = function(src, dest) {
   console.log(`Starting to copy from ${src} to ${dest}`);
@@ -16,6 +20,8 @@ var copyRecursiveSync = function(src, dest) {
     console.log(`Creating directory: ${dest}`);
     fs.mkdirSync(dest, { recursive: true });
     fs.readdirSync(src).forEach(function(childItemName) {
+      // Copies files recursively.
+
       copyRecursiveSync(path.join(src, childItemName),
                         path.join(dest, childItemName));
     });
