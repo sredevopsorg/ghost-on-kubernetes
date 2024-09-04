@@ -47,7 +47,7 @@ RUN mv -v $GHOST_CONTENT $GHOST_CONTENT_ORIGINAL && \
 
 
 # Stage 2: Final Image
-FROM gcr.io/distroless/nodejs20-debian12:latest@sha256:40b1db5c38e83ef8245efabcd9b5cbd87e2405eb75afe7fdea60ffb29c1a3289 AS runtime 
+FROM gcr.io/distroless/nodejs20-debian12:latest@sha256:662ce457e0f8d405e2846914ff69702fbf838f793ab6f0099a869c0580efd44f AS runtime 
 
 # Set the installation directory and content directory for Ghost
 ENV GHOST_INSTALL_SRC=/home/nonroot/app/ghost
