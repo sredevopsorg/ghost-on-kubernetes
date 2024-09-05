@@ -8,16 +8,6 @@ on:
     paths:
       - Dockerfile
       - entrypoint.js
-  
-  push:
-    branches-ignore:
-      - main
-    tags-ignore:
-      - v*
-    paths: 
-    - Dockerfile
-    - entrypoint.js
-
 
 permissions:
   contents: read
