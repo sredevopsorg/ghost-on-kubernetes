@@ -33,6 +33,7 @@ permissions:
 jobs:
   build:
     permissions:
+      attestations: write
       actions: write
       checks: write
       contents: write
@@ -151,7 +152,7 @@ jobs:
           annotations: ${{ steps.meta.outputs.annotations }}
           build-args: GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }} 
           outputs: type=image,name=${{ env.GHCR_IMAGE }},push-by-digest=true,name-canonical=true,push=true,oci-mediatypes=true
-          provenance: false
+          # provenance: false
           cache-from: type=gha,ignore-error=true
           cache-to: type=gha,ignore-error=true
       -
@@ -256,8 +257,14 @@ jobs:
         run: |
               docker buildx imagetools create \
                 $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
-                --annotation='index:org.opencontainers.image.description="Ghost on Kubernetes by SREDevOps.org https://sredevops.org "' \
-                  $(printf '${{ env.GHCR_IMAGE }}@sha256:%s ' *)
+                --annotation='index:org.opencontainers.image.description=${{ github.event.repository.description }}' \
+                --annotation='index:org.opencontainers.image.created=${{ github.workflow_ref.timestamp }}' \
+                --annotation='index:org.opencontainers.image.url=${{ github.event.repository.url }}' \
+                --annotation='index:org.opencontainers.image.source=${{ github.event.repository.url }}' \
+                --annotation='index:io.artifacthub.package.readme-url=https://raw.githubusercontent.com/sredevopsorg/ghost-on-kubernetes/main/README.md' \
+                --annotation='index:org.opencontainers.image.vendor=SREDevOps.org' \
+                --annotation='index:io.artifacthub.package.maintainers=[{"name":"Nicolas Georger","email":"info@sredevops.org"}]' \
+                $(printf '${{ env.GHCR_IMAGE }}@sha256:%s ' *)
 
       -
         name: Create manifest list and pushs
