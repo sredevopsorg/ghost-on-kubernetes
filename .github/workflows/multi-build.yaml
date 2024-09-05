@@ -250,6 +250,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       -
+        name: Get execution timestamp with RFC3339 format
+        id: timestamp
+        run: |
+          echo "timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> $GITHUB_OUTPUT
+      -
         name: Create manifest list and pushs
         working-directory: /tmp/digests
         id: manifest-annotate
@@ -258,7 +263,7 @@ jobs:
               docker buildx imagetools create \
                 $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
                 --annotation='index:org.opencontainers.image.description=${{ github.event.repository.description }}' \
-                --annotation='index:org.opencontainers.image.created=${{ github.workflow_ref.timestamp }}' \
+                --annotation='index:org.opencontainers.image.created=${{ steps.timestamp.outputs.timestamp }}' \
                 --annotation='index:org.opencontainers.image.url=${{ github.event.repository.url }}' \
                 --annotation='index:org.opencontainers.image.source=${{ github.event.repository.url }}' \
                 --annotation='index:io.artifacthub.package.readme-url=https://raw.githubusercontent.com/sredevopsorg/ghost-on-kubernetes/main/README.md' \
