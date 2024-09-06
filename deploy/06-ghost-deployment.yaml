@@ -85,10 +85,10 @@ spec:
             done
 
             echo "Changing ownership of $GHOST_CONTENT/themes directory"
-            chown -Rf 65532:65532 $GHOST_CONTENT/themes && echo "chown ok on thenmes" || echo "Error changing ownership of $GHOST_CONTENT/themes directory"
+            chown -Rf 65532:65532 $GHOST_CONTENT/themes && echo "chown ok on themes" || echo "Error changing ownership of $GHOST_CONTENT/themes directory"
 
             echo "Changing ownership of $GHOST_CONTENT/public directory"
-            chown -Rf 65532:65532 $GHOST_CONTENT/public && chown ok in public|| echo "Error changing ownership of $GHOST_CONTENT public directory"
+            chown -Rf 65532:65532 $GHOST_CONTENT/public && echo "chown ok in public" || echo "Error changing ownership of $GHOST_CONTENT public directory"
             exit 0
 
 
