@@ -27,10 +27,6 @@ jobs:
       id-token: write
       actions: read
       attestations: write
-      security-events: write
-      repository-projects: read
-
-
 
     steps:
       - name: Harden Runner
