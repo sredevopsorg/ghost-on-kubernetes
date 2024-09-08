@@ -12,11 +12,12 @@ on: [pull_request]
 
 permissions:
   contents: read
-  pull-requests: write
 
 jobs:
   dependency-review:
     runs-on: ubuntu-latest
+    permissions: 
+      pull-requests: write
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@5c7944e73c4c2a096b17a9cb74d65b6c2bbafbde # v2.9.1
@@ -29,3 +30,5 @@ jobs:
         uses: actions/dependency-review-action@5a2ce3f5b92ee19cbb1541a4984c76d921601d7c # v4.3.4
         with:
           comment-summary-in-pr: always
+          retry-on-snapshot-warnings: true
+          retry-on-snapshot-warnings-timeout: 60
