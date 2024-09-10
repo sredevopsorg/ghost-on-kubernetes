@@ -45,7 +45,6 @@ RUN mv -v $GHOST_CONTENT $GHOST_CONTENT_ORIGINAL && \
     chown -fv 65532 $GHOST_INSTALL && \
     chmod -v 1755 $GHOST_CONTENT
 
-
 # Stage 2: Final Image
 FROM gcr.io/distroless/nodejs20-debian12:latest@sha256:bdbbd3d1bb68ab13bcb075a8f38973acf2129892ac3daafbe96e0b6c66681296 AS runtime 
 
