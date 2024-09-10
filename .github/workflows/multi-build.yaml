@@ -270,7 +270,7 @@ jobs:
                 --annotation='index:org.opencontainers.image.vendor=SREDevOps.org' \
                 --annotation='index:io.artifacthub.package.maintainers=[{"name":"Nicolas Georger","email":"info@sredevops.org"}]' \
                 --annotation='index:io.artifacthub.package.alternative-locations=oci://index.docker.io/ngeorger/ghost-on-kubernetes' \
-                --annotation='index:io.artifacthub.package.logo-url=https://github.com/sredevopsorg/.github/blob/b07954f560b64ba5301cdcefbae2d8d2a7bdcc40/SREDevOpsOrg-Logo.png' \
+                --annotation='index:io.artifacthub.package.logo-url=https://raw.githubusercontent.com/sredevopsorg/.github/main/SREDevOpsOrg-Logo.png' \
                 --annotation='index:io.artifacthub.package.keywords=kubernetes, cms, deploy, ghost, self-hosted, k8s, ghost blog, ghost cms, kubernetes-deployment, container-image, distroless, k3s, hardened-images' \
                 $(printf '${{ env.GHCR_IMAGE }}@sha256:%s ' *)
 
