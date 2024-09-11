@@ -1,6 +1,6 @@
 # Ghost on Kubernetes by SREDevOps.Org
 
-<center><a href="https://sredevops.org" target="_blank" rel="noopener"><img src="https://github.com/sredevopsorg/.github/assets/34670018/6878e00f-635c-4553-8df7-3b20406fdb4f" alt="SREDevOps.org" width="60%" align="center" /></a></center>
+[![SREDevOps.org](https://github.com/sredevopsorg/.github/assets/34670018/6878e00f-635c-4553-8df7-3b20406fdb4f)](https://sredevops.org)
 
 **Community for SRE, DevOps, Cloud Native, GNU/Linux, and more. 🌎**
 
@@ -20,10 +20,12 @@ This repository implements Ghost CMS v5.xx.x from [@TryGhost (upstream)](https:/
 - Removed gosu, now everything runs as non-root (UID/GID 65532) inside the Distroless container. This change alone reduces 6 critical vulnerabilities and 34 high vulnerabilities reported by Docker Scout in the original Ghost image. References:
 
   - [Ghost Official Image](https://hub.docker.com/_/ghost/tags)
-    ![Docker Scout Report - Ghost Official Image](docs/images/dockerhub-ghost.png)
+
+    ![Docker Scout Report - Ghost Official Image](https://raw.githubusercontent.com/sredevopsorg/ghost-on-kubernetes/main/docs/images/dockerhub-ghost.png)
 
   - [Ghost on Kubernetes Image on Docker Hub](https://hub.docker.com/r/ngeorger/ghost-on-kubernetes/tags)
-    ![Docker Scout Report - Ghost on Kubernetes Image](docs/images/dockerhub-ngeorger.png)
+
+    ![Docker Scout Report - Ghost on Kubernetes Image](https://raw.githubusercontent.com/sredevopsorg/ghost-on-kubernetes/main/docs/images/dockerhub-ngeorger.png)
 
 - New Entrypoint flow, using a Node.js script executed by the unprivileged Node user inside the Distroless container, which updates the default themes and starts the Ghost application, an operation that is performed inside the Distroless container itself.
 - We use the latest version of Ghost 5 (when the image is built).
@@ -40,12 +42,7 @@ We've made some significant updates to improve the security and efficiency of ou
 
 ## Star History
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=sredevopsorg/ghost-on-kubernetes&type=Date&theme=dark" />
-  <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=sredevopsorg/ghost-on-kubernetes&type=Date" />
-  <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=sredevopsorg/ghost-on-kubernetes&type=Date" height="300px" />
-</picture>
-
+![Star History Chart](https://api.star-history.com/svg?repos=sredevopsorg/ghost-on-kubernetes&type=Date&theme=dark)
 
 ## Installation
 
@@ -58,7 +55,6 @@ git clone https://github.com/sredevopsorg/ghost-on-kubernetes.git --depth 1 --br
 cd ghost-on-kubernetes
 # Create a new branch for your changes (optional but recommended).
 git checkout -b my-branch --no-track --detach
-
 
 ```
 
@@ -79,6 +75,8 @@ Deploying a sophisticated application like Ghost on Kubernetes involves orchestr
 
 Namespaces in Kubernetes provide a logical separation of resources. We'll use the `ghost-on-kubernetes` namespace to contain all resources related to our Ghost deployment. This approach enhances organization and prevents resource conflicts with other applications running on the same cluster.
 
+File: [deploy/00-namespace.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/00-namespace.yaml)
+
 ```yaml
 apiVersion: v1
 kind: Namespace
@@ -96,6 +94,12 @@ Secrets in Kubernetes allow us to store and manage sensitive data, such as datab
 - `ghost-config-prod`: Stores the Ghost configuration, including database connection details and mail server settings.
 - `ghost-on-kubernetes-mysql-env`: Contains environment variables for the MySQL database, including the database name, username, and password.
 - `tls-secret`: Holds the TLS certificate and key for enabling HTTPS on our Ghost blog.
+
+File: [deploy/01-mysql-config.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/01-mysql-config.yaml)
+
+File: [deploy/04-ghost-config.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/04-ghost-config.yaml)
+
+File: [deploy/01-tls.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/01-tls.yaml)
 
 ```yaml
 apiVersion: v1
@@ -119,6 +123,8 @@ PersistentVolumeClaims (PVCs) in Kubernetes enable us to request persistent stor
 - `k8s-ghost-content`: Provides persistent storage for Ghost's content, including images, themes, and uploaded files.
 - `ghost-on-kubernetes-mysql-pvc`: Offers persistent storage for the MySQL database, ensuring data persistence across pod restarts and reschedulings.
 
+File: [deploy/02-pvc.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/02-pvc.yaml)
+
 ```yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -137,6 +143,8 @@ Services in Kubernetes provide a way to expose our applications running on a set
 - `ghost-on-kubernetes-service`: Exposes the Ghost application internally within the cluster on port 2368.
 - `ghost-on-kubernetes-mysql-service`: Exposes the MySQL database internally on port 3306, allowing the Ghost application to connect to the database.
 
+File: [deploy/03-service.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/03-service.yaml)
+
 ```yaml
 apiVersion: v1
 kind: Service
@@ -148,9 +156,12 @@ spec:
   # ... Service specification
 ```
 
+
 ### StatefulSet: Managing the MySQL Database
 
 A StatefulSet in Kubernetes is designed to manage stateful applications, such as databases, that require persistent storage and stable network identities. We'll use a StatefulSet to deploy a single replica of the MySQL database.
+
+File: [deploy/05-mysql.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/05-mysql.yaml)
 
 ```yaml
 apiVersion: apps/v1
@@ -167,6 +178,8 @@ spec:
 
 Deployments in Kubernetes manage the deployment and scaling of stateless applications. We'll use a Deployment to deploy a single replica of the Ghost application.
 
+File: [deploy/06-ghost-deployment.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/06-ghost-deployment.yaml)
+
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -181,6 +194,8 @@ spec:
 ### Ingress: Exposing Ghost to the Outside World
 
 An Ingress resource in Kubernetes acts as a reverse proxy, routing external traffic to services within the cluster. We'll use an Ingress to expose our Ghost blog to the internet using a domain name.
+
+File: [deploy/07-ingress.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/07-ingress.yaml)
 
 ```yaml
 apiVersion: networking.k8s.io/v1
