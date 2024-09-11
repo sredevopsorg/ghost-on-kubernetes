@@ -1,5 +1,2 @@
-FROM scratch
+FROM hello-world
 
-RUN echo "Hello World 1"
-
-CMD ["/bin/sh", "-c", "echo 'Hello World 2'"]
