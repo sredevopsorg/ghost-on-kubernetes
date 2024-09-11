@@ -22,7 +22,6 @@ on:
         required: true
         default: '5.86.2'
         type: string
-  workflow_call:
 
 
 env:
@@ -35,7 +34,7 @@ jobs:
   build:
     permissions:
       attestations: write
-      actions: write
+      actions: read
       checks: write
       contents: write
       deployments: none
@@ -101,8 +100,6 @@ jobs:
         uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81 # v5.5.1
         with:
           images: ${{ env.GHCR_IMAGE }}
-          annotations: |
-            type=org.opencontainers.image.description,value=${{ github.event.repository.description }}
 
       -
         name: Set up QEMU
@@ -111,6 +108,7 @@ jobs:
         continue-on-error: false
         with:
           platforms: arm64
+          image: tonistiigi/binfmt:qemu-v8.1.5
       
       -
         name: Set up Docker Buildx
@@ -124,8 +122,8 @@ jobs:
         uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
         with:
           registry: ghcr.io
-          username: ${{ secrets.GHCR_USER }}
-          password: ${{ secrets.GHCR_PASS }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       -
         name: Build and push by digest
         id: build
@@ -164,9 +162,9 @@ jobs:
 
     permissions:
       attestations: write
-      actions: write
-      checks: write
-      contents: write
+      actions: read
+      checks: read
+      contents: read
       deployments: none
       id-token: write
       issues: read
@@ -233,7 +231,6 @@ jobs:
             type=raw,value=${{ env.GHOST_VERSION }},enable=${{ github.event_name != 'workflow_dispatch' }}
             type=raw,value=${{ github.event.inputs.manual-tag }},enable=${{ github.event_name == 'workflow_dispatch' }}
 
-
       -
         name: Login to GitHub Container Registry
         uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
@@ -296,18 +293,6 @@ jobs:
           DIGEST_0: ${{ steps.inspect.outputs.DIGEST_0 }}
           DIGEST_2: ${{ steps.inspect.outputs.DIGEST_2 }}
 
-      - name: Sign the images with GitHub OIDC Token
-        id: sign
-        continue-on-error: true
-        env:
-          DIGEST: ${{ steps.inspect.outputs.DIGEST }}
-          TAGS: ${{ steps.inspect.outputs.TAGS }}
-        run: |
-          images=""
-          for tag in ${TAGS}; do
-            images+="${tag}@${DIGEST} "
-          done
-          cosign sign --yes ${images}
       -
         name: Login to Docker Hub
         uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
