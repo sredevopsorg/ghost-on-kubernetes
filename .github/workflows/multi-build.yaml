@@ -3,7 +3,6 @@ on:
   push:
     branches: 
     - main
-    - cosign*
     paths: 
     - Dockerfile
     - entrypoint.js
