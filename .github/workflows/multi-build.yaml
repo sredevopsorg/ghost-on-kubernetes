@@ -3,6 +3,7 @@ on:
   push:
     branches: 
     - main
+    - cosign*
     paths: 
     - Dockerfile
     - entrypoint.js
@@ -293,23 +294,23 @@ jobs:
         id: inspect
         continue-on-error: true
         run: |
-          docker buildx imagetools inspect ${{ env.GHCR_IMAGE }}:${{ steps.meta.outputs.version }} &&
-          echo "DIGEST=$(docker buildx imagetools inspect ${{ env.GHCR_IMAGE }}:${{ steps.meta.outputs.version }} | jq -r '.[0].digest')" >> $GITHUB_OUTPUT &&
-          echo "TAGS=$(docker buildx imagetools inspect ${{ env.GHCR_IMAGE }}:${{ steps.meta.outputs.version }} | jq -r '.[0].tags')" >> $GITHUB_OUTPUT
+          echo "DIGEST_0=$(docker buildx imagetools inspect --raw ${{ env.GHCR_IMAGE }}:${{ steps.meta.outputs.version }} | jq -r '.manifests[0].digest')" >> $GITHUB_OUTPUT 
+          echo "DIGEST_2=$(docker buildx imagetools inspect --raw ${{ env.GHCR_IMAGE }}:${{ steps.meta.outputs.version }} | jq -r '.manifests[2].digest')" >> $GITHUB_OUTPUT
 
-
-      - name: Sign the images with GitHub OIDC Token
-        id: sign
-        continue-on-error: true
-        env:
-          DIGEST: ${{ steps.inspect.outputs.DIGEST }}
-          TAGS: ${{ steps.inspect.outputs.TAGS }}
+      - name: Sign image with a key
         run: |
           images=""
           for tag in ${TAGS}; do
-            images+="${tag}@${DIGEST} "
+            images+="${tag}@${DIGEST_0} ${tag}@${DIGEST_2} "
           done
-          cosign sign --yes ${images}
+          cosign sign --recursive --yes --key env://COSIGN_PRIVATE_KEY ${images}
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+          COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
+          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+          DIGEST_0: ${{ steps.inspect.outputs.DIGEST_0 }}
+          DIGEST_2: ${{ steps.inspect.outputs.DIGEST_2 }}
+
       -
         name: Login to Docker Hub
         uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
