@@ -52,6 +52,7 @@ jobs:
           # - you are installing Scorecards on a *private* repository
           # To create the PAT, follow the steps in https://github.com/ossf/scorecard-action#authentication-with-pat.
           repo_token: ${{ secrets.GHCR_PASS }}
+          publish_results: true
 
           # Public repositories:
           #   - Publish results to OpenSSF REST API for easy access by consumers
@@ -60,7 +61,6 @@ jobs:
           # For private repositories:
           #   - `publish_results` will always be set to `false`, regardless
           #     of the value entered here.
-          publish_results: true
 
       # Upload the results as artifacts (optional). Commenting out will disable uploads of run results in SARIF
       # format to the repository Actions tab.
@@ -69,7 +69,7 @@ jobs:
         with:
           name: SARIF file
           path: results.sarif
-          retention-days: 5
+          retention-days: 15
 
       # Upload the results to GitHub's code scanning dashboard.
       - name: "Upload to code-scanning"
