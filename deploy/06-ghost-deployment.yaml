@@ -83,6 +83,9 @@ spec:
                 mkdir -pv $GHOST_CONTENT/$dir && chown -Rfv 65532:65532 $GHOST_CONTENT/$dir || echo "Error creating $GHOST_CONTENT/$dir directory"
               fi
             done
+            
+            echo "Changing ownership of $GHOST_CONTENT/data directory"
+            chown -Rf 65532:65532 $GHOST_CONTENT/data && echo "chown ok on data" || echo "Error changing ownership of $GHOST_CONTENT/data directory"
 
             echo "Changing ownership of $GHOST_CONTENT/themes directory"
             chown -Rf 65532:65532 $GHOST_CONTENT/themes && echo "chown ok on themes" || echo "Error changing ownership of $GHOST_CONTENT/themes directory"
