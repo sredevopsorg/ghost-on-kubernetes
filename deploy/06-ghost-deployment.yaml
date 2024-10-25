@@ -80,18 +80,10 @@ spec:
             for dir in $DIRS; do
               if [ ! -d $GHOST_CONTENT/$dir ]; then
                 echo "Creating $GHOST_CONTENT/$dir directory"
-                mkdir -pv $GHOST_CONTENT/$dir && chown -Rfv 65532:65532 $GHOST_CONTENT/$dir || echo "Error creating $GHOST_CONTENT/$dir directory"
+                mkdir -pv $GHOST_CONTENT/$dir || echo "Error creating $GHOST_CONTENT/$dir directory"
               fi
+              chown -Rfv 65532:65532 $GHOST_CONTENT/$dir && echo "chown ok on $dir" || echo "Error changing ownership of $GHOST_CONTENT/$dir directory"
             done
-            
-            echo "Changing ownership of $GHOST_CONTENT/data directory"
-            chown -Rf 65532:65532 $GHOST_CONTENT/data && echo "chown ok on data" || echo "Error changing ownership of $GHOST_CONTENT/data directory"
-
-            echo "Changing ownership of $GHOST_CONTENT/themes directory"
-            chown -Rf 65532:65532 $GHOST_CONTENT/themes && echo "chown ok on themes" || echo "Error changing ownership of $GHOST_CONTENT/themes directory"
-
-            echo "Changing ownership of $GHOST_CONTENT/public directory"
-            chown -Rf 65532:65532 $GHOST_CONTENT/public && echo "chown ok in public" || echo "Error changing ownership of $GHOST_CONTENT public directory"
             exit 0
 
 
