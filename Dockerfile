@@ -2,7 +2,7 @@
 # The image is built with official Node 20 on Debian Bookworm (LTS Iron)  image and uses the Distroless base image for security and minimalism.
 
 # Stage 1: Build Environment
-FROM node:iron-bookworm@sha256:09b38290270d132b895814d9b54602635dbe146ed3ee65b04619922fe4ef6415 AS build-env
+FROM node:iron-bookworm@sha256:bcf90f85634194bc51e92f8add1221c7fdeeff94b7f1ff360aeaa7498086d641 AS build-env
 USER root
 # Create a new user and group named "nonroot" with the UID 65532 and GID 65532, not a member of the root, sudo, and sys groups, and set the home directory to /home/nonroot.
 # This user is used to run the Ghost application in the container for security reasons.
