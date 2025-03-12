@@ -31,11 +31,9 @@ RUN mkdir -pv "$GHOST_INSTALL"
 RUN yarn config set network-timeout 60000 && \
     yarn config set inline-builds true && \
     npm config set fetch-timeout 60000 && \
-    npm config set omit dev
-
-RUN export NODE_ENV=production && \
+    npm config set omit dev && \
+    export NODE_ENV=production && \
     npx ghost-cli install $GHOST_VERSION --dir $GHOST_INSTALL --db mysql --dbhost mysql --no-prompt --no-stack --no-setup --color --process local
-
 
 # Move the original content directory to a backup location, create a new content directory, set the correct ownership and permissions, and switch back to the "node" user
 RUN mv -v $GHOST_CONTENT $GHOST_CONTENT_ORIGINAL && \
