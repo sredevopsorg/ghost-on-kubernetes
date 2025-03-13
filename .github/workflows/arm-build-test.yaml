@@ -1,6 +1,18 @@
-name: ARM Test build
+name: Multi build with native runners
 
 on:
+  push:
+    branches: 
+    # - main
+    - arm-build-test
+    paths: 
+    - Dockerfile
+    - entrypoint.js
+    # - .github/workflows/multi-build.yaml
+    - .github/workflows/arm-build-test.yaml
+    # tags:
+    #   - v*
+
   workflow_dispatch:
     inputs:
       manual-tag:
@@ -196,12 +208,38 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      -
+        name: Get execution timestamp with RFC3339 format
+        id: timestamp
+        run: |
+          echo "timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> $GITHUB_OUTPUT
+      -
+        name: Create manifest list and pushs
+        working-directory: /tmp/digests
+        id: manifest-annotate
+        continue-on-error: true
+        run: |
+              docker buildx imagetools create \
+                $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+                --annotation='index:org.opencontainers.image.description=${{ github.event.repository.description }}' \
+                --annotation='index:org.opencontainers.image.created=${{ steps.timestamp.outputs.timestamp }}' \
+                --annotation='index:org.opencontainers.image.url=${{ github.event.repository.url }}' \
+                --annotation='index:org.opencontainers.image.source=${{ github.event.repository.url }}' \
+                --annotation='index:io.artifacthub.package.readme-url=https://raw.githubusercontent.com/sredevopsorg/ghost-on-kubernetes/main/README.md' \
+                --annotation='index:org.opencontainers.image.vendor=SREDevOps.org' \
+                --annotation='index:io.artifacthub.package.maintainers=[{"name":"Nicolas Georger","email":"info@sredevops.org"}]' \
+                --annotation='index:io.artifacthub.package.alternative-locations=oci://index.docker.io/ngeorger/ghost-on-kubernetes' \
+                --annotation='index:io.artifacthub.package.logo-url=https://raw.githubusercontent.com/sredevopsorg/.github/main/SREDevOpsOrg-Logo.png' \
+                --annotation='index:io.artifacthub.package.keywords=ghost, blog, cms' \
+                $(printf '${{ env.GHCR_IMAGE }}@sha256:%s ' *)
 
       - name: Create manifest list and push
+        if: steps.manifest-annotate.outcome == 'failure'
         working-directory: /tmp/digests
         run: |
-          docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< '${{ steps.meta.outputs.json }}') \
-            $(printf '${{ env.GHCR_IMAGE }}@sha256:%s ' *)
+              docker buildx imagetools create  $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+                $(printf '${{ env.GHCR_IMAGE }}@sha256:%s ' *)
+
       - name: Inspect image
         run: |
           docker buildx imagetools inspect '${{ env.GHCR_IMAGE }}:${{ steps.meta.outputs.version }}'
