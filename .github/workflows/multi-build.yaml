@@ -1,4 +1,5 @@
-name: multi-build
+name: Multi build with native runners
+
 on:
   push:
     branches: 
@@ -20,18 +21,29 @@ on:
       ghost_version:
         description: 'Ghost version'
         required: true
-        default: '5.86.2'
+        default: '5.112.0'
         type: string
 
-
+      
 env:
+  REGISTRY: ghcr.io
   GHCR_IMAGE: ghcr.io/${{ github.repository }}
   DOCKER_IMAGE: docker.io/${{ secrets.DOCKER_USER }}/${{ github.event.repository.name }}
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - linux/amd64
+          - linux/arm64
     permissions:
       attestations: write
       actions: read
@@ -47,14 +59,10 @@ jobs:
       repository-projects: read
       security-events: read
       statuses: read
+    runs-on: ${{ matrix.platform == 'linux/amd64' && 'ubuntu-latest' || matrix.platform == 'linux/arm64' && 'ubuntu-24.04-arm' }}
 
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: true
-      matrix:
-        platform:
-          - linux/amd64
-          - linux/arm64
+    name: Build Docker image for ${{ matrix.platform }}
+
     steps:
       -
         name: Prepare
@@ -62,14 +70,10 @@ jobs:
         run: |
           platform=${{ matrix.platform }}
           echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
-      - 
-        name: Harden Runner
-        uses: step-security/harden-runner@4d991eb9b905ef189e4c376166672c3f2f230481 # v2.11.0
-        with:
-          egress-policy: audit
       -
         name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
       -
         name: Set up GHOST_VERSION and MANUAL_TAG values, depending on event type (push or workflow_dispatch)
         id: versions
@@ -101,21 +105,17 @@ jobs:
         with:
           images: ${{ env.GHCR_IMAGE }}
 
-      -
-        name: Set up QEMU
-        uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3.6.0
-        if: ${{ matrix.platform == 'linux/arm64' || env.PLATFORM_PAIR == 'linux-arm64' }}
-        continue-on-error: false
-        with:
-          platforms: arm64
-          image: tonistiigi/binfmt:qemu-v8.1.5
-      
+      - name: Set up Docker Context for Buildx
+        id: buildx-context
+        run: |
+          docker context create builders
+          
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
         with:
-          driver-opts: |
-            network=host
+          endpoint: builders
+          platforms: ${{ matrix.platform }}
 
       -
         name: Login to GitHub Container Registry
@@ -124,8 +124,8 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      -
-        name: Build and push by digest
+
+      - name: Build and push by digest
         id: build
         uses: docker/build-push-action@471d1dc4e07e5cdedd4c2171150001c434f0b7a4 # v6.15.0
         env:
@@ -137,9 +137,9 @@ jobs:
           annotations: ${{ steps.meta.outputs.annotations }}
           build-args: GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }} 
           outputs: type=image,name=${{ env.GHCR_IMAGE }},push-by-digest=true,name-canonical=true,push=true,oci-mediatypes=true
-          # provenance: false
-          cache-from: type=gha,ignore-error=true
-          cache-to: type=gha,ignore-error=true
+          cache-from: type=gha,scope=${{ github.repository }}-${{ github.ref_name }}-${{ matrix.platform }}
+          cache-to: type=gha,scope=${{ github.repository }}-${{ github.ref_name }}-${{ matrix.platform }}
+
       -
         name: Export digest
         run: |
@@ -153,13 +153,10 @@ jobs:
           name: digests-${{ env.PLATFORM_PAIR }}
           path: /tmp/digests/*
           if-no-files-found: error
-          retention-days: 15
+          retention-days: 1
 
   merge:
     runs-on: ubuntu-latest
-    needs:
-      - build
-
     permissions:
       attestations: write
       actions: read
@@ -175,12 +172,12 @@ jobs:
       repository-projects: read
       security-events: read
       statuses: read
-    
+
+    needs:
+      - build
+
+    name: Merge Docker manifests
     steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@4d991eb9b905ef189e4c376166672c3f2f230481 # v2.11.0
-        with:
-          egress-policy: audit
 
       - name: Install Cosign
         uses: sigstore/cosign-installer@d7d6bc7722e3daa8354c50bcb52f4837da5e9b6a # v3.8.1
@@ -193,12 +190,7 @@ jobs:
           path: /tmp/digests
           pattern: digests-*
           merge-multiple: true
-      -
-        name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
-        with:
-          driver-opts: |
-            network=host
+
       -
         name: Set up GHOST_VERSION and MANUAL_TAG values, depending on event type (push or workflow_dispatch)
         id: versions
@@ -232,12 +224,21 @@ jobs:
             type=raw,value=${{ github.event.inputs.manual-tag }},enable=${{ github.event_name == 'workflow_dispatch' }}
 
       -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
+        with:
+          driver-opts: |
+            network=host
+
+
+      -
         name: Login to GitHub Container Registry
         uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
       -
         name: Get execution timestamp with RFC3339 format
         id: timestamp
@@ -263,14 +264,13 @@ jobs:
                 --annotation='index:io.artifacthub.package.keywords=ghost, blog, cms' \
                 $(printf '${{ env.GHCR_IMAGE }}@sha256:%s ' *)
 
-      -
-        name: Create manifest list and pushs
-        working-directory: /tmp/digests
-        id: manifest
+      - name: Create manifest list and push
         if: steps.manifest-annotate.outcome == 'failure'
+        working-directory: /tmp/digests
         run: |
               docker buildx imagetools create  $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
                 $(printf '${{ env.GHCR_IMAGE }}@sha256:%s ' *)
+
       -
         name: Inspect image
         id: inspect
