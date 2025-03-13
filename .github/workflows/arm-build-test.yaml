@@ -132,9 +132,6 @@ jobs:
           retention-days: 15
 
   merge:
-    strategy:
-      fail-fast: false
-      matrix:
     runs-on: ubuntu-latest
     permissions:
       contents: read
