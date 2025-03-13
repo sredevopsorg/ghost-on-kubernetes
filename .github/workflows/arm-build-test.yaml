@@ -31,6 +31,8 @@ env:
   REGISTRY: ghcr.io
   GHCR_IMAGE: ghcr.io/${{ github.repository }}
   DOCKER_IMAGE: docker.io/${{ secrets.DOCKER_USER }}/${{ github.event.repository.name }}
+permissions:
+  contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -45,8 +47,20 @@ jobs:
           - linux/amd64
           - linux/arm64
     permissions:
-      contents: read
+      attestations: write
+      actions: read
+      checks: write
+      contents: write
+      deployments: none
+      id-token: write
+      issues: read
+      discussions: read
       packages: write
+      pages: none
+      pull-requests: read
+      repository-projects: read
+      security-events: read
+      statuses: read
     runs-on: ${{ matrix.platform == 'linux/amd64' && 'ubuntu-latest' || matrix.platform == 'linux/arm64' && 'ubuntu-24.04-arm' }}
 
     name: Build Docker image for ${{ matrix.platform }}
@@ -104,7 +118,6 @@ jobs:
           endpoint: builders
           platforms: ${{ matrix.platform }}
 
-
       -
         name: Login to GitHub Container Registry
         uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
@@ -115,16 +128,16 @@ jobs:
 
       - name: Build and push by digest
         id: build
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@471d1dc4e07e5cdedd4c2171150001c434f0b7a4 # v6.15.0
+        env:
+          DOCKER_BUILDKIT: 1
         with:
-          provenance: false
           context: .
           platforms: ${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ steps.meta.outputs.annotations }}
           build-args: GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }} 
-          outputs: |
-            type=image,name=${{ env.GHCR_IMAGE }},push-by-digest=true,name-canonical=true,push=true
+          outputs: type=image,name=${{ env.GHCR_IMAGE }},push-by-digest=true,name-canonical=true,push=true,oci-mediatypes=true
           cache-from: type=gha,scope=${{ github.repository }}-${{ github.ref_name }}-${{ matrix.platform }}
           cache-to: type=gha,scope=${{ github.repository }}-${{ github.ref_name }}-${{ matrix.platform }}
 
@@ -146,8 +159,21 @@ jobs:
   merge:
     runs-on: ubuntu-latest
     permissions:
+      attestations: write
+      actions: read
+      checks: read
       contents: read
+      deployments: none
+      id-token: write
+      issues: read
+      discussions: read
       packages: write
+      pages: none
+      pull-requests: read
+      repository-projects: read
+      security-events: read
+      statuses: read
+
     needs:
       - build
     name: Merge Docker manifests
