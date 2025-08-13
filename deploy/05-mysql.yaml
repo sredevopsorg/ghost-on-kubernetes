@@ -7,7 +7,7 @@ metadata:
     app: ghost-on-kubernetes-mysql
     app.kubernetes.io/name: ghost-on-kubernetes-mysql
     app.kubernetes.io/instance: ghost-on-kubernetes
-    app.kubernetes.io/version: '5.92'
+    app.kubernetes.io/version: '6.0.2'
     app.kubernetes.io/component: database
     app.kubernetes.io/part-of: ghost-on-kubernetes
     
@@ -76,17 +76,17 @@ spec:
           runAsUser: 65534
 
         image: docker.io/mysql:8.4
-        imagePullPolicy: Always # You can change this value according to your needs
+        imagePullPolicy: IfNotPresent # You can change this value according to your needs
         envFrom:
         - secretRef:
             name: ghost-on-kubernetes-mysql-env
         resources:
           requests:
             memory: 500Mi # You can change this value according to your needs
-            cpu: 300m # You can change this value according to your needs
+            cpu: 500m # You can change this value according to your needs
           limits:
-            memory: 1Gi # You can change this value according to your needs
-            cpu: 900m # You can change this value according to your needs
+            memory: 2Gi # You can change this value according to your needs
+            cpu: 2000m # You can change this value according to your needs
         ports:
         - containerPort: 3306
           protocol: TCP

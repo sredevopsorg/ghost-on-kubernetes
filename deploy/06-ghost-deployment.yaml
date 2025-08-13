@@ -7,7 +7,7 @@ metadata:
     app: ghost-on-kubernetes
     app.kubernetes.io/name: ghost-on-kubernetes
     app.kubernetes.io/instance: ghost-on-kubernetes
-    app.kubernetes.io/version: '5.92'
+    app.kubernetes.io/version: '6.0.2'
     app.kubernetes.io/component: ghost
     app.kubernetes.io/part-of: ghost-on-kubernetes
     
@@ -94,7 +94,7 @@ spec:
 
       containers:
       - name: ghost-on-kubernetes
-        image: ghcr.io/sredevopsorg/ghost-on-kubernetes:main
+        image: ghcr.io/sredevopsorg/ghost-on-kubernetes:v6-tests
         imagePullPolicy: Always
         ports:
         - name: ghk8s
@@ -102,35 +102,35 @@ spec:
           protocol: TCP
 
         # You should uncomment the following lines in production. Change the values according to your environment.
-        readinessProbe:
-          httpGet:
-            path: /ghost/api/v4/admin/site/
-            port: ghk8s
-            httpHeaders:
-            - name: X-Forwarded-Proto
-              value: https
-            - name: Host
-              value: yourdomain.tld
-          periodSeconds: 10
-          timeoutSeconds: 3
-          successThreshold: 1
-          failureThreshold: 3
-          initialDelaySeconds: 10
+        # readinessProbe:
+        #   httpGet:
+        #     path: /ghost/api/v4/admin/site/
+        #     port: ghk8s
+        #     httpHeaders:
+        #     - name: X-Forwarded-Proto
+        #       value: https
+        #     - name: Host
+        #       value: yourdomain.tld
+        #   periodSeconds: 10
+        #   timeoutSeconds: 3
+        #   successThreshold: 1
+        #   failureThreshold: 3
+        #   initialDelaySeconds: 10
 
-        livenessProbe:
-          httpGet:
-            path: /ghost/api/v4/admin/site/
-            port: ghk8s
-            httpHeaders:
-            - name: X-Forwarded-Proto
-              value: https
-            - name: Host
-              value: yourdomain.tld
-          periodSeconds: 300
-          timeoutSeconds: 3
-          successThreshold: 1
-          failureThreshold: 1
-          initialDelaySeconds: 30
+        # livenessProbe:
+        #   httpGet:
+        #     path: /ghost/api/v4/admin/site/
+        #     port: ghk8s
+        #     httpHeaders:
+        #     - name: X-Forwarded-Proto
+        #       value: https
+        #     - name: Host
+        #       value: yourdomain.tld
+        #   periodSeconds: 300
+        #   timeoutSeconds: 3
+        #   successThreshold: 1
+        #   failureThreshold: 1
+        #   initialDelaySeconds: 30
 
         env:
         - name: NODE_ENV
