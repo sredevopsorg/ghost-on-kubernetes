@@ -8,13 +8,13 @@ _**SREDevOps.org**: SRE, DevOps, Linux, Ethical Hacking, AI, ML, Open Source, Cl
 
 ## Introduction
 
-This repository implements Ghost CMS v5.xx.x from [@TryGhost (Official)](https://github.com/TryGhost/Ghost) on Kubernetes, with our custom image, which has significant improvements intended to be used on Kubernetes [(Dockerfile)](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/Dockerfile). See this whole README for more information.
+This repository implements Ghost CMS v6.xx.x from [@TryGhost (Official)](https://github.com/TryGhost/Ghost) on Kubernetes, with our custom image, which has significant improvements intended to be used on Kubernetes [(Dockerfile)](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/Dockerfile). See this whole README for more information.
 
 ## Features
 
 - Both Ghost and MySQL components run as non-root user in Kubernetes, which significantly improves security, in addition to our custom image enhancements.
 - Multi-arch support (amd64 and arm64).
-- We use the official Node 22 Jod LTS image as our build environment. [Dockerfile](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/91678494c56e618798719b5e2ca8bc74112d9d7d/Dockerfile#L5).
+- We use the official Node 22 Jod LTS image as our build environment. [Dockerfile](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/Dockerfile#L5).
 - We introduce a multi-stage build, which reduces the final image size and improves security by removing unnecessary components from the final image.
 - [Distroless Node 22 Debian 12](https://github.com/GoogleContainerTools/distroless/blob/main/README.md) as our runtime environment for the final image stage.
 - The official Ghost image used gosu, but we removed it in favor of a clean and native container based executions. Now everything runs as non-root (UID/GID 65532) inside the Distroless container. This change alone reduces 6 critical vulnerabilities and 34 high vulnerabilities reported by Docker Scout in the original Ghost image. References:
@@ -28,12 +28,13 @@ This repository implements Ghost CMS v5.xx.x from [@TryGhost (Official)](https:/
     ![Docker Scout Report - Ghost on Kubernetes Image](https://raw.githubusercontent.com/sredevopsorg/ghost-on-kubernetes/main/docs/images/dockerhub-ngeorger.png)
 
 - New Entrypoint flow, using a Node.js script executed by the unprivileged Node user inside the Distroless container, which updates the default themes and starts the Ghost application, an operation that is performed inside the Distroless container itself.
-- We use the latest version of Ghost 5 (when the image is built).
+- We use the latest version of Ghost 6 (when the image is built).
 
 ## Recent updates and changes
 
 We've made some significant updates to improve the security and efficiency of our Ghost implementation on Kubernetes:
 
+- **Updated Ghost v6**: We are using the new Ghost v6, please check the [Official Docs](https://docs.ghost.org/update) for more details. 
 - **Updated NodeJS version**: From Iron LTS (Node v20) into Jod LTS (Node v22)
 - **Multi-arch support**: The images are now multi-arch, with support for amd64 and arm64.
 - **Distroless Image**: We use [@GoogleContainerTools](https://github.com/GoogleContainerTools)'s [Distroless NodeJS](https://github.com/ogleContainerTools/distroless/blob/main/examples/nodejs/Dockerfile) as the execution environment for the final image. Distroless images e minimal images that contain only the necessary components to run the application, making them more secure and efficient than aditional images.
