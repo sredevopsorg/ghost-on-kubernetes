@@ -44,7 +44,7 @@ RUN mv -v $GHOST_CONTENT $GHOST_CONTENT_ORIGINAL && \
     chmod -v 1755 $GHOST_CONTENT
 
 # Stage 2: Final Image
-FROM gcr.io/distroless/nodejs22-debian12:latest@sha256:3732180ba4a39101bd95b7105ef0c47526c197d6c29c6d48f7059a647a4064a5 AS runtime 
+FROM gcr.io/distroless/nodejs22-debian12:latest@sha256:33a071f11d6d35fd5edc4f9ce2f41efa1e4a59b49894c545ca43456c27ab7eaa AS runtime 
 
 # Set the installation directory and content directory for Ghost
 ENV GHOST_INSTALL_SRC=/home/nonroot/app/ghost
