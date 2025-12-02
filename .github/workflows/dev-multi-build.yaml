@@ -227,7 +227,7 @@ jobs:
           annotations: |
             type=org.opencontainers.image.description,value=${{ github.event.repository.description }}
           tags: |
-            type=raw,value=v${{ env.GHOST_VERSION }}
+            type=raw,value=${{ env.GHOST_VERSION }}
             type=raw,value=${{ github.event.inputs.manual-tag }},enable=${{ github.event_name == 'workflow_dispatch' }}
 
       -
