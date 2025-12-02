@@ -4,7 +4,7 @@ on:
   push:
     branches: 
     - main
-    - v6-dev-sqñite-images
+    - v6-dev-sqlite-images
     paths: 
     - Dockerfile-dev
     - entrypoint.js
@@ -27,8 +27,8 @@ on:
       
 env:
   REGISTRY: ghcr.io
-  GHCR_IMAGE: ghcr.io/${{ github.repository }}-dev
-  DOCKER_IMAGE: docker.io/${{ secrets.DOCKER_USER }}/${{ github.event.repository.name }}-dev
+  GHCR_IMAGE: ghcr.io/${{ github.repository }}
+  DOCKER_IMAGE: docker.io/${{ secrets.DOCKER_USER }}/${{ github.event.repository.name }}
 permissions:
   contents: read
 
@@ -104,6 +104,10 @@ jobs:
         uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
         with:
           images: ${{ env.GHCR_IMAGE }}
+          flavor: |
+            latest=false
+            prefix=
+            suffix=-dev
 
       - name: Set up Docker Context for Buildx
         id: buildx-context
@@ -216,13 +220,15 @@ jobs:
           GHOST_VERSION: "v${{ steps.versions.outputs.GHOST_VERSION }}"
         with:
           images: ${{ env.GHCR_IMAGE }}
+          flavor: |
+            latest=false
+            prefix=
+            suffix=-dev
           annotations: |
             type=org.opencontainers.image.description,value=${{ github.event.repository.description }}
           tags: |
-            type=raw,value=dev,enable=${{ github.event_name != 'workflow_dispatch' }}
-            type=raw,value=latest-dev,enable=${{ github.event_name != 'workflow_dispatch' }}
-            type=raw,value=${{ env.GHOST_VERSION }}-dev,enable=${{ github.event_name != 'workflow_dispatch' }}
-            type=raw,value=${{ github.event.inputs.manual-tag }}-dev,enable=${{ github.event_name == 'workflow_dispatch' }}
+            type=raw,value=${{ env.GHOST_VERSION }}
+            type=raw,value=${{ github.event.inputs.manual-tag }},enable=${{ github.event_name == 'workflow_dispatch' }}
 
       -
         name: Set up Docker Buildx
@@ -306,7 +312,7 @@ jobs:
         continue-on-error: true
         run: |
             docker buildx imagetools create \
-              --tag ${{ env.DOCKER_IMAGE }}:${{ steps.meta.outputs.version }}-dev \
+              --tag ${{ env.DOCKER_IMAGE }}:${{ steps.meta.outputs.version }} \
               --tag ${{ env.DOCKER_IMAGE }}:latest-dev \
               --tag ${{ env.DOCKER_IMAGE }}:v${{ steps.versions.outputs.GHOST_VERSION }}-dev \
             ${{ env.GHCR_IMAGE }}:${{ steps.meta.outputs.version }}
