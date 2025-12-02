@@ -4,7 +4,7 @@ on:
   push:
     branches: 
     - main
-    - v6-dev-sqñite-images
+    - v6-dev-sqlite-images
     paths: 
     - Dockerfile-dev
     - entrypoint.js
@@ -219,13 +219,12 @@ jobs:
           flavor: |
             latest=false
             prefix=
-            suffix=dev
+            suffix=-dev
           annotations: |
             type=org.opencontainers.image.description,value=${{ github.event.repository.description }}
           tags: |
             type=raw,value=dev,enable=${{ github.event_name != 'workflow_dispatch' }}
-            type=raw,value=latest-dev,enable=${{ github.event_name != 'workflow_dispatch' }}
-            type=raw,value=${{ env.GHOST_VERSION }}-dev,enable=${{ github.event_name != 'workflow_dispatch' }}
+            type=raw,value=${{ env.GHOST_VERSION }}-dev
             type=raw,value=${{ github.event.inputs.manual-tag }},enable=${{ github.event_name == 'workflow_dispatch' }}
 
       -
