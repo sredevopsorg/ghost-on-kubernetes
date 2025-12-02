@@ -1,0 +1,311 @@
+name: Dev Multi build with native runners
+
+on:
+  push:
+    branches: 
+    - main
+    - v6-dev-sqñite-images
+    paths: 
+    - Dockerfile-dev
+    - entrypoint.js
+    tags:
+      - v*
+  workflow_dispatch:
+    inputs:
+      manual-tag:
+        description: 'Manual Tag'
+        required: true
+        default: 'manual'
+        type: string
+      ghost_version:
+        description: 'Ghost version'
+        required: true
+        default: '5.112.0'
+        type: string
+
+      
+env:
+  REGISTRY: ghcr.io
+  GHCR_IMAGE: ghcr.io/${{ github.repository }}-dev
+  DOCKER_IMAGE: docker.io/${{ secrets.DOCKER_USER }}/${{ github.event.repository.name }}-dev
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - linux/amd64
+          - linux/arm64
+    permissions:
+      attestations: write
+      actions: read
+      checks: write
+      contents: write
+      deployments: none
+      id-token: write
+      issues: read
+      discussions: read
+      packages: write
+      pages: none
+      pull-requests: read
+      repository-projects: read
+      security-events: read
+      statuses: read
+    runs-on: ${{ matrix.platform == 'linux/amd64' && 'ubuntu-latest' || matrix.platform == 'linux/arm64' && 'ubuntu-24.04-arm' }}
+
+    name: Build Docker image for ${{ matrix.platform }}
+
+    steps:
+      -
+        name: Prepare
+        id: prepare
+        run: |
+          platform=${{ matrix.platform }}
+          echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
+      -
+        name: Checkout
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+
+      -
+        name: Set up GHOST_VERSION and MANUAL_TAG values, depending on event type (push or workflow_dispatch)
+        id: versions
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if [ ${{ env.GITHUB_EVENT_NAME }} == workflow_dispatch ]; then
+            echo "GHOST_VERSION=${{ github.event.inputs.ghost_version }}" >> $GITHUB_OUTPUT
+            echo "MANUAL_TAG=${{ github.event.inputs.manual-tag }}" >> $GITHUB_OUTPUT
+            echo "GHOST_VERSION=${{ github.event.inputs.ghost_version }}" >> $GITHUB_ENV
+            echo "MANUAL_TAG=${{ github.event.inputs.manual-tag }}" >> $GITHUB_ENV
+          else
+            echo "GHOST_VERSION=$(curl -s https://api.github.com/repos/tryghost/ghost/releases/latest | jq '.name' | sed 's/\"//g')" >> $GITHUB_OUTPUT
+            echo "GHOST_VERSION=$(curl -s https://api.github.com/repos/tryghost/ghost/releases/latest | jq '.name' | sed 's/\"//g')" >> $GITHUB_ENV
+          fi
+
+      -
+        name: Show Ghost version
+        continue-on-error: true
+        run: |
+              echo "output of step for GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }}"
+              echo "output of step for MANUAL_TAG=${{ steps.versions.outputs.MANUAL_TAG }}"
+              echo "output of env for GHOST_VERSION=\"$(echo $GHOST_VERSION)\""
+              echo "output of env for MANUAL_TAG=\"$(echo $MANUAL_TAG)\""
+
+      - name: Docker meta default
+        id: meta
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
+        with:
+          images: ${{ env.GHCR_IMAGE }}
+
+      - name: Set up Docker Context for Buildx
+        id: buildx-context
+        run: |
+          docker context create builders
+          
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
+        with:
+          endpoint: builders
+          platforms: ${{ matrix.platform }}
+
+      -
+        name: Login to GitHub Container Registry
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push by digest
+        id: build
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+        env:
+          DOCKER_BUILDKIT: 1
+        with:
+          context: .
+          file: Dockerfile-dev        
+          platforms: ${{ matrix.platform }}
+          labels: ${{ steps.meta.outputs.labels }}
+          annotations: ${{ steps.meta.outputs.annotations }}
+          build-args: GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }} 
+          outputs: type=image,name=${{ env.GHCR_IMAGE }},push-by-digest=true,name-canonical=true,push=true,oci-mediatypes=true
+          cache-from: type=gha,scope=${{ github.repository }}-${{ github.ref_name }}-${{ matrix.platform }}
+          cache-to: type=gha,scope=${{ github.repository }}-${{ github.ref_name }}-${{ matrix.platform }}
+
+      -
+        name: Export digest
+        run: |
+          mkdir -p /tmp/digests
+          digest="${{ steps.build.outputs.digest }}"
+          touch "/tmp/digests/${digest#sha256:}"
+      -
+        name: Upload digest
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        with:
+          name: digests-${{ env.PLATFORM_PAIR }}
+          path: /tmp/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  merge:
+    runs-on: ubuntu-latest
+    permissions:
+      attestations: write
+      actions: read
+      checks: read
+      contents: read
+      deployments: none
+      id-token: write
+      issues: read
+      discussions: read
+      packages: write
+      pages: none
+      pull-requests: read
+      repository-projects: read
+      security-events: read
+      statuses: read
+
+    needs:
+      - build
+
+    name: Merge Docker manifests
+    steps:latest
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
+        continue-on-error: true
+
+      -
+        name: Download digests
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        with:
+          path: /tmp/digests
+          pattern: digests-*
+          merge-multiple: true
+
+      -
+        name: Set up GHOST_VERSION and MANUAL_TAG values, depending on event type (push or workflow_dispatch)
+        id: versions
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if [ ${{ env.GITHUB_EVENT_NAME }} == workflow_dispatch ]; then
+            echo "GHOST_VERSION=${{ github.event.inputs.ghost_version }}" >> $GITHUB_OUTPUT
+            echo "MANUAL_TAG=${{ github.event.inputs.manual-tag }}" >> $GITHUB_OUTPUT
+            echo "GHOST_VERSION=${{ github.event.inputs.ghost_version }}" >> $GITHUB_ENV
+            echo "MANUAL_TAG=${{ github.event.inputs.manual-tag }}" >> $GITHUB_ENV
+          else
+            echo "GHOST_VERSION=$(curl -s https://api.github.com/repos/tryghost/ghost/releases/latest | jq '.name' | sed 's/\"//g')" >> $GITHUB_OUTPUT
+            echo "GHOST_VERSION=$(curl -s https://api.github.com/repos/tryghost/ghost/releases/latest | jq '.name' | sed 's/\"//g')" >> $GITHUB_ENV
+          fi
+
+      -
+        name: Docker meta
+        id: meta
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
+        env:
+          GHOST_VERSION: "v${{ steps.versions.outputs.GHOST_VERSION }}"
+        with:
+          images: ${{ env.GHCR_IMAGE }}
+          annotations: |
+            type=org.opencontainers.image.description,value=${{ github.event.repository.description }}
+          tags: |
+            type=raw,value=dev,enable=${{ github.event_name != 'workflow_dispatch' }}
+            type=raw,value=latest-dev,enable=${{ github.event_name != 'workflow_dispatch' }}
+            type=raw,value=${{ env.GHOST_VERSION }},enable=${{ github.event_name != 'workflow_dispatch' }}-dev
+            type=raw,value=${{ github.event.inputs.manual-tag }},enable=${{ github.event_name == 'workflow_dispatch' }}-dev
+
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
+        with:
+          driver-opts: |
+            network=host
+
+
+      -
+        name: Login to GitHub Container Registry
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      -
+        name: Get execution timestamp with RFC3339 format
+        id: timestamp
+        run: |
+          echo "timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> $GITHUB_OUTPUT
+      -
+        name: Create manifest list and pushs
+        working-directory: /tmp/digests
+        id: manifest-annotate
+        continue-on-error: true
+        run: |
+              docker buildx imagetools create \
+                $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+                --annotation='index:org.opencontainers.image.description=${{ github.event.repository.description }}' \
+                --annotation='index:org.opencontainers.image.created=${{ steps.timestamp.outputs.timestamp }}' \
+                --annotation='index:org.opencontainers.image.url=${{ github.event.repository.url }}' \
+                --annotation='index:org.opencontainers.image.source=${{ github.event.repository.url }}' \
+                --annotation='index:io.artifacthub.package.readme-url=https://raw.githubusercontent.com/sredevopsorg/ghost-on-kubernetes/main/README.md' \
+                --annotation='index:org.opencontainers.image.vendor=SREDevOps.org' \
+                --annotation='index:io.artifacthub.package.maintainers=[{"name":"Nicolas Georger","email":"info@sredevops.org"}]' \
+                --annotation='index:io.artifacthub.package.alternative-locations=oci://index.docker.io/ngeorger/ghost-on-kubernetes' \
+                --annotation='index:io.artifacthub.package.logo-url=https://raw.githubusercontent.com/sredevopsorg/.github/main/SREDevOpsOrg-Logo.png' \
+                --annotation='index:io.artifacthub.package.keywords=ghost, blog, cms' \
+                $(printf '${{ env.GHCR_IMAGE }}@sha256:%s ' *)
+
+      - name: Create manifest list and push
+        if: steps.manifest-annotate.outcome == 'failure'
+        working-directory: /tmp/digests
+        run: |
+              docker buildx imagetools create  $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+                $(printf '${{ env.GHCR_IMAGE }}@sha256:%s ' *)
+
+      -
+        name: Inspect image
+        id: inspect
+        continue-on-error: true
+        run: |
+          echo "DIGEST_0=$(docker buildx imagetools inspect --raw ${{ env.GHCR_IMAGE }}:${{ steps.meta.outputs.version }} | jq -r '.manifests[0].digest')" >> $GITHUB_OUTPUT 
+
+
+      - name: Sign image with a key
+        run: |
+          images=""
+          for tag in ${TAGS}; do
+            images+="${tag}@${DIGEST_0} "
+          done
+          cosign sign --recursive --yes --key env://COSIGN_PRIVATE_KEY ${images}
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+          COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
+          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+          DIGEST_0: ${{ steps.inspect.outputs.DIGEST_0 }}
+
+      -
+        name: Login to Docker Hub
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
+        continue-on-error: true
+        with:
+          username: ${{ secrets.DOCKER_USER }}
+          password: ${{ secrets.DOCKER_PASS }}
+
+      -
+        name: Push to Docker Hub
+        continue-on-error: true
+        run: |
+            docker buildx imagetools create \
+              --tag ${{ env.DOCKER_IMAGE }}:${{ steps.meta.outputs.version }}-dev \
+              --tag ${{ env.DOCKER_IMAGE }}:latest-dev \
+              --tag ${{ env.DOCKER_IMAGE }}:v${{ steps.versions.outputs.GHOST_VERSION }}-dev \
+            ${{ env.GHCR_IMAGE }}:${{ steps.meta.outputs.version }}
