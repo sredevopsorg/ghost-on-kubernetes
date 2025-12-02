@@ -104,6 +104,10 @@ jobs:
         uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
         with:
           images: ${{ env.GHCR_IMAGE }}
+          flavor: |
+            latest=false
+            prefix=
+            suffix=-dev
 
       - name: Set up Docker Context for Buildx
         id: buildx-context
@@ -223,8 +227,7 @@ jobs:
           annotations: |
             type=org.opencontainers.image.description,value=${{ github.event.repository.description }}
           tags: |
-            type=raw,value=dev,enable=${{ github.event_name != 'workflow_dispatch' }}
-            type=raw,value=${{ env.GHOST_VERSION }}-dev
+            type=raw,value=v${{ env.GHOST_VERSION }}
             type=raw,value=${{ github.event.inputs.manual-tag }},enable=${{ github.event_name == 'workflow_dispatch' }}
 
       -
