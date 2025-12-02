@@ -221,8 +221,8 @@ jobs:
           tags: |
             type=raw,value=dev,enable=${{ github.event_name != 'workflow_dispatch' }}
             type=raw,value=latest-dev,enable=${{ github.event_name != 'workflow_dispatch' }}
-            type=raw,value=${{ env.GHOST_VERSION }},enable=${{ github.event_name != 'workflow_dispatch' }}-dev
-            type=raw,value=${{ github.event.inputs.manual-tag }},enable=${{ github.event_name == 'workflow_dispatch' }}-dev
+            type=raw,value=${{ env.GHOST_VERSION }}-dev,enable=${{ github.event_name != 'workflow_dispatch' }}
+            type=raw,value=${{ github.event.inputs.manual-tag }}-dev,enable=${{ github.event_name == 'workflow_dispatch' }}
 
       -
         name: Set up Docker Buildx
