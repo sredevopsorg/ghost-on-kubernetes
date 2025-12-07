@@ -4,7 +4,6 @@ on:
   push:
     branches: 
     - main
-    - v6-dev-sqlite-images
     paths: 
     - Dockerfile-dev
     - entrypoint.js
@@ -48,7 +47,7 @@ jobs:
       attestations: write
       actions: read
       checks: write
-      contents: write
+      contents: read
       deployments: none
       id-token: write
       issues: read
@@ -228,6 +227,7 @@ jobs:
             type=org.opencontainers.image.description,value=${{ github.event.repository.description }}
           tags: |
             type=raw,value=${{ env.GHOST_VERSION }}
+            type=raw,value=latest            
             type=raw,value=${{ github.event.inputs.manual-tag }},enable=${{ github.event_name == 'workflow_dispatch' }}
 
       -
@@ -314,5 +314,4 @@ jobs:
             docker buildx imagetools create \
               --tag ${{ env.DOCKER_IMAGE }}:${{ steps.meta.outputs.version }} \
               --tag ${{ env.DOCKER_IMAGE }}:latest-dev \
-              --tag ${{ env.DOCKER_IMAGE }}:v${{ steps.versions.outputs.GHOST_VERSION }}-dev \
             ${{ env.GHCR_IMAGE }}:${{ steps.meta.outputs.version }}

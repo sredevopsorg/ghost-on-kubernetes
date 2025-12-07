@@ -13,10 +13,10 @@ This repository implements Ghost CMS v6.xx.x from [@TryGhost (Official)](https:/
 ## Features
 
 - Both Ghost and MySQL components run as non-root user in Kubernetes, which significantly improves security, in addition to our custom image enhancements.
-- Multi-arch support (amd64 and arm64).
+- Multi-arch support (amd64 and arm64) and also a dev variant with sqlite support.
 - We use the official Node 22 Jod LTS image as our build environment. [Dockerfile](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/Dockerfile#L5).
 - We introduce a multi-stage build, which reduces the final image size and improves security by removing unnecessary components from the final image.
-- [Distroless Node 22 Debian 12](https://github.com/GoogleContainerTools/distroless/blob/main/README.md) as our runtime environment for the final image stage.
+- [Distroless Node 22 Debian 13](https://github.com/GoogleContainerTools/distroless/blob/main/README.md) as our runtime environment for the final image stage.
 - The official Ghost image used gosu, but we removed it in favor of a clean and native container based executions. Now everything runs as non-root (UID/GID 65532) inside the Distroless container. This change alone reduces 6 critical vulnerabilities and 34 high vulnerabilities reported by Docker Scout in the original Ghost image. References:
 
   - Example scan for the [Ghost Official Image](https://hub.docker.com/_/ghost/tags)
@@ -37,7 +37,8 @@ We've made some significant updates to improve the security and efficiency of ou
 - **Updated Ghost v6**: We are using the new Ghost v6, please check the [Official Docs](https://docs.ghost.org/update) for more details. 
 - **Updated NodeJS version**: From Iron LTS (Node v20) into Jod LTS (Node v22)
 - **Multi-arch support**: The images are now multi-arch, with support for amd64 and arm64.
-- **Distroless Image**: We use [@GoogleContainerTools](https://github.com/GoogleContainerTools)'s [Distroless NodeJS](https://github.com/ogleContainerTools/distroless/blob/main/examples/nodejs/Dockerfile) as the execution environment for the final image. Distroless images e minimal images that contain only the necessary components to run the application, making them more secure and efficient than aditional images.
+- **Distroless Image**: We use [@GoogleContainerTools](https://github.com/GoogleContainerTools)'s [Distroless Debian 13 - NodeJS 22](https://github.com/ogleContainerTools/distroless/blob/main/examples/nodejs/Dockerfile) as the execution environment for the final image. Distroless images are minimal images that contain only the required components of the base image and the specific language to run the application, without shells, package managers, making them more secure and efficient than traditional images, even lighter than "slim" variants.
+- **Dev image variant with sqlite support**: We added a [Dockerfile-dev](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/Dockerfile-dev), with bundled sqlite3 dependencies and node environment configured as "development". 
 - **MySQL StatefulSet**: We've changed the MySQL implementation to a StatefulSet. This provides stable network identifiers and rsistent storage, which is important for databases like MySQL that need to maintain state.
 - **Init Container**: We've added an init container to the Ghost deployment. This container is responsible for setting up the necessary nfiguration files and directories before the main Ghost container starts, ensuring the right directories are created, correct ownership r user node inside distroless container UID/GID to 65532, and the correct permissions are set.  Check [deploy/06-ghost-deployment.yaml]ttps://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/06-ghost-deployment.yaml) for details on these changes.
 - **Entrypoint Script**: We've introduced a new entrypoint script that runs as the non-privileged user inside the distroless container. is script is responsible for updating the default themes then starts the Ghost application. This script is executed by the nonroot user thout privileges within the Distroless container, which updates default themes and starts the Ghost application, operation performed to the distroless container in runtime. [entrypoint.js](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/entrypoint.js)
