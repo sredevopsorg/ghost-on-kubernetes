@@ -46,7 +46,7 @@ jobs:
     permissions:
       attestations: write
       actions: read
-      checks: write
+      checks: read
       contents: read
       deployments: none
       id-token: write
@@ -268,7 +268,7 @@ jobs:
                 --annotation='index:io.artifacthub.package.maintainers=[{"name":"Nicolas Georger","email":"info@sredevops.org"}]' \
                 --annotation='index:io.artifacthub.package.alternative-locations=oci://index.docker.io/ngeorger/ghost-on-kubernetes' \
                 --annotation='index:io.artifacthub.package.logo-url=https://raw.githubusercontent.com/sredevopsorg/.github/main/SREDevOpsOrg-Logo.png' \
-                --annotation='index:io.artifacthub.package.keywords=ghost, blog, cms' \
+                --annotation='index:io.artifacthub.package.keywords=ghost, blog, cms, hardened, distroless' \
                 $(printf '${{ env.GHCR_IMAGE }}@sha256:%s ' *)
 
       - name: Create manifest list and push
