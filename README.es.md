@@ -1,153 +1,155 @@
-# Ghost en Kubernetes por SREDevOps.Org
+# **Ghost en Kubernetes (v6.x) por SREDevOps.Org**
 
-[![SREDevOps.org](https://github.com/sredevopsorg/.github/assets/34670018/6878e00f-635c-4553-8df7-3b20406fdb4f)](https://www.sredevops.org)
+Despliega la principal plataforma de publicación de código abierto, **Ghost**, en Kubernetes con la máxima **seguridad** y **eficiencia** utilizando una imagen de contenedor endurecida y multi-arquitectura.
 
-_**SREDevOps.org**: SRE, DevOps, Linux, Ethical Hacking, AI, ML, Open Source, Cloud Native, Platform Engineering en Español, Portugués (Brasil) y English_
+Mantenido por ***[SREDevOps.org](https://www.sredevops.org)**: SRE, DevOps, Linux, Hacking Ético, IA, ML, Código Abierto, Cloud Native, Platform Engineering en Inglés, Español y Portugués (Brasil).*
 
 [![Build Multiarch](https://github.com/sredevopsorg/ghost-on-kubernetes/actions/workflows/multi-build.yaml/badge.svg?branch=main)](https://github.com/sredevopsorg/ghost-on-kubernetes/actions/workflows/multi-build.yaml) [![Image Size](https://ghcr-badge.egpl.dev/sredevopsorg/ghost-on-kubernetes/size?color=%2344cc11&tag=main&label=main+image+size)](https://github.com/sredevopsorg/ghost-on-kubernetes/pkgs/container/ghost-on-kubernetes) [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/sredevopsorg/ghost-on-kubernetes/badge)](https://securityscorecards.dev/viewer/?uri=github.com/sredevopsorg/ghost-on-kubernetes) [![Fork this repository](https://img.shields.io/github/forks/sredevopsorg/ghost-on-kubernetes?style=social)](https://github.com/sredevopsorg/ghost-on-kubernetes/fork) [![Star this repository](https://img.shields.io/github/stars/sredevopsorg/ghost-on-kubernetes?style=social)](https://github.com/sredevopsorg/ghost-on-kubernetes/stargazers) [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/8888/badge)](https://www.bestpractices.dev/projects/8888) [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/ghost-on-kubernetes)](https://artifacthub.io/packages/search?repo=ghost-on-kubernetes)
 
-## Introducción
+## **Aspectos Destacados: Seguridad y Eficiencia**
 
-Este repositorio implementa **Ghost CMS v6.xx.x** desde [@TryGhost (Oficial)](https://github.com/TryGhost/Ghost) en **Kubernetes**, usando nuestra imagen personalizada con mejoras significativas diseñadas para su uso en Kubernetes [(Dockerfile)](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/Dockerfile). Revisa todo este README para más información.
+Este repositorio implementa Ghost CMS v6.xx.x de [@TryGhost (Oficial)](https://github.com/TryGhost/Ghost) en Kubernetes con una imagen personalizada, que ofrece mejoras significativas para el uso en producción y características de seguridad en Kubernetes.
 
-## Características
+### **Seguridad Mejorada**
 
-- Tanto **Ghost** como **MySQL** se ejecutan como usuarios *non-root* en Kubernetes, mejorando considerablemente la seguridad, junto con otras mejoras en la imagen personalizada.
-- Soporte **multi-arch** (amd64 y arm64).
-- Se usa la imagen oficial **Node 22 Jod LTS** como entorno de build. [Dockerfile](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/Dockerfile#L5).
-- Implementa un **multi-stage build**, reduciendo el tamaño final de la imagen y mejorando la seguridad al eliminar componentes innecesarios.
-- Usa **[Distroless Node 22 Debian 12](https://github.com/GoogleContainerTools/distroless/blob/main/README.md)** como entorno de runtime en la imagen final.
-- La imagen oficial de Ghost usaba *gosu*, pero fue removido en favor de una ejecución nativa sin privilegios dentro del contenedor. Todo corre como usuario *non-root* (UID/GID 65532) en el contenedor **Distroless**. Este cambio reduce 6 vulnerabilidades críticas y 34 altas reportadas por Docker Scout en la imagen oficial de Ghost.
+* **Ejecución Sin Root:** Tanto los componentes de Ghost como los de MySQL se ejecutan exclusivamente como un **usuario sin privilegios (non-root)** (UID/GID 65532) en Kubernetes, previniendo posibles ataques de escalada de privilegios.
+* **Tiempo de Ejecución Distroless:** Utilizamos **Google Container Tools Distroless Debian 13 - NodeJS 22** como el entorno de tiempo de ejecución final. Las imágenes **Distroless** contienen solo las dependencias de la aplicación y el lenguaje requeridas, **excluyendo shells y gestores de paquetes**, lo que las hace sustancialmente más seguras y reduce la superficie de ataque.
+* **Reducción de Vulnerabilidades:** Al reemplazar `gosu` con un flujo de ejecución de contenedor nativo y adoptar Distroless, eliminamos varias vulnerabilidades críticas reportadas en la imagen original de Ghost:
+  * **Resultado:** Solo este cambio redujo **6 vulnerabilidades críticas** y **34 vulnerabilidades altas** reportadas por Docker Scout en la imagen oficial.
 
-  - Ejemplo de escaneo para la [Imagen Oficial de Ghost](https://hub.docker.com/_/ghost/tags)
+**Ejemplo de Reportes de Seguridad:**
 
-    ![Docker Scout Report - Ghost Official Image](https://raw.githubusercontent.com/sredevopsorg/ghost-on-kubernetes/main/docs/images/dockerhub-ghost.png)
+| Imagen Oficial de Ghost | Imagen de Ghost en Kubernetes |
+| :---- | :---- |
+| Escaneo de ejemplo para la [Imagen Oficial de Ghost](https://hub.docker.com/_/ghost/tags): ![Reporte de Docker Scout - Imagen Oficial de Ghost](https://raw.githubusercontent.com/sredevopsorg/ghost-on-kubernetes/main/docs/images/dockerhub-ghost.png) | Ejemplo de nuestra [Imagen de Ghost en Kubernetes en Docker Hub](https://hub.docker.com/r/ngeorger/ghost-on-kubernetes/tags): ![Reporte de Docker Scout - Imagen de Ghost en Kubernetes](https://raw.githubusercontent.com/sredevopsorg/ghost-on-kubernetes/main/docs/images/dockerhub-ngeorger.png) |
 
-  - Ejemplo de nuestra [Imagen Ghost on Kubernetes en Docker Hub](https://hub.docker.com/r/ngeorger/ghost-on-kubernetes/tags)
+### **Rendimiento y Arquitectura**
 
-    ![Docker Scout Report - Ghost on Kubernetes Image](https://raw.githubusercontent.com/sredevopsorg/ghost-on-kubernetes/main/docs/images/dockerhub-ngeorger.png)
+* **Artefactos de Build Personalizados:** Mantenemos dos Dockerfiles distintos para producción y desarrollo:
+  * **Imagen de Producción:** La imagen principal construida utilizando nuestro proceso de construcción endurecido y multi-etapa. Ver el [Dockerfile](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/Dockerfile).
+  * **Imagen de Desarrollo:** Una variante adaptada para pruebas, que incluye soporte para SQLite. Ver el [Dockerfile-dev](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/Dockerfile-dev).
+* **Soporte Multi-Arquitectura:** Las imágenes están construidas para las arquitecturas **amd64** y **arm64**.
+* **Build Multi-Etapa:** Utilizamos la imagen oficial de Node 22 Jod LTS para la construcción, lo que reduce significativamente el tamaño final de la imagen y mejora la seguridad al eliminar componentes de construcción innecesarios.
+* **Ghost v6 y NodeJS 22 LTS Actualizados:** Utilizando las últimas versiones estables para seguridad y rendimiento.
+* **Punto de Entrada Robusto (entrypoint.js):** Un script de punto de entrada **Node.js** personalizado, ejecutado por el usuario sin privilegios, maneja las operaciones de tiempo de ejecución necesarias, como la actualización de temas predeterminados, antes de iniciar la aplicación Ghost. El script se puede revisar aquí: [entrypoint.js](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/entrypoint.js).
+* **Contenedor Init Dedicado:** El despliegue incluye un **initContainer** para manejar la creación de directorios, la propiedad correcta (UID/GID 65532) y la configuración de permisos antes del lanzamiento del contenedor principal de Ghost, asegurando una operación fluida dentro del contenedor Distroless.
 
-- Nuevo **Entrypoint** basado en script **Node.js** ejecutado por el usuario sin privilegios dentro del contenedor **Distroless**, que actualiza los temas por defecto y lanza la aplicación Ghost.
-- Se usa siempre la última versión de Ghost 6 al momento del build.
+## **Resumen de la Arquitectura de Despliegue**
 
-## Cambios recientes
+Este proyecto proporciona archivos manifest completos de Kubernetes (`deploy/`) para ejecutar una instancia de Ghost lista para producción, respaldada por una base de datos **MySQL**.
 
-Actualizaciones clave para mejorar la seguridad y eficiencia de Ghost en Kubernetes:
+| Recurso | Componentes | Detalles |
+| :---- | :---- | :---- |
+| **Namespace** | ghost-on-kubernetes | Proporciona aislamiento lógico para todos los componentes. (Archivo: [00-namespace.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/00-namespace.yaml)) |
+| **StatefulSet** | ghost-on-kubernetes-mysql | Gestiona la base de datos MySQL 8, asegurando red estable y almacenamiento persistente. (Archivo: [05-mysql.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/05-mysql.yaml)) |
+| **Deployment** | ghost-on-kubernetes | Gestiona los pods de la aplicación Ghost v6. (Archivo: [06-ghost-deployment.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/06-ghost-deployment.yaml)) |
+| **Services** | ghost-on-kubernetes-service, ghost-on-kubernetes-mysql-service | Expone Ghost (2368) y MySQL (3306) internamente dentro del clúster. (Archivo: [03-service.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/03-service.yaml)) |
+| **PersistentVolumeClaims (PVC)** | k8s-ghost-content, ghost-on-kubernetes-mysql-pvc | Solicita almacenamiento persistente para el contenido de Ghost (temas, imágenes) y los datos de MySQL. (Archivo: [02-pvc.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/02-pvc.yaml)) |
+| **Secrets** | ghost-config-prod, ghost-on-kubernetes-mysql-env, tls-secret | Almacena de forma segura la configuración de Ghost, las credenciales de la base de datos y los certificados TLS (opcional). (Archivos: [01-mysql-config.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/01-mysql-config.yaml), [04-ghost-config.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/04-ghost-config.yaml), [01-tls.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/01-tls.yaml)) |
+| **Ingress** | ghost-on-kubernetes-ingress | Expone la aplicación Ghost al mundo exterior a través de HTTP/HTTPS (requiere un TLD). (Archivo: [07-ingress.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/07-ingress.yaml)) |
 
-- **Ghost v6 actualizado**: Usamos la nueva versión, revisa la [documentación oficial](https://docs.ghost.org/update).
-- **NodeJS actualizado**: Desde Iron LTS (Node v20) a Jod LTS (Node v22).
-- **Soporte multi-arch**: Imágenes para amd64 y arm64.
-- **Imagen Distroless**: Basada en [@GoogleContainerTools](https://github.com/GoogleContainerTools), solo con los componentes necesarios para ejecutar la app.
-- **MySQL StatefulSet**: Ahora MySQL se ejecuta como StatefulSet, lo que permite almacenamiento persistente y redes estables.
-- **Init Container**: Nuevo init container que prepara configuraciones, permisos y directorios antes de iniciar Ghost. Ver [deploy/06-ghost-deployment.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/06-ghost-deployment.yaml).
-- **Entrypoint Script**: Script NodeJS que corre como usuario *non-root* dentro del contenedor Distroless para actualizar temas y lanzar Ghost. [entrypoint.js](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/entrypoint.js)
+*Nota*: Puedes alojar múltiples instancias de Ghost reemplazando la especificación de Namespace en cada archivo manifest.
 
-## Instrucciones de instalación
+## **Instrucciones de Instalación (Producción)**
 
-### 0. Clonar el repositorio
+Sigue estos pasos para desplegar Ghost en tu clúster de Kubernetes.
+
+### **Prerrequisitos**
+
+1. Un clúster de Kubernetes en funcionamiento (`kubectl` configurado).
+2. Un StorageClass provisionado (requerido para los PVCs).
+
+### **0. Clonar (o hacer fork) del Repositorio**
 
 ```bash
+## Clonar el repositorio
 git clone https://github.com/sredevopsorg/ghost-on-kubernetes.git --depth 1 --branch main --single-branch --no-tags
+## Cambiar de directorio
 cd ghost-on-kubernetes
-git checkout -b my-branch --no-track --detach
 ```
 
-### 1. Revisar configuraciones de ejemplo
+### **1. Revisar y Configurar**
 
-Los archivos de ejemplo están en [examples](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/examples/):
+Revisa los archivos de configuración de ejemplo y modifica los manifests en la carpeta `deploy/` para adaptarlos a tu entorno (ej. clase de almacenamiento, nombre de dominio, valores de secretos).
 
-- `config.development.sample.yaml`: Configuración para desarrollo, usa SQLite.
-- `config.production.sample.yaml`: Configuración para producción, usa MySQL 8. Requiere dominio válido y [Ingress configurado](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/07-ingress.yaml).
+* **Configuraciones:** Revisa los archivos de configuración de ejemplo en el directorio [examples/](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/examples/):
+  * `config.production.sample.yaml`: Configuración recomendada usando MySQL 8. Requiere un **dominio de nivel superior (TLD)** válido para el campo `url` y la configuración de Ingress.
+  * `config.development.sample.yaml`: Utiliza SQLite para entornos de prueba.
+* **Documentación Oficial de Ghost:** Consulta la [documentación oficial de Ghost](https://ghost.org/docs/config/#custom-configuration-files) para opciones de configuración detalladas.
 
-Más detalles en la [documentación oficial de Ghost](https://ghost.org/docs/config/#custom-configuration-files).
+### **2. Secuencia de Despliegue**
 
-### 2. Editar valores según tus necesidades
+Es **crucial** aplicar los manifests en el orden correcto para asegurar la resolución de dependencias (especialmente los componentes de la base de datos).
 
-Revisa cada manifiesto dentro de [deploy/](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/).
+1. **Crear el Namespace:**
 
-### Arquitectura de despliegue Ghost en Kubernetes
+    `kubectl apply -f deploy/00-namespace.yaml`
 
-Ghost requiere varios recursos Kubernetes:
+2. **Crear Secrets (Credenciales y Configuración):**
 
-#### Namespace
+    ```bash
+    # IMPORTANTE: Personaliza estos secretos antes de aplicarlos
+    kubectl apply -f deploy/01-mysql-config.yaml
+    kubectl apply -f deploy/04-ghost-config.yaml
+    kubectl apply -f deploy/01-tls.yaml
+    ```
 
-Aisla recursos en `ghost-on-kubernetes`.
+3. **Crear Almacenamiento Persistente y Services:**
 
-```yaml
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: ghost-on-kubernetes
-```
+    ```bash
+    kubectl apply -f deploy/02-pvc.yaml
+    kubectl apply -f deploy/03-service.yaml
+    ```
 
-#### Secrets
+4. **Desplegar la Base de Datos MySQL (StatefulSet):**
 
-Guarda datos sensibles como contraseñas y certificados TLS.
+    ```bash
+    # Espera a que el PVC de MySQL esté enlazado
+    kubectl apply -f deploy/05-mysql.yaml
+    ```
 
-- `ghost-config-prod`
-- `ghost-on-kubernetes-mysql-env`
-- `tls-secret`
+5. **Desplegar la Aplicación Ghost (Deployment):**
 
-#### PersistentVolumeClaims
+    ```bash
+    # Espera a que MySQL esté listo antes de comenzar
+    kubectl apply -f deploy/06-ghost-deployment.yaml
+    ```
 
-Permite almacenamiento persistente para contenido Ghost y base de datos MySQL.
+6. **Exponer Ghost con Ingress (Opcional/Recomendado):**
 
-#### Services
+    ```bash
+    # Enruta el tráfico externo al Service de Ghost
+    kubectl apply -f deploy/07-ingress.yaml
+    ```
 
-Expone Ghost y MySQL dentro del clúster.
+## **¡Tu Blog Ghost está Desplegado\!**
 
-#### StatefulSet
+¡Felicidades\! Has desplegado una instancia de Ghost v6 altamente segura y escalable en Kubernetes.
 
-Administra la base de datos MySQL con almacenamiento persistente.
+### **Acceso Sin Nombre de Dominio (Pruebas)**
 
-#### Deployment
+Para previsualizar el sitio web sin configurar Ingress o un TLD, puedes usar el *port forwarding*:
 
-Gestiona la aplicación Ghost (stateless).
+1. Configura temporalmente las URL `url` y `admin` en tu Secret `config.production.json` para usar `http://localhost:2368/`.
+2. Reinicia el/los pod(s) de Ghost después de actualizar el Secret.
+3. Ejecuta el comando de *port-forwarding*:
 
-#### Ingress
-
-Expone Ghost a Internet mediante dominio.
-
-## Despliegue en Kubernetes
-
-Aplica los archivos **en orden**:
-
-```bash
-kubectl apply -f deploy/00-namespace.yaml
-kubectl apply -f deploy/01-mysql-config.yaml
-kubectl apply -f deploy/04-ghost-config.yaml
-kubectl apply -f deploy/01-tls.yaml
-kubectl apply -f deploy/02-pvc.yaml
-kubectl apply -f deploy/03-service.yaml
-kubectl apply -f deploy/05-mysql.yaml
-kubectl apply -f deploy/06-ghost-deployment.yaml
-kubectl apply -f deploy/07-ingress.yaml
-```
-
-## Tu blog Ghost está desplegado
-
-Has desplegado Ghost en Kubernetes exitosamente. Personaliza configuraciones según tus necesidades (almacenamiento, recursos, dominio, etc.).
-
-## Acceder sin dominio
-
-Para previsualizar Ghost sin dominio:
-
-Configura `url` y `admin url` como `http://localhost:2368/`, reinicia el pod y usa port-forward:
+<!-- end list -->
 
 ```bash
 kubectl port-forward -n ghost-on-kubernetes services ghost-on-kubernetes-service 2368:2368
 ```
 
-## Contribuir
+## Contribuciones
 
-Contribuciones son bienvenidas. Revisa [CONTRIBUTING.md](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/CONTRIBUTING.md).
+¡Damos la bienvenida a las contribuciones de la comunidad\! Por favor, revisa el archivo [CONTRIBUTING.md](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/CONTRIBUTING.md) para obtener más información sobre cómo contribuir a este proyecto.
 
-## Licencia y créditos
+## Licencia y Créditos
 
-- Proyecto bajo **MIT License**. Ver [LICENSE](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/LICENSE).
-- **Ghost CMS** está bajo [MIT License](https://github.com/TryGhost/Ghost/blob/main/LICENSE).
-- Las imágenes base (Node y Distroless) pertenecen a sus respectivos autores.
+* Este proyecto está licenciado bajo la **Licencia MIT**. Por favor, revisa el archivo [LICENSE](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/LICENSE) para obtener más información.
+* Ghost CMS está licenciado bajo la [Licencia MIT](https://github.com/TryGhost/Ghost/blob/main/LICENSE).
+* La imagen de node y la imagen Distroless están licenciadas por sus respectivos propietarios.
 
-## Historial de estrellas
+## Historial de Estrellas
 
 ![Star History Chart](https://api.star-history.com/svg?repos=sredevopsorg/ghost-on-kubernetes&type=Date&theme=dark)

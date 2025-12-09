@@ -7,7 +7,7 @@ metadata:
     app: ghost-on-kubernetes
     app.kubernetes.io/name: ghost-on-kubernetes
     app.kubernetes.io/instance: ghost-on-kubernetes
-    app.kubernetes.io/version: '5.92'
+    app.kubernetes.io/version: '6.0'
     app.kubernetes.io/component: ghost
     app.kubernetes.io/part-of: ghost-on-kubernetes
     
@@ -94,6 +94,8 @@ spec:
 
       containers:
       - name: ghost-on-kubernetes
+        # For development, you can use the following image:
+        # image: ghcr.io/sredevopsorg/ghost-on-kubernetes:latest-dev
         image: ghcr.io/sredevopsorg/ghost-on-kubernetes:main
         imagePullPolicy: Always
         ports:
