@@ -8,6 +8,7 @@ on:
       - main
     paths:
       - Dockerfile
+      - Dockerfile-dev
       - entrypoint.js
 
 permissions:
