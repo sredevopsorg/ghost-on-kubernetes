@@ -253,6 +253,7 @@ jobs:
                 --annotation='index:org.opencontainers.image.description=${{ github.event.repository.description }}' \
                 --annotation='index:org.opencontainers.image.created=${{ steps.timestamp.outputs.timestamp }}' \
                 --annotation='index:org.opencontainers.image.url=${{ github.event.repository.url }}' \
+                --annotation='index:org.opencontainers.image.version=v${{ steps.versions.outputs.GHOST_VERSION }}' \
                 --annotation='index:org.opencontainers.image.source=${{ github.event.repository.url }}' \
                 --annotation='index:io.artifacthub.package.readme-url=https://raw.githubusercontent.com/sredevopsorg/ghost-on-kubernetes/main/README.md' \
                 --annotation='index:org.opencontainers.image.vendor=SREDevOps.org' \
@@ -304,6 +305,4 @@ jobs:
         run: |
             docker buildx imagetools create \
               --tag ${{ env.DOCKER_IMAGE }}:${{ steps.meta.outputs.version }} \
-              --tag ${{ env.DOCKER_IMAGE }}:latest \
-              --tag ${{ env.DOCKER_IMAGE }}:v${{ steps.versions.outputs.GHOST_VERSION }} \
             ${{ env.GHCR_IMAGE }}:${{ steps.meta.outputs.version }}
