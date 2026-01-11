@@ -304,6 +304,4 @@ jobs:
         run: |
             docker buildx imagetools create \
               --tag ${{ env.DOCKER_IMAGE }}:${{ steps.meta.outputs.version }} \
-              --tag ${{ env.DOCKER_IMAGE }}:latest \
-              --tag ${{ env.DOCKER_IMAGE }}:v${{ steps.versions.outputs.GHOST_VERSION }} \
             ${{ env.GHCR_IMAGE }}:${{ steps.meta.outputs.version }}
