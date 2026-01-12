@@ -11,7 +11,7 @@ image:
 ghost:
   url: "https://blog.example.com"
   adminUrl: "https://blog.example.com"
-  
+
   mail:
     enabled: true
     transport: "SMTP"
@@ -22,7 +22,7 @@ ghost:
     secure: false
     user: "apikey"
     password: "SG.xxxxxxxxxxxxx"
-  
+
   resources:
     limits:
       cpu: 1000m
@@ -35,7 +35,7 @@ ghost:
     enabled: true
     initialDelaySeconds: 60
     periodSeconds: 300
-    
+
   readinessProbe:
     enabled: true
     initialDelaySeconds: 30
@@ -43,13 +43,13 @@ ghost:
 
 mysql:
   enabled: true
-  
+
   auth:
     database: "ghost_production"
     username: "ghost_user"
     password: "ChangeMeToSecurePassword123!"
     rootPassword: "ChangeMeToSecureRootPassword123!"
-  
+
   resources:
     limits:
       cpu: 1000m
@@ -64,7 +64,7 @@ persistence:
     storageClassName: "fast-ssd"
     accessMode: ReadWriteOnce
     size: 10Gi
-  
+
   mysql:
     enabled: true
     storageClassName: "standard"
@@ -79,17 +79,17 @@ ingress:
   enabled: true
   className: "nginx"
   preset: "nginx"
-  
+
   annotations:
     nginx.ingress.kubernetes.io/proxy-body-size: "50m"
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-  
+
   hosts:
     - host: blog.example.com
       paths:
         - path: /
           pathType: Prefix
-  
+
   tls:
     enabled: true
     mode: "certManager"

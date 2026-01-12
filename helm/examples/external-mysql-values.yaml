@@ -8,7 +8,7 @@ ghost:
 
 mysql:
   enabled: false
-  
+
   external:
     host: "mysql.database.example.com"
     port: 3306
@@ -20,9 +20,9 @@ persistence:
   ghost:
     enabled: true
     storageClassName: "nfs-client"
-    accessMode: ReadWriteMany  # Required for multiple replicas
+    accessMode: ReadWriteMany # Required for multiple replicas
     size: 5Gi
-  
+
   mysql:
     enabled: false
 
@@ -30,13 +30,13 @@ ingress:
   enabled: true
   className: "traefik"
   preset: "traefik"
-  
+
   hosts:
     - host: blog.example.com
       paths:
         - path: /
           pathType: ImplementationSpecific
-  
+
   tls:
     enabled: true
     mode: "manual"

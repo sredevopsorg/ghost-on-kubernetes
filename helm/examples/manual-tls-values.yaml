@@ -6,7 +6,7 @@ ghost:
 
 mysql:
   enabled: true
-  
+
   auth:
     database: "ghost_secure"
     username: "ghost_secure_user"
@@ -19,7 +19,7 @@ persistence:
     storageClassName: "fast-storage"
     accessMode: ReadWriteOnce
     size: 5Gi
-  
+
   mysql:
     enabled: true
     storageClassName: "fast-storage"
@@ -30,13 +30,13 @@ ingress:
   enabled: true
   className: "traefik"
   preset: "traefik"
-  
+
   hosts:
     - host: secure.example.com
       paths:
         - path: /
           pathType: ImplementationSpecific
-  
+
   tls:
     enabled: true
     mode: "manual"
