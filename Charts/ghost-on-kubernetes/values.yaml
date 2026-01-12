@@ -80,7 +80,7 @@ mysql:
 
   image:
     repository: docker.io/mysql
-    tag: "8.4"
+    tag: "9.5"
     pullPolicy: Always
 
   # Database credentials
