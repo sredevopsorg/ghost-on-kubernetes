@@ -42,8 +42,8 @@ jobs:
         with:
           charts_dir: Charts
           pages_branch: gh-pages
-          packages_with_index: true
-          mark_as_latest: true
+          mark_as_latest: false
+          # packages_with_index: true
           # version:
           # config:
           # skip_packaging:
