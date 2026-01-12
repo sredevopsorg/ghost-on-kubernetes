@@ -1,0 +1,54 @@
+# Configuration with manually provided TLS certificates
+
+ghost:
+  url: "https://secure.example.com"
+  adminUrl: "https://secure.example.com"
+
+mysql:
+  enabled: true
+  
+  auth:
+    database: "ghost_secure"
+    username: "ghost_secure_user"
+    password: "SecureDatabasePassword123!"
+    rootPassword: "SecureRootPassword123!"
+
+persistence:
+  ghost:
+    enabled: true
+    storageClassName: "fast-storage"
+    accessMode: ReadWriteOnce
+    size: 5Gi
+  
+  mysql:
+    enabled: true
+    storageClassName: "fast-storage"
+    accessMode: ReadWriteOnce
+    size: 10Gi
+
+ingress:
+  enabled: true
+  className: "traefik"
+  preset: "traefik"
+  
+  hosts:
+    - host: secure.example.com
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  
+  tls:
+    enabled: true
+    mode: "manual"
+    secretName: "manual-tls-secret"
+    # These would typically be base64 encoded
+    # certificate: |
+    #   -----BEGIN CERTIFICATE-----
+    #   ... certificate content ...
+    #   -----END CERTIFICATE-----
+    # key: |
+    #   -----BEGIN PRIVATE KEY-----
+    #   ... key content ...
+    #   -----END PRIVATE KEY-----
+    hosts:
+      - secure.example.com

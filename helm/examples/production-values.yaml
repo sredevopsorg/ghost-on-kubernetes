@@ -1,0 +1,100 @@
+#production-values.yaml
+# Production configuration with internal MySQL and cert-manager
+
+replicaCount: 1
+
+image:
+  repository: ghcr.io/sredevopsorg/ghost-on-kubernetes
+  pullPolicy: Always
+  tag: "main"
+
+ghost:
+  url: "https://blog.example.com"
+  adminUrl: "https://blog.example.com"
+  
+  mail:
+    enabled: true
+    transport: "SMTP"
+    from: "noreply@example.com"
+    service: "SendGrid"
+    host: "smtp.sendgrid.net"
+    port: 587
+    secure: false
+    user: "apikey"
+    password: "SG.xxxxxxxxxxxxx"
+  
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 200m
+      memory: 512Mi
+
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 60
+    periodSeconds: 300
+    
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 30
+    periodSeconds: 10
+
+mysql:
+  enabled: true
+  
+  auth:
+    database: "ghost_production"
+    username: "ghost_user"
+    password: "ChangeMeToSecurePassword123!"
+    rootPassword: "ChangeMeToSecureRootPassword123!"
+  
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+    requests:
+      cpu: 500m
+      memory: 1Gi
+
+persistence:
+  ghost:
+    enabled: true
+    storageClassName: "fast-ssd"
+    accessMode: ReadWriteOnce
+    size: 10Gi
+  
+  mysql:
+    enabled: true
+    storageClassName: "standard"
+    accessMode: ReadWriteOnce
+    size: 20Gi
+
+service:
+  type: ClusterIP
+  port: 2368
+
+ingress:
+  enabled: true
+  className: "nginx"
+  preset: "nginx"
+  
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+  
+  hosts:
+    - host: blog.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  
+  tls:
+    enabled: true
+    mode: "certManager"
+    certManager:
+      issuer: "letsencrypt-prod"
+      issuerKind: "ClusterIssuer"
+    hosts:
+      - blog.example.com

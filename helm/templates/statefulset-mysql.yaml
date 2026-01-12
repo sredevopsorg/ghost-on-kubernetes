@@ -1,0 +1,95 @@
+{{- if .Values.mysql.enabled }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "ghost-on-kubernetes.fullname" . }}-mysql
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ include "ghost-on-kubernetes.name" . }}-mysql
+    {{- include "ghost-on-kubernetes.labels" . | nindent 4 }}
+    app.kubernetes.io/component: database
+spec:
+  serviceName: {{ include "ghost-on-kubernetes.fullname" . }}-mysql-service
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "ghost-on-kubernetes.name" . }}-mysql
+  template:
+    metadata:
+      labels:
+        app: {{ include "ghost-on-kubernetes.name" . }}-mysql
+    spec:
+      initContainers:
+      - name: mysql-init
+        securityContext:
+          {{- toYaml .Values.initContainer.securityContext | nindent 10 }}
+        image: "{{ .Values.initContainer.image.repository }}:{{ .Values.initContainer.image.tag }}"
+        imagePullPolicy: {{ .Values.initContainer.image.pullPolicy }}
+        command:
+        - /bin/sh
+        - -c
+        - |
+          set -e
+          echo 'Changing ownership of mysql mount directory to 65534:65534'
+          chown -Rfv 65534:65534 /mnt/mysql || echo 'Error changing ownership of mysql mount directory to 65534:65534'
+          echo 'Changing ownership of tmp mount directory to 65534:65534'
+          chown -Rfv 65534:65534 /mnt/tmp || echo 'Error changing ownership of tmp mount directory to 65534:65534'
+          echo 'Changing ownership of socket mount directory to 65534:65534'
+          chown -Rfv 65534:65534 /mnt/var/run/mysqld || echo 'Error changing ownership of socket mount directory to 65534:65534'
+        volumeMounts:
+        - name: mysql-volume
+          mountPath: /mnt/mysql
+          subPath: mysql-empty-subdir
+          readOnly: false
+        - name: mysql-tmp
+          mountPath: /mnt/tmp
+          readOnly: false
+        - name: mysql-socket
+          mountPath: /mnt/var/run/mysqld
+          readOnly: false
+        resources:
+          {{- toYaml .Values.mysql.initResources | nindent 10 }}
+      containers:
+      - name: mysql
+        securityContext:
+          {{- toYaml .Values.mysql.securityContext | nindent 10 }}
+        image: "{{ .Values.mysql.image.repository }}:{{ .Values.mysql.image.tag }}"
+        imagePullPolicy: {{ .Values.mysql.image.pullPolicy }}
+        envFrom:
+        - secretRef:
+            name: {{ include "ghost-on-kubernetes.fullname" . }}-mysql-env
+        resources:
+          {{- toYaml .Values.mysql.resources | nindent 10 }}
+        ports:
+        - containerPort: 3306
+          protocol: TCP
+          name: mysqlgh
+        volumeMounts:
+        - name: mysql-volume
+          mountPath: /var/lib/mysql
+          subPath: mysql-empty-subdir
+          readOnly: false
+        - name: mysql-tmp
+          mountPath: /tmp
+          readOnly: false
+        - name: mysql-socket
+          mountPath: /var/run/mysqld
+          readOnly: false
+      automountServiceAccountToken: false
+      {{- with .Values.mysql.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      volumes:
+      - name: mysql-volume
+        persistentVolumeClaim:
+          claimName: {{ include "ghost-on-kubernetes.fullname" . }}-mysql-pvc
+      - name: mysql-tmp
+        emptyDir:
+          sizeLimit: {{ .Values.volumes.mysqlTmp.sizeLimit }}
+      - name: mysql-socket
+        emptyDir:
+          sizeLimit: {{ .Values.volumes.mysqlSocket.sizeLimit }}
+{{- end }}

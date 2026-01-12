@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Release.Namespace }}
+  labels:
+    app: {{ include "ghost-on-kubernetes.name" . }}
+    {{- include "ghost-on-kubernetes.labels" . | nindent 4 }}

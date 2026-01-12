@@ -1,0 +1,62 @@
+# Development/testing configuration with minimal resources
+
+replicaCount: 1
+
+image:
+  repository: ghcr.io/sredevopsorg/ghost-on-kubernetes
+  tag: "latest-dev"  # Development image with SQLite support
+  pullPolicy: Always
+
+ghost:
+  url: "http://localhost:2368"
+  adminUrl: "http://localhost:2368"
+  
+  mail:
+    enabled: false
+  
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  
+  livenessProbe:
+    enabled: false
+  
+  readinessProbe:
+    enabled: false
+
+mysql:
+  enabled: true
+  
+  auth:
+    database: "ghost_dev"
+    username: "ghost"
+    password: "ghost"
+    rootPassword: "root"
+  
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+
+persistence:
+  ghost:
+    enabled: true
+    storageClassName: "longhorn"
+    accessMode: ReadWriteOnce
+    size: 1Gi
+  
+  mysql:
+    enabled: true
+    storageClassName: "longhorn"
+    accessMode: ReadWriteOnce
+    size: 1Gi
+
+ingress:
+  enabled: false

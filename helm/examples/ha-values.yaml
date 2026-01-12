@@ -1,0 +1,95 @@
+# High Availability configuration with multiple replicas
+
+replicaCount: 3
+
+image:
+  repository: ghcr.io/sredevopsorg/ghost-on-kubernetes
+  tag: "main"
+  pullPolicy: Always
+
+ghost:
+  url: "https://ha-blog.example.com"
+  adminUrl: "https://ha-blog.example.com"
+  
+  resources:
+    limits:
+      cpu: 800m
+      memory: 800Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+  
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+            - key: app.kubernetes.io/name
+              operator: In
+              values:
+              - ghost-on-kubernetes
+          topologyKey: kubernetes.io/hostname
+
+mysql:
+  enabled: true
+  
+  auth:
+    database: "ghost_ha"
+    username: "ghost_ha_user"
+    password: "SecureHAPassword123!"
+    rootPassword: "SecureHARootPassword123!"
+  
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+    requests:
+      cpu: 1000m
+      memory: 2Gi
+
+persistence:
+  ghost:
+    enabled: true
+    storageClassName: "ceph-rbd-rwx"  # Must support ReadWriteMany
+    accessMode: ReadWriteMany
+    size: 20Gi
+  
+  mysql:
+    enabled: true
+    storageClassName: "fast-ssd"
+    accessMode: ReadWriteOnce
+    size: 50Gi
+
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 1
+    maxSurge: 1
+
+ingress:
+  enabled: true
+  className: "nginx"
+  preset: "nginx"
+  
+  annotations:
+    nginx.ingress.kubernetes.io/affinity: "cookie"
+    nginx.ingress.kubernetes.io/session-cookie-name: "ghost-affinity"
+    nginx.ingress.kubernetes.io/session-cookie-expires: "172800"
+    nginx.ingress.kubernetes.io/session-cookie-max-age: "172800"
+  
+  hosts:
+    - host: ha-blog.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  
+  tls:
+    enabled: true
+    mode: "certManager"
+    certManager:
+      issuer: "letsencrypt-prod"
+      issuerKind: "ClusterIssuer"
+    hosts:
+      - ha-blog.example.com

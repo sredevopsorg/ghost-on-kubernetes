@@ -1,0 +1,56 @@
+Thank you for installing {{ .Chart.Name }}!
+
+Your Ghost CMS has been deployed to namespace: {{ .Release.Namespace }}
+
+{{- if .Values.ingress.enabled }}
+
+1. Ghost will be available at:
+{{- range .Values.ingress.hosts }}
+   https://{{ .host }}
+{{- end }}
+
+{{- if .Values.ingress.tls.enabled }}
+{{- if eq .Values.ingress.tls.mode "certManager" }}
+   Note: TLS certificates are being provisioned via cert-manager. This may take a few minutes.
+{{- else if eq .Values.ingress.tls.mode "manual" }}
+   Note: Using manual TLS certificates from secret: {{ .Values.ingress.tls.secretName }}
+{{- end }}
+{{- end }}
+{{- else }}
+
+1. To access Ghost locally, forward the service port:
+
+   kubectl port-forward -n {{ .Release.Namespace }} svc/{{ include "ghost-on-kubernetes.fullname" . }}-service 2368:2368
+
+   Then visit: http://localhost:2368
+{{- end }}
+
+2. Check the deployment status:
+
+   kubectl get pods -n {{ .Release.Namespace }} -l app.kubernetes.io/instance={{ .Release.Name }}
+
+{{- if .Values.mysql.enabled }}
+
+3. MySQL is deployed internally. Database: {{ .Values.mysql.auth.database }}
+{{- else }}
+
+3. Using external MySQL at: {{ .Values.mysql.external.host }}:{{ .Values.mysql.external.port }}
+{{- end }}
+
+4. Monitor Ghost logs:
+
+   kubectl logs -n {{ .Release.Namespace }} -l app.kubernetes.io/name={{ include "ghost-on-kubernetes.name" . }} -f
+
+5. To complete Ghost setup, visit your domain and follow the admin setup wizard.
+
+{{- if and .Values.mysql.enabled (not .Values.persistence.mysql.enabled) }}
+
+WARNING: MySQL persistence is disabled. Data will be lost on pod restart!
+{{- end }}
+
+{{- if not .Values.persistence.ghost.enabled }}
+
+WARNING: Ghost content persistence is disabled. Uploads and themes will be lost on pod restart!
+{{- end }}
+
+For more information, visit: https://github.com/sredevopsorg/ghost-on-kubernetes

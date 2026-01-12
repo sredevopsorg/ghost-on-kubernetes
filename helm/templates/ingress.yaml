@@ -1,0 +1,56 @@
+{{- if .Values.ingress.enabled }}
+{{- $ := . }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "ghost-on-kubernetes.fullname" $ }}-ingress
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "ghost-on-kubernetes.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: ingress
+  annotations:
+    {{- if eq .Values.ingress.preset "nginx" }}
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    {{- end }}
+    {{- if eq .Values.ingress.preset "traefik" }}
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    {{- end }}
+    {{- if and .Values.ingress.tls.enabled (eq .Values.ingress.tls.mode "certManager") }}
+    cert-manager.io/{{ .Values.ingress.tls.certManager.issuerKind | lower }}: {{ .Values.ingress.tls.certManager.issuer }}
+    {{- end }}
+    {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  {{- if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- end }}
+  rules:
+  {{- range .Values.ingress.hosts }}
+  - host: {{ .host | quote }}
+    http:
+      paths:
+      {{- range .paths }}
+      - path: {{ .path }}
+        pathType: {{ .pathType }}
+        backend:
+          service:
+            name: {{ include "ghost-on-kubernetes.fullname" $ }}-service
+            port:
+              name: ghk8s
+      {{- end }}
+  {{- end }}
+  {{- if .Values.ingress.tls.enabled }}
+  tls:
+  - hosts:
+    {{- range .Values.ingress.tls.hosts }}
+    - {{ . | quote }}
+    {{- end }}
+    {{- if eq .Values.ingress.tls.mode "manual" }}
+    secretName: {{ .Values.ingress.tls.secretName }}
+    {{- else if eq .Values.ingress.tls.mode "certManager" }}
+    secretName: {{ include "ghost-on-kubernetes.fullname" $ }}-tls-cert
+    {{- end }}
+  {{- end }}
+{{- end }}

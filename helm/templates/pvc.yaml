@@ -1,0 +1,44 @@
+{{- if .Values.persistence.ghost.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "ghost-on-kubernetes.fullname" . }}-content
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "ghost-on-kubernetes.labels" . | nindent 4 }}
+    app.kubernetes.io/component: storage
+spec:
+  {{- if .Values.persistence.ghost.storageClassName }}
+  storageClassName: {{ .Values.persistence.ghost.storageClassName | quote }}
+  {{- end }}
+  volumeMode: Filesystem
+  accessModes:
+    - {{ .Values.persistence.ghost.accessMode }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.ghost.size }}
+{{- end }}
+---
+{{- if and .Values.mysql.enabled .Values.persistence.mysql.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "ghost-on-kubernetes.fullname" . }}-mysql-pvc
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ include "ghost-on-kubernetes.name" . }}-mysql
+    {{- include "ghost-on-kubernetes.labels" . | nindent 4 }}
+    app.kubernetes.io/component: database-storage
+spec:
+  {{- if .Values.persistence.mysql.storageClassName }}
+  storageClassName: {{ .Values.persistence.mysql.storageClassName | quote }}
+  {{- end }}
+  volumeMode: Filesystem
+  accessModes:
+    - {{ .Values.persistence.mysql.accessMode }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.mysql.size }}
+{{- end }}
+
+---
