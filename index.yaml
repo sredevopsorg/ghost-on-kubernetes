@@ -1,0 +1,27 @@
+apiVersion: v1
+entries:
+  ghost-on-kubernetes:
+  - apiVersion: v2
+    appVersion: "6.0"
+    created: "2026-01-12T21:27:40.802942825Z"
+    description: A Helm chart for deploying Ghost CMS v6 on Kubernetes with enhanced
+      security
+    digest: 6b18cf8f2a9e1b1351c685f46f06790f727f858e841962e380c7efcb8ef25f46
+    home: https://github.com/sredevopsorg/ghost-on-kubernetes
+    icon: https://www.sredevops.org/content/images/size/w256h256/2024/07/Icon-App-76x76@2x.png
+    keywords:
+    - ghost
+    - cms
+    - blog
+    - publishing
+    maintainers:
+    - name: SREDevOps.org
+      url: https://www.sredevops.org
+    name: ghost-on-kubernetes
+    sources:
+    - https://github.com/sredevopsorg/ghost-on-kubernetes
+    type: application
+    urls:
+    - https://github.com/sredevopsorg/ghost-on-kubernetes/releases/download/ghost-on-kubernetes-1.0.0/ghost-on-kubernetes-1.0.0.tgz
+    version: 1.0.0
+generated: "2026-01-12T21:27:40.802952411Z"
