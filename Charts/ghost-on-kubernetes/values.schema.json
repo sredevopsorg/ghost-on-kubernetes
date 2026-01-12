@@ -1,0 +1,82 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["ghost", "persistence"],
+  "properties": {
+    "replicaCount": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Number of Ghost pod replicas"
+    },
+    "image": {
+      "type": "object",
+      "properties": {
+        "repository": {"type": "string"},
+        "tag": {"type": "string"},
+        "pullPolicy": {"enum": ["Always", "IfNotPresent", "Never"]}
+      }
+    },
+    "ghost": {
+      "type": "object",
+      "required": ["url"],
+      "properties": {
+        "url": {
+          "type": "string",
+          "pattern": "^https?://",
+          "description": "Ghost site URL"
+        },
+        "adminUrl": {
+          "type": "string",
+          "pattern": "^https?://"
+        }
+      }
+    },
+    "mysql": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Deploy MySQL StatefulSet"
+        },
+        "external": {
+          "type": "object",
+          "properties": {
+            "host": {"type": "string"},
+            "port": {"type": "integer", "minimum": 1, "maximum": 65535},
+            "database": {"type": "string"},
+            "username": {"type": "string"},
+            "password": {"type": "string"}
+          }
+        }
+      }
+    },
+    "persistence": {
+      "type": "object",
+      "properties": {
+        "ghost": {
+          "type": "object",
+          "properties": {
+            "enabled": {"type": "boolean"},
+            "storageClassName": {"type": "string"},
+            "accessMode": {"enum": ["ReadWriteOnce", "ReadWriteMany"]},
+            "size": {"type": "string", "pattern": "^[0-9]+(Gi|Mi|Ti)$"}
+          }
+        }
+      }
+    },
+    "ingress": {
+      "type": "object",
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "preset": {"enum": ["traefik", "nginx", "custom"]},
+        "tls": {
+          "type": "object",
+          "properties": {
+            "enabled": {"type": "boolean"},
+            "mode": {"enum": ["manual", "certManager", "both"]}
+          }
+        }
+      }
+    }
+  }
+}

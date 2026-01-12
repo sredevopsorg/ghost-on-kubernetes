@@ -1,0 +1,137 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ghost-on-kubernetes.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "ghost-on-kubernetes.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ghost
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "ghost-on-kubernetes.selectorLabels" . | nindent 6 }}
+  minReadySeconds: 5
+  strategy:
+    {{- toYaml .Values.strategy | nindent 4 }}
+  revisionHistoryLimit: 4
+  progressDeadlineSeconds: 600
+  template:
+    metadata:
+      namespace: {{ .Release.Namespace }}
+      labels:
+        {{- include "ghost-on-kubernetes.selectorLabels" . | nindent 8 }}
+    spec:
+      automountServiceAccountToken: false
+      volumes:
+      - name: ghost-content
+        persistentVolumeClaim:
+          claimName: {{ include "ghost-on-kubernetes.fullname" . }}-content
+      - name: ghost-config
+        secret:
+          secretName: {{ include "ghost-on-kubernetes.fullname" . }}-config
+          defaultMode: 420
+      - name: tmp
+        emptyDir:
+          sizeLimit: {{ .Values.volumes.tmp.sizeLimit }}
+      initContainers:
+      - name: permissions-fix
+        imagePullPolicy: {{ .Values.initContainer.image.pullPolicy }}
+        image: "{{ .Values.initContainer.image.repository }}:{{ .Values.initContainer.image.tag }}"
+        env:
+        - name: GHOST_INSTALL
+          value: /home/nonroot/app/ghost
+        - name: GHOST_CONTENT
+          value: /home/nonroot/app/ghost/content
+        - name: NODE_ENV
+          value: production
+        securityContext:
+          {{- toYaml .Values.initContainer.securityContext | nindent 10 }}
+        resources:
+          {{- toYaml .Values.initContainer.resources | nindent 10 }}
+        command:
+          - /bin/sh
+          - '-c'
+          - |
+            set -e
+            export DIRS='files logs apps themes data public settings images media'
+            echo 'Check if base dirs exists, if not, create them'
+            echo "Directories to check: $DIRS"
+            for dir in $DIRS; do
+              if [ ! -d $GHOST_CONTENT/$dir ]; then
+                echo "Creating $GHOST_CONTENT/$dir directory"
+                mkdir -pv $GHOST_CONTENT/$dir || echo "Error creating $GHOST_CONTENT/$dir directory"
+              fi
+              chown -Rfv 65532:65532 $GHOST_CONTENT/$dir && echo "chown ok on $dir" || echo "Error changing ownership of $GHOST_CONTENT/$dir directory"
+            done
+            exit 0
+        volumeMounts:
+        - name: ghost-content
+          mountPath: /home/nonroot/app/ghost/content
+          readOnly: false
+      containers:
+      - name: ghost
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - name: ghk8s
+          containerPort: 2368
+          protocol: TCP
+        {{- if .Values.ghost.readinessProbe.enabled }}
+        readinessProbe:
+          httpGet:
+            path: /ghost/api/v4/admin/site/
+            port: ghk8s
+            httpHeaders:
+            - name: X-Forwarded-Proto
+              value: https
+            - name: Host
+              value: {{ (first .Values.ingress.hosts).host }}
+          periodSeconds: {{ .Values.ghost.readinessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.ghost.readinessProbe.timeoutSeconds }}
+          successThreshold: {{ .Values.ghost.readinessProbe.successThreshold }}
+          failureThreshold: {{ .Values.ghost.readinessProbe.failureThreshold }}
+          initialDelaySeconds: {{ .Values.ghost.readinessProbe.initialDelaySeconds }}
+        {{- end }}
+        {{- if .Values.ghost.livenessProbe.enabled }}
+        livenessProbe:
+          httpGet:
+            path: /ghost/api/v4/admin/site/
+            port: ghk8s
+            httpHeaders:
+            - name: X-Forwarded-Proto
+              value: https
+            - name: Host
+              value: {{ (first .Values.ingress.hosts).host }}
+          periodSeconds: {{ .Values.ghost.livenessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.ghost.livenessProbe.timeoutSeconds }}
+          successThreshold: {{ .Values.ghost.livenessProbe.successThreshold }}
+          failureThreshold: {{ .Values.ghost.livenessProbe.failureThreshold }}
+          initialDelaySeconds: {{ .Values.ghost.livenessProbe.initialDelaySeconds }}
+        {{- end }}
+        env:
+        - name: NODE_ENV
+          value: production
+        resources:
+          {{- toYaml .Values.ghost.resources | nindent 10 }}
+        volumeMounts:
+        - name: ghost-content
+          mountPath: /home/nonroot/app/ghost/content
+          readOnly: false
+        - name: ghost-config
+          readOnly: true
+          mountPath: /home/nonroot/app/ghost/config.production.json
+          subPath: config.production.json
+        - name: tmp
+          mountPath: /tmp
+          readOnly: false
+        securityContext:
+          {{- toYaml .Values.ghost.securityContext | nindent 10 }}
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 15
+      dnsPolicy: ClusterFirst
+      {{- with .Values.ghost.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext: {}

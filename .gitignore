@@ -88,3 +88,4 @@ Temporary Items
 ***/*.local*
 docker-compose.yml
 node_modules
+.vscode/settings.json

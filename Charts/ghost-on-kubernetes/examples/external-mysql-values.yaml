@@ -1,0 +1,45 @@
+# Configuration with external MySQL database
+
+replicaCount: 1
+
+ghost:
+  url: "https://blog.example.com"
+  adminUrl: "https://blog.example.com"
+
+mysql:
+  enabled: false
+
+  external:
+    host: "mysql.database.example.com"
+    port: 3306
+    database: "ghost"
+    username: "ghost_user"
+    password: "ExternalDatabasePassword"
+
+persistence:
+  ghost:
+    enabled: true
+    storageClassName: "nfs-client"
+    accessMode: ReadWriteMany # Required for multiple replicas
+    size: 5Gi
+
+  mysql:
+    enabled: false
+
+ingress:
+  enabled: true
+  className: "traefik"
+  preset: "traefik"
+
+  hosts:
+    - host: blog.example.com
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+
+  tls:
+    enabled: true
+    mode: "manual"
+    secretName: "blog-tls-secret"
+    hosts:
+      - blog.example.com
