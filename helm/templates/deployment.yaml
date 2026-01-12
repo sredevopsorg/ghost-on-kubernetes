@@ -22,7 +22,7 @@ spec:
       labels:
         {{- include "ghost-on-kubernetes.selectorLabels" . | nindent 8 }}
     spec:
-      automountServiceAccountToken: {{ .Values.serviceAccount.automount }}
+      automountServiceAccountToken: false
       volumes:
       - name: ghost-content
         persistentVolumeClaim:
