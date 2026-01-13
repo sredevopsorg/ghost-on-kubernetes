@@ -1,0 +1,41 @@
+name: "Set Ghost Version"
+description: "Sets up GHOST_VERSION and MANUAL_TAG values based on event type"
+inputs:
+  event-name:
+    description: "The GitHub event name"
+    required: true
+  ghost-version:
+    description: "Ghost version from workflow_dispatch inputs"
+    required: true
+  manual-tag:
+    description: "Manual tag from workflow_dispatch inputs"
+    required: false
+outputs:
+  ghost-version:
+    description: "The Ghost version to use"
+    value: ${{ steps.version-setter.outputs.GHOST_VERSION }}
+  manual-tag:
+    description: "The manual tag value"
+    value: ${{ steps.version-setter.outputs.MANUAL_TAG }}
+runs:
+  using: "composite"
+  steps:
+    - name: Set up GHOST_VERSION and MANUAL_TAG values
+      shell: bash
+      id: version-setter
+      env:
+        GITHUB_EVENT_NAME: ${{ inputs.event-name }}
+      run: |
+        if [ "${{ env.GITHUB_EVENT_NAME }}" == "workflow_dispatch" ]; then
+          echo "GHOST_VERSION=${{ inputs.ghost-version }}" >> $GITHUB_OUTPUT
+          echo "MANUAL_TAG=${{ inputs.manual-tag }}" >> $GITHUB_OUTPUT
+        else
+          echo "GHOST_VERSION=$(curl -s https://api.github.com/repos/tryghost/ghost/releases/latest | jq '.name' | sed 's/\"//g')" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Show Ghost version
+      shell: bash
+      continue-on-error: true
+      run: |
+        echo "output of step for GHOST_VERSION=${{ steps.version-setter.outputs.GHOST_VERSION }}"
+        echo "output of step for MANUAL_TAG=${{ steps.version-setter.outputs.MANUAL_TAG }}"
