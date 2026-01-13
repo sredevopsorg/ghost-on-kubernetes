@@ -53,4 +53,10 @@ WARNING: MySQL persistence is disabled. Data will be lost on pod restart!
 WARNING: Ghost content persistence is disabled. Uploads and themes will be lost on pod restart!
 {{- end }}
 
+You can also install this chart from our Helm repository (repo name: `sredevopsorg`):
+
+   helm repo add sredevopsorg https://sredevopsorg.github.io/ghost-on-kubernetes
+   helm repo update
+   helm install my-ghost sredevopsorg/ghost-on-kubernetes --namespace <namespace> --create-namespace
+
 For more information, visit: https://github.com/sredevopsorg/ghost-on-kubernetes

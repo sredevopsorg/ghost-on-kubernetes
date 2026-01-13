@@ -1,19 +1,35 @@
 # Chart.yaml
 apiVersion: v2
 name: ghost-on-kubernetes
-description: A Helm chart for deploying Ghost CMS v6 on Kubernetes with enhanced security
+description: Ghost on Kubernetes by SREDevOps.org - Deploy Ghost v6 on Kubernetes (k8s, k3s, etc) with our hardened distroless rootless custom image.
 type: application
-version: 1.0.0
-appVersion: "6.0"
+version: 1.0.2
+appVersion: "6.12.0"
 keywords:
   - ghost
   - cms
   - blog
   - publishing
-home: https://github.com/sredevopsorg/ghost-on-kubernetes
+  - hardened
+  - distroless
+  - rootless
+home: https://www.sredevops.org
 sources:
   - https://github.com/sredevopsorg/ghost-on-kubernetes
 maintainers:
   - name: SREDevOps.org
     url: https://www.sredevops.org
+  - name: Nicolás Georger
+    email: info@sredevops.org
 icon: "https://www.sredevops.org/content/images/size/w256h256/2024/07/Icon-App-76x76@2x.png"
+
+annotations:
+  artifacthub.io/license: MIT
+  artifacthub.io/links: |
+    - name: support
+      url: https://github.com/sredevopsorg/ghost-on-kubernetes/issues
+  artifacthub.io/maintainers: |
+    - name: SREDevOps.org
+      url: https://www.sredevops.org
+    - name: Nicolás Georger
+      email: info@sredevops.org

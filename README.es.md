@@ -81,6 +81,18 @@ Revisa los archivos de configuración de ejemplo y modifica los manifests en la 
 
 Es **crucial** aplicar los manifests en el orden correcto para asegurar la resolución de dependencias (especialmente los componentes de la base de datos).
 
+Alternativamente, puedes instalar el chart desde nuestro repositorio Helm (recomendado):
+
+```bash
+helm repo add sredevopsorg https://sredevopsorg.github.io/ghost-on-kubernetes
+helm repo update
+helm install my-ghost sredevopsorg/ghost-on-kubernetes \
+  --namespace ghost \
+  --create-namespace \
+  --set ghost.url=https://tudominio.tld \
+  --set persistence.ghost.storageClassName=tu-clase-de-almacenamiento
+```
+
 1. **Crear el Namespace:**
 
     `kubectl apply -f deploy/00-namespace.yaml`

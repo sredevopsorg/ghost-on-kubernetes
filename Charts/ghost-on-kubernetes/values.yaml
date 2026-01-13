@@ -81,7 +81,7 @@ mysql:
   image:
     repository: docker.io/mysql
     tag: "8.4"
-    pullPolicy: Always
+    pullPolicy: IfNotPresent
 
   # Database credentials
   auth:
@@ -207,7 +207,7 @@ initContainer:
   image:
     repository: docker.io/busybox
     tag: "stable-musl"
-    pullPolicy: Always
+    pullPolicy: IfNotPresent
 
   resources:
     limits:
