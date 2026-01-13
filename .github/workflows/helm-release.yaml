@@ -67,4 +67,4 @@ jobs:
             charts_dir: Charts
             skip_helm_install: true
             skip_existing: true
-            tag_name_pattern: '{chartName}'
+            tag_name_pattern: '{chartName}-chart'
