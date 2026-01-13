@@ -3,7 +3,7 @@ apiVersion: v2
 name: ghost-on-kubernetes
 description: Ghost on Kubernetes by SREDevOps.org - Deploy Ghost v6 on Kubernetes (k8s, k3s, etc) with our hardened distroless rootless custom image.
 type: application
-version: 1.0.1
+version: 1.0.2
 appVersion: "6.12.0"
 keywords:
   - ghost

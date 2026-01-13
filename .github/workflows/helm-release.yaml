@@ -67,4 +67,5 @@ jobs:
             charts_dir: Charts
             skip_helm_install: true
             skip_existing: true
-            tag_name_pattern: '{chartName}-chart'
+            tag_name_pattern: "{chartName}-chart"
+            mark_as_latest: false
