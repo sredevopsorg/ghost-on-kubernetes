@@ -81,6 +81,18 @@ Review the example configuration files and modify the manifests in the deploy/ f
 
 It is **crucial** to apply the manifests in the correct order to ensure dependency resolution (especially the database components).
 
+Alternatively, you can install the chart from our Helm repository (recommended):
+
+```bash
+helm repo add sredevopsorg https://sredevopsorg.github.io/ghost-on-kubernetes
+helm repo update
+helm install my-ghost sredevopsorg/ghost-on-kubernetes \
+  --namespace ghost \
+  --create-namespace \
+  --set ghost.url=https://yourdomain.tld \
+  --set persistence.ghost.storageClassName=your-storage-class
+```
+
 1. **Create the Namespace:**  
 
    ```bash

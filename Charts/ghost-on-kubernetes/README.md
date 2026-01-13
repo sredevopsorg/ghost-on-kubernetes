@@ -14,6 +14,24 @@ Deploy Ghost CMS v6 on Kubernetes with enhanced security using this Helm chart.
 
 ### Quick Start with Internal MySQL
 
+Install from the Helm chart repository (recommended):
+
+```bash
+helm repo add sredevopsorg https://sredevopsorg.github.io/ghost-on-kubernetes
+helm repo update
+helm install my-ghost sredevopsorg/ghost-on-kubernetes \
+  --namespace ghost \
+  --create-namespace \
+  --set ghost.url=https://yourdomain.tld \
+  --set ghost.adminUrl=https://yourdomain.tld \
+  --set ingress.hosts[0].host=yourdomain.tld \
+  --set ingress.tls.hosts[0]=yourdomain.tld \
+  --set persistence.ghost.storageClassName=your-storage-class \
+  --set persistence.mysql.storageClassName=your-storage-class
+```
+
+Or install from the local chart:
+
 ```bash
 helm install my-ghost ./ghost-on-kubernetes \
   --namespace ghost \
@@ -25,8 +43,26 @@ helm install my-ghost ./ghost-on-kubernetes \
   --set persistence.ghost.storageClassName=your-storage-class \
   --set persistence.mysql.storageClassName=your-storage-class
 ```
-
 ### With External MySQL
+
+Install from the Helm chart repository (recommended):
+
+```bash
+helm repo add sredevopsorg https://sredevopsorg.github.io/ghost-on-kubernetes
+helm repo update
+helm install my-ghost sredevopsorg/ghost-on-kubernetes \
+  --namespace ghost \
+  --create-namespace \
+  --set mysql.enabled=false \
+  --set mysql.external.host=external-mysql-host \
+  --set mysql.external.database=ghost \
+  --set mysql.external.username=ghost \
+  --set mysql.external.password=your-password \
+  --set ghost.url=https://yourdomain.tld \
+  --set persistence.ghost.storageClassName=your-storage-class
+```
+
+Or from the local chart:
 
 ```bash
 helm install my-ghost ./ghost-on-kubernetes \
@@ -40,8 +76,24 @@ helm install my-ghost ./ghost-on-kubernetes \
   --set ghost.url=https://yourdomain.tld \
   --set persistence.ghost.storageClassName=your-storage-class
 ```
-
 ### With cert-manager for TLS
+
+Install from the Helm chart repository (recommended):
+
+```bash
+helm repo add sredevopsorg https://sredevopsorg.github.io/ghost-on-kubernetes
+helm repo update
+helm install my-ghost sredevopsorg/ghost-on-kubernetes \
+  --namespace ghost \
+  --create-namespace \
+  --set ghost.url=https://yourdomain.tld \
+  --set ingress.tls.mode=certManager \
+  --set ingress.tls.certManager.issuer=letsencrypt-prod \
+  --set ingress.tls.certManager.issuerKind=ClusterIssuer \
+  --set persistence.ghost.storageClassName=your-storage-class
+```
+
+Or from the local chart:
 
 ```bash
 helm install my-ghost ./ghost-on-kubernetes \
@@ -53,7 +105,6 @@ helm install my-ghost ./ghost-on-kubernetes \
   --set ingress.tls.certManager.issuerKind=ClusterIssuer \
   --set persistence.ghost.storageClassName=your-storage-class
 ```
-
 ### With Manual TLS Certificates
 
 ```bash
@@ -63,7 +114,17 @@ kubectl create secret tls tls-secret \
   --key=path/to/tls.key \
   -n ghost
 
-# Install chart
+# Install chart (from repo -- recommended)
+helm repo add sredevopsorg https://sredevopsorg.github.io/ghost-on-kubernetes
+helm repo update
+helm install my-ghost sredevopsorg/ghost-on-kubernetes \
+  --namespace ghost \
+  --set ghost.url=https://yourdomain.tld \
+  --set ingress.tls.mode=manual \
+  --set ingress.tls.secretName=tls-secret \
+  --set persistence.ghost.storageClassName=your-storage-class
+
+# Or install from the local chart
 helm install my-ghost ./ghost-on-kubernetes \
   --namespace ghost \
   --set ghost.url=https://yourdomain.tld \
@@ -71,13 +132,12 @@ helm install my-ghost ./ghost-on-kubernetes \
   --set ingress.tls.secretName=tls-secret \
   --set persistence.ghost.storageClassName=your-storage-class
 ```
-
 ## Configuration
 
 ### Key Parameters
 
 | Parameter | Description | Default |
-|-----------|-------------|---------|
+| ----------- | ------------- | --------- |
 | `replicaCount` | Number of Ghost replicas | `1` |
 | `image.repository` | Ghost image repository | `ghcr.io/sredevopsorg/ghost-on-kubernetes` |
 | `image.tag` | Ghost image tag | `main` |
@@ -152,6 +212,7 @@ persistence:
 ### Ingress Presets
 
 #### Traefik (default)
+
 ```yaml
 ingress:
   preset: traefik
@@ -159,6 +220,7 @@ ingress:
 ```
 
 #### Nginx
+
 ```yaml
 ingress:
   preset: nginx
@@ -166,6 +228,7 @@ ingress:
 ```
 
 #### Custom
+
 ```yaml
 ingress:
   preset: custom
@@ -176,12 +239,23 @@ ingress:
 ## Upgrading
 
 ```bash
-helm upgrade my-ghost ./ghost-on-kubernetes \
+# Update the chart index and upgrade from the Helm repo (recommended)
+helm repo add sredevopsorg https://sredevopsorg.github.io/ghost-on-kubernetes
+helm repo update
+helm upgrade my-ghost sredevopsorg/ghost-on-kubernetes \
   --namespace ghost \
   --reuse-values \
   --set image.tag=new-version
 ```
 
+Or upgrade using a local chart:
+
+```bash
+helm upgrade my-ghost ./ghost-on-kubernetes \
+  --namespace ghost \
+  --reuse-values \
+  --set image.tag=new-version
+```
 ## Uninstalling
 
 ```bash
@@ -205,20 +279,26 @@ kubectl delete pvc -n ghost -l app.kubernetes.io/instance=my-ghost
 ## Troubleshooting
 
 ### Ghost pod stuck in Init
+
 Check init container logs:
+
 ```bash
 kubectl logs -n ghost <pod-name> -c permissions-fix
 ```
 
 ### MySQL connection issues
+
 Verify MySQL is ready:
+
 ```bash
 kubectl get pods -n ghost -l app=ghost-on-kubernetes-mysql
 kubectl logs -n ghost <mysql-pod-name>
 ```
 
 ### Storage issues
+
 Check PVC status:
+
 ```bash
 kubectl get pvc -n ghost
 kubectl describe pvc <pvc-name> -n ghost
@@ -270,17 +350,28 @@ ingress:
           pathType: Prefix
 ```
 
-Install with custom values:
+Install with custom values (from Helm repo -- recommended):
+
+```bash
+helm repo add sredevopsorg https://sredevopsorg.github.io/ghost-on-kubernetes
+helm repo update
+helm install my-ghost sredevopsorg/ghost-on-kubernetes \
+  --namespace ghost \
+  --create-namespace \
+  -f custom-values.yaml
+```
+
+Or from local chart:
+
 ```bash
 helm install my-ghost ./ghost-on-kubernetes \
   --namespace ghost \
   --create-namespace \
   -f custom-values.yaml
 ```
-
 ## Contributing
 
-See the main repository for contribution guidelines: https://github.com/sredevopsorg/ghost-on-kubernetes
+See the main repository for contribution guidelines: <https://github.com/sredevopsorg/ghost-on-kubernetes>
 
 ## License
 
