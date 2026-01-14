@@ -53,7 +53,7 @@ RUN mv -v $GHOST_CONTENT $GHOST_CONTENT_ORIGINAL && \
 
 # Stage 2: Final Image
 # For this development image variant, we moved from nodejs22-debian13:latest into nodejs22-debian13:debug-nonroot
-FROM gcr.io/distroless/nodejs22-debian13:debug-nonroot@sha256:7f39dab769aafc2f33163626b4730adc24cc6c8dcce30f4757055ccef0c0caff AS runtime 
+FROM gcr.io/distroless/nodejs22-debian13:debug-nonroot@sha256:80d460ed8d09945f5ede3d9fc59561a88df4e55e8e631efb2fe47bc60f0daab2 AS runtime 
 
 # Set the installation directory and content directory for Ghost
 ENV GHOST_INSTALL_SRC=/home/nonroot/app/ghost
