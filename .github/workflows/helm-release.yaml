@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - chart-experiments
     paths:
       - 'Charts/**'
       - .github/workflows/helm-release.yaml
@@ -23,7 +22,7 @@ jobs:
       pages: write
       id-token: write
     runs-on: ubuntu-latest
-    if: ${{ github.actor == 'github-actions[bot]' || github.actor == 'ngeorger' }}
+    if: ${{ github.actor == 'ngeorger' }}
     steps:
       - name: Checkout
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
