@@ -12,6 +12,44 @@ entries:
         - name: Nicolás Georger
           email: info@sredevops.org
     apiVersion: v2
+    appVersion: 6.12.1
+    created: "2026-01-15T19:52:32.340233238Z"
+    description: Ghost on Kubernetes by SREDevOps.org - Deploy Ghost v6 on Kubernetes
+      (k8s, k3s, etc) with our hardened distroless rootless custom image.
+    digest: 81c4da04d580234c910241b1684af82233d6fbf71671b21955b1c2990845671e
+    home: https://www.sredevops.org
+    icon: https://www.sredevops.org/content/images/size/w256h256/2024/07/Icon-App-76x76@2x.png
+    keywords:
+    - ghost
+    - cms
+    - blog
+    - publishing
+    - hardened
+    - distroless
+    - rootless
+    maintainers:
+    - name: SREDevOps.org
+      url: https://www.sredevops.org
+    - email: info@sredevops.org
+      name: Nicolás Georger
+    name: ghost-on-kubernetes
+    sources:
+    - https://github.com/sredevopsorg/ghost-on-kubernetes
+    type: application
+    urls:
+    - ghost-on-kubernetes-1.0.3.tgz
+    version: 1.0.3
+  - annotations:
+      artifacthub.io/license: MIT
+      artifacthub.io/links: |
+        - name: support
+          url: https://github.com/sredevopsorg/ghost-on-kubernetes/issues
+      artifacthub.io/maintainers: |
+        - name: SREDevOps.org
+          url: https://www.sredevops.org
+        - name: Nicolás Georger
+          email: info@sredevops.org
+    apiVersion: v2
     appVersion: 6.12.0
     created: "2026-01-13T04:38:08.529478667Z"
     description: Ghost on Kubernetes by SREDevOps.org - Deploy Ghost v6 on Kubernetes
@@ -100,4 +138,4 @@ entries:
     urls:
     - https://github.com/sredevopsorg/ghost-on-kubernetes/releases/download/ghost-on-kubernetes-1.0.0/ghost-on-kubernetes-1.0.0.tgz
     version: 1.0.0
-generated: "2026-01-13T04:38:08.529488927Z"
+generated: "2026-01-15T19:52:32.340249979Z"
