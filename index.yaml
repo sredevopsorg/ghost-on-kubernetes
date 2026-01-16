@@ -13,6 +13,44 @@ entries:
           email: info@sredevops.org
     apiVersion: v2
     appVersion: 6.12.1
+    created: "2026-01-16T04:09:37.924625106Z"
+    description: Ghost v6 on Kubernetes (k8s, k3s, etc) with our hardened distroless
+      rootless custom image by SREDevOps.org
+    digest: 2d68797ff9679b7e07c2dda2de1acf0ba13c5352b8814f9c6e72cbdebd381d31
+    home: https://www.sredevops.org
+    icon: https://www.sredevops.org/content/images/size/w256h256/2024/07/Icon-App-76x76@2x.png
+    keywords:
+    - ghost
+    - cms
+    - blog
+    - publishing
+    - hardened
+    - distroless
+    - rootless
+    maintainers:
+    - email: info@sredevops.org
+      name: Nicolás Georger
+      url: https://www.sredevops.org
+    name: ghost-on-kubernetes
+    sources:
+    - https://github.com/sredevopsorg/ghost-on-kubernetes
+    - https://github.com/sredevopsorg/ghost-on-kubernetes/tree/main/Charts/ghost-on-kubernetes
+    type: application
+    urls:
+    - ghost-on-kubernetes-1.0.4.tgz
+    version: 1.0.4
+  - annotations:
+      artifacthub.io/license: MIT
+      artifacthub.io/links: |
+        - name: support
+          url: https://github.com/sredevopsorg/ghost-on-kubernetes/issues
+      artifacthub.io/maintainers: |
+        - name: SREDevOps.org
+          url: https://www.sredevops.org
+        - name: Nicolás Georger
+          email: info@sredevops.org
+    apiVersion: v2
+    appVersion: 6.12.1
     created: "2026-01-15T19:52:32.340233238Z"
     description: Ghost on Kubernetes by SREDevOps.org - Deploy Ghost v6 on Kubernetes
       (k8s, k3s, etc) with our hardened distroless rootless custom image.
@@ -138,4 +176,4 @@ entries:
     urls:
     - https://github.com/sredevopsorg/ghost-on-kubernetes/releases/download/ghost-on-kubernetes-1.0.0/ghost-on-kubernetes-1.0.0.tgz
     version: 1.0.0
-generated: "2026-01-15T19:52:32.340249979Z"
+generated: "2026-01-16T04:09:37.924648981Z"
