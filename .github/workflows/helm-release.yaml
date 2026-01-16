@@ -69,5 +69,5 @@ jobs:
             skip_existing: true
             mark_as_latest: false
             skip_gh_release: true
-            # oci_tag_pattern: "{chartName}"
+            oci_tag_pattern: "{chartName}-{version}"
             # tag_name_pattern: "{chartName}-chart"
