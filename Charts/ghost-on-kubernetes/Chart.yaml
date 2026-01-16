@@ -2,7 +2,7 @@ apiVersion: v2
 name: ghost-on-kubernetes
 description: Ghost v6 on Kubernetes (k8s, k3s, etc) with our hardened distroless rootless custom image by SREDevOps.org
 type: application
-version: "1.0.4"
+version: "1.0.5"
 appVersion: "6.12.1"
 keywords:
   - ghost
@@ -14,10 +14,11 @@ keywords:
   - rootless
 home: https://www.sredevops.org
 sources:
-  - https://github.com/sredevopsorg/ghost-on-kubernetes
+  - https://github.com/sredevopsorg/ghost-on-kubernetes/
   - https://github.com/sredevopsorg/ghost-on-kubernetes/tree/main/Charts/ghost-on-kubernetes
+  - https://sredevopsorg.github.io/ghost-on-kubernetes/
 maintainers:
-  - name: Nicolás Georger
+  - name: Nicolas Georger
     email: info@sredevops.org
     url: https://www.sredevops.org
 icon: "https://www.sredevops.org/content/images/size/w256h256/2024/07/Icon-App-76x76@2x.png"
@@ -29,5 +30,5 @@ annotations:
   artifacthub.io/maintainers: |
     - name: SREDevOps.org
       url: https://www.sredevops.org
-    - name: Nicolás Georger
+    - name: Nicolas Georger
       email: info@sredevops.org
