@@ -36,11 +36,12 @@ jobs:
 
       - name: Install Helm
         uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4.3.1
-        env:
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+        id: install
+        with:
+          version: latest
 
 
-      - name: Run chart-releaser
+      - name: Run chart-releaser (old)
         uses: helm/chart-releaser-action@cae68fefc6b5f367a0275617c9f83181ba54714f # v1.7.0
         with:
           charts_dir: Charts
@@ -55,8 +56,8 @@ jobs:
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
-      - name: Run chart-releaser
-        uses: sredevopsorg/helm-oci-charts-releaser@main
+      - name: Run chart-releaser (New)
+        uses: sredevopsorg/helm-oci-charts-releaser@v0.0.1
         continue-on-error: true
         with:
             oci_registry: ghcr.io/sredevopsorg
@@ -68,3 +69,5 @@ jobs:
             skip_existing: true
             tag_name_pattern: "{chartName}-chart"
             mark_as_latest: false
+            skip_gh_release: false
+            oci_tag_pattern: "{chartName}-chart"

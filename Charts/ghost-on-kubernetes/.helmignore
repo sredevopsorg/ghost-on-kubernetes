@@ -13,8 +13,6 @@
 .hg/
 .hgignore
 .svn/
-*.md
-examples/
 OWNERS
 .project
 .idea/
