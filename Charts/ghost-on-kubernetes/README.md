@@ -43,6 +43,7 @@ helm install my-ghost ./ghost-on-kubernetes \
   --set persistence.ghost.storageClassName=your-storage-class \
   --set persistence.mysql.storageClassName=your-storage-class
 ```
+
 ### With External MySQL
 
 Install from the Helm chart repository (recommended):
@@ -76,6 +77,7 @@ helm install my-ghost ./ghost-on-kubernetes \
   --set ghost.url=https://yourdomain.tld \
   --set persistence.ghost.storageClassName=your-storage-class
 ```
+
 ### With cert-manager for TLS
 
 Install from the Helm chart repository (recommended):
@@ -105,6 +107,7 @@ helm install my-ghost ./ghost-on-kubernetes \
   --set ingress.tls.certManager.issuerKind=ClusterIssuer \
   --set persistence.ghost.storageClassName=your-storage-class
 ```
+
 ### With Manual TLS Certificates
 
 ```bash
@@ -132,6 +135,7 @@ helm install my-ghost ./ghost-on-kubernetes \
   --set ingress.tls.secretName=tls-secret \
   --set persistence.ghost.storageClassName=your-storage-class
 ```
+
 ## Configuration
 
 ### Key Parameters
@@ -256,6 +260,7 @@ helm upgrade my-ghost ./ghost-on-kubernetes \
   --reuse-values \
   --set image.tag=new-version
 ```
+
 ## Uninstalling
 
 ```bash
@@ -369,6 +374,7 @@ helm install my-ghost ./ghost-on-kubernetes \
   --create-namespace \
   -f custom-values.yaml
 ```
+
 ## Contributing
 
 See the main repository for contribution guidelines: <https://github.com/sredevopsorg/ghost-on-kubernetes>
