@@ -24,13 +24,13 @@ jobs:
         uses: step-security/harden-runner@20cf305ff2072d973412fa9b1e3a4f227bda3c76 # v2.14.0
         with:
           egress-policy: audit
-      
+
       - name: Checkout
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           # Fetch full history for git diff to work correctly on PRs
-          fetch-depth: 0 
-          
+          fetch-depth: 0
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
         with:
@@ -42,7 +42,7 @@ jobs:
         id: versions
         run: |
           echo "GHOST_VERSION=$(curl -s https://api.github.com/repos/tryghost/ghost/releases/latest | jq '.name' | sed 's/\"//g')" >> $GITHUB_OUTPUT
-          
+
       - name: Show GHOST_VERSION
         continue-on-error: true
         run: echo ${{ steps.versions.outputs.GHOST_VERSION }}
@@ -50,7 +50,7 @@ jobs:
       - name: 🔍 Check for Dockerfile Changes using Git Diff
         id: check_files
         # Only run this file-checking logic for Pull Request events
-        if: github.event_name == 'pull_request' 
+        if: github.event_name == 'pull_request'
         run: |
           # Get the comparison commit for the PR (base vs head)
           BASE_REF=${{ github.event.pull_request.base.sha }}

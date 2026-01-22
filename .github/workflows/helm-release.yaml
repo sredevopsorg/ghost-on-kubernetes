@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'Charts/**'
+      - "Charts/**"
       - .github/workflows/helm-release.yaml
   workflow_dispatch:
 
