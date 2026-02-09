@@ -2,7 +2,7 @@
 # The image is built with official Node 22 on Debian Bookworm (LTS Jod)  image and uses the Distroless base image for security and minimalism.
 
 # Stage 1: Build Environment
-FROM docker.io/node:jod-trixie@sha256:0457d8a847ee5c77943f4cf070c192cf14331d306b63cfdcb12c2a90cda05060 AS build-env
+FROM docker.io/node:krypton-trixie@sha256:c5d7e2590675fc31c7d6709e052030f9be090bc8ddcded1b559c503c54cf5c2b AS build-env
 USER root
 # Create a new user and group named "nonroot" with the UID 65532 and GID 65532, not a member of the root, sudo, and sys groups, and set the home directory to /home/nonroot.
 # This user is used to run the Ghost application in the container for security reasons.
