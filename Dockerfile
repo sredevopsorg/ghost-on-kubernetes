@@ -13,7 +13,6 @@ RUN groupadd -g 65532 nonroot && \
     chown -Rfv 65532:65532 /home/nonroot
 
 USER nonroot
-# SHELL ["/bin/bash", "-c"]
 ENV NODE_ENV=production
 
 # Define the GHOST_VERSION build argument and set it as an environment variable
