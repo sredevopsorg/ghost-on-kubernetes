@@ -4,6 +4,10 @@
 # Stage 1: Build Environment
 FROM docker.io/node:jod-trixie@sha256:0457d8a847ee5c77943f4cf070c192cf14331d306b63cfdcb12c2a90cda05060 AS build-env
 USER root
+# Installs dependencies for sqlite3 node dependencies
+RUN apt update && \
+    apt install -y python3-setuptools build-essential libsqlite3-dev
+
 # Create a new user and group named "nonroot" with the UID 65532 and GID 65532, not a member of the root, sudo, and sys groups, and set the home directory to /home/nonroot.
 # This user is used to run the Ghost application in the container for security reasons.
 RUN groupadd -g 65532 nonroot && \
@@ -15,6 +19,7 @@ RUN groupadd -g 65532 nonroot && \
     chown -Rfv 65532:65532 /var/lib/ghost
 
 USER nonroot
+WORKDIR /home/nonroot
 ENV NODE_ENV=production
 
 # Define the GHOST_VERSION build argument and set it as an environment variable
@@ -36,6 +41,10 @@ RUN yarn config set network-timeout 60000 && \
     export NODE_ENV=production
 
 RUN npx ghost-cli install $GHOST_VERSION --dir $GHOST_INSTALL --db mysql --dbhost mysql --no-prompt --no-stack --no-setup --color --process local
+
+WORKDIR /var/lib/ghost/current
+RUN npm install --save --legacy-peer-deps sqlite3
+WORKDIR /home/nonroot
 
 # Move the original content directory to a backup location, create a new content directory, set the correct ownership and permissions, and switch back to the "node" user
 RUN mv -v $GHOST_CONTENT $GHOST_CONTENT_ORIGINAL && \
