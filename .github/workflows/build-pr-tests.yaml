@@ -80,7 +80,7 @@ jobs:
       - name: ⚙️ Build Production Image (if Dockerfile changed)
         # Use the bash output for conditional check
         if: github.event_name == 'workflow_dispatch' || steps.check_files.outputs.DOCKERFILE_MODIFIED == 'true'
-        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
         id: build-test
         with:
           context: .
@@ -94,7 +94,7 @@ jobs:
       - name: 🧪 Build Development Image (if Dockerfile-dev.dockerfile changed)
         # Use the bash output for conditional check
         if: github.event_name == 'workflow_dispatch' || steps.check_files.outputs.DOCKERFILE_DEV_MODIFIED == 'true'
-        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
         id: build-dev-test
         with:
           context: .
