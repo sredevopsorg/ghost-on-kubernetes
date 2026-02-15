@@ -2,7 +2,7 @@
 # The image is built with official Node 22 on Debian Bookworm (LTS Jod)  image and uses the Distroless base image for security and minimalism.
 
 # Stage 1: Build Environment
-FROM node:jod-trixie@sha256:0457d8a847ee5c77943f4cf070c192cf14331d306b63cfdcb12c2a90cda05060 AS build-env
+FROM docker.io/node:jod-trixie@sha256:a749bc973cd21d41d36889e0b67c4ee59ef9519d557885ad90c9c7c43927233f AS build-env
 USER root
 # Create a new user and group named "nonroot" with the UID 65532 and GID 65532, not a member of the root, sudo, and sys groups, and set the home directory to /home/nonroot.
 # This user is used to run the Ghost application in the container for security reasons.
@@ -13,7 +13,6 @@ RUN groupadd -g 65532 nonroot && \
     chown -Rfv 65532:65532 /home/nonroot
 
 USER nonroot
-SHELL ["/bin/bash", "-c"]
 ENV NODE_ENV=production
 
 # Define the GHOST_VERSION build argument and set it as an environment variable
@@ -32,8 +31,9 @@ RUN yarn config set network-timeout 60000 && \
     yarn config set inline-builds true && \
     npm config set fetch-timeout 60000 && \
     npm config set omit dev && \
-    export NODE_ENV=production && \
-    npx ghost-cli install $GHOST_VERSION --dir $GHOST_INSTALL --db mysql --dbhost mysql --no-prompt --no-stack --no-setup --color --process local
+    export NODE_ENV=production
+
+RUN npx ghost-cli install $GHOST_VERSION --dir $GHOST_INSTALL --db mysql --dbhost mysql --no-prompt --no-stack --no-setup --color --process local
 
 # Move the original content directory to a backup location, create a new content directory, set the correct ownership and permissions, and switch back to the "node" user
 RUN mv -v $GHOST_CONTENT $GHOST_CONTENT_ORIGINAL && \
@@ -44,7 +44,7 @@ RUN mv -v $GHOST_CONTENT $GHOST_CONTENT_ORIGINAL && \
     chmod -v 1755 $GHOST_CONTENT
 
 # Stage 2: Final Image
-FROM gcr.io/distroless/nodejs22-debian13:latest@sha256:8b6e2a89c521967fdd8fa2f773de59d113a7a5b7640cf58d10a1b0d7683b2113 AS runtime 
+FROM gcr.io/distroless/nodejs22-debian13:latest@sha256:d2ba14a51074b9d0042dcd66464e8d51b1ff5d98107e493a7c2f4f145a2175a7 AS runtime 
 
 # Set the installation directory and content directory for Ghost
 ENV GHOST_INSTALL_SRC=/home/nonroot/app/ghost
