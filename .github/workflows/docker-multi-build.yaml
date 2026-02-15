@@ -1,13 +1,13 @@
-name: Dev Multi build with native runners
+name: Docker Multi build
 
 on:
   push:
     branches:
       - main
     paths:
-      - Dockerfile-dev.dockerfile
+      - Dockerfile-docker.dockerfile
       - entrypoint.js
-      - .github/workflows/dev-multi-build.yaml
+      - .github/workflows/docker-multi-build.yaml
     tags:
       - v*
   workflow_dispatch:
@@ -86,7 +86,7 @@ jobs:
           flavor: |
             latest=false
             prefix=
-            suffix=-dev
+            suffix=-docker
 
       - name: Set up Docker Context for Buildx
         id: buildx-context
@@ -113,7 +113,7 @@ jobs:
           DOCKER_BUILDKIT: 1
         with:
           context: .
-          file: Dockerfile-dev.dockerfile
+          file: Dockerfile-docker.dockerfile
           platforms: ${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ steps.meta.outputs.annotations }}
@@ -161,9 +161,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
     
-      - name: Install Cosign
-        uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
-        continue-on-error: true
+      # - name: Install Cosign
+      #   uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
+      #   continue-on-error: true
 
       - name: Download digests
         uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
@@ -188,7 +188,7 @@ jobs:
           flavor: |
             latest=false
             prefix=
-            suffix=-dev
+            suffix=-docker
           annotations: |
             type=org.opencontainers.image.description,value=${{ github.event.repository.description }}
           tags: |
@@ -246,30 +246,30 @@ jobs:
         run: |
           echo "DIGEST_0=$(docker buildx imagetools inspect --raw ${{ env.GHCR_IMAGE }}:${{ steps.meta.outputs.version }} | jq -r '.manifests[0].digest')" >> $GITHUB_OUTPUT
 
-      - name: Sign image with a key
-        run: |
-          images=""
-          for tag in ${TAGS}; do
-            images+="${tag}@${DIGEST_0} "
-          done
-          cosign sign --recursive --yes --key env://COSIGN_PRIVATE_KEY ${images}
-        env:
-          TAGS: ${{ steps.meta.outputs.tags }}
-          COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
-          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
-          DIGEST_0: ${{ steps.inspect.outputs.DIGEST_0 }}
+      # - name: Sign image with a key
+      #   run: |
+      #     images=""
+      #     for tag in ${TAGS}; do
+      #       images+="${tag}@${DIGEST_0} "
+      #     done
+      #     cosign sign --recursive --yes --key env://COSIGN_PRIVATE_KEY ${images}
+      #   env:
+      #     TAGS: ${{ steps.meta.outputs.tags }}
+      #     COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
+      #     COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+      #     DIGEST_0: ${{ steps.inspect.outputs.DIGEST_0 }}
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
-        continue-on-error: true
-        with:
-          username: ${{ secrets.DOCKER_USER }}
-          password: ${{ secrets.DOCKER_PASS }}
+      # - name: Login to Docker Hub
+      #   uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+      #   continue-on-error: true
+      #   with:
+      #     username: ${{ secrets.DOCKER_USER }}
+      #     password: ${{ secrets.DOCKER_PASS }}
 
-      - name: Push to Docker Hub
-        continue-on-error: true
-        run: |
-          docker buildx imagetools create \
-            --tag ${{ env.DOCKER_IMAGE }}:${{ steps.meta.outputs.version }} \
-            --tag ${{ env.DOCKER_IMAGE }}:latest-dev \
-          ${{ env.GHCR_IMAGE }}:${{ steps.meta.outputs.version }}
+      # - name: Push to Docker Hub
+      #   continue-on-error: true
+      #   run: |
+      #     docker buildx imagetools create \
+      #       --tag ${{ env.DOCKER_IMAGE }}:${{ steps.meta.outputs.version }} \
+      #       --tag ${{ env.DOCKER_IMAGE }}:latest-docker \
+      #     ${{ env.GHCR_IMAGE }}:${{ steps.meta.outputs.version }}

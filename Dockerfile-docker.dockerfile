@@ -1,5 +1,5 @@
-# This Dockerfile is used to build a container image for running Ghost, a popular open-source blogging platform, on Kubernetes.
-# The image is built with official Node 22 on Debian Bookworm (LTS Jod)  image and uses the Distroless base image for security and minimalism.
+# This Dockerfile is used to build a container image for running Ghost, a popular open-source blogging platform, on Docker.
+# The image is built with official Node 22 on Debian Trixie (LTS Jod)  image and uses the Google's Distroless nodejs22-debian13 image in the runtime for security and minimalism.
 
 # Stage 1: Build Environment
 FROM docker.io/node:jod-trixie@sha256:0457d8a847ee5c77943f4cf070c192cf14331d306b63cfdcb12c2a90cda05060 AS build-env
