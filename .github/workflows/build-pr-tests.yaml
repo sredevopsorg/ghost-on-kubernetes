@@ -8,7 +8,8 @@ on:
       - main
     paths:
       - Dockerfile
-      - Dockerfile-dev
+      - Dockerfile-dev.dockerfile
+      - Dockerfile-docker.dockerfile
       - entrypoint.js
 
 permissions:
@@ -66,12 +67,12 @@ jobs:
             echo "Dockerfile was NOT modified."
           fi
 
-          # Check if Dockerfile-dev was modified
-          if git diff --name-only $BASE_REF $HEAD_REF | grep -q "^Dockerfile-dev$"; then
-            echo "Dockerfile-dev was modified."
+          # Check if Dockerfile-dev.dockerfile was modified
+          if git diff --name-only $BASE_REF $HEAD_REF | grep -q "^Dockerfile-dev.dockerfile$"; then
+            echo "Dockerfile-dev.dockerfile was modified."
             echo "DOCKERFILE_DEV_MODIFIED=true" >> $GITHUB_OUTPUT
           else
-            echo "Dockerfile-dev was NOT modified."
+            echo "Dockerfile-dev.dockerfile was NOT modified."
           fi
 
       # --- Conditional Build Stages ---
@@ -90,14 +91,14 @@ jobs:
           push: false
           build-args: GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }}
 
-      - name: 🧪 Build Development Image (if Dockerfile-dev changed)
+      - name: 🧪 Build Development Image (if Dockerfile-dev.dockerfile changed)
         # Use the bash output for conditional check
         if: github.event_name == 'workflow_dispatch' || steps.check_files.outputs.DOCKERFILE_DEV_MODIFIED == 'true'
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         id: build-dev-test
         with:
           context: .
-          file: ./Dockerfile-dev
+          file: ./Dockerfile-dev.dockerfile
           platforms: linux/amd64
           cache-from: type=gha,mode=max
           cache-to: type=gha,mode=max

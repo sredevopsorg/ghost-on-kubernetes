@@ -16,13 +16,13 @@ on:
     branches: ["main"]
     paths:
       - "./Dockerfile"
-      - "./Dockerfile-dev"
+      - "./Dockerfile-dev.dockerfile"
       - "**.js"
   pull_request:
     branches: ["main"]
     paths:
       - "./Dockerfile"
-      - "./Dockerfile-dev"
+      - "./Dockerfile-dev.dockerfile"
       - "**.js"
   schedule:
     - cron: "42 16 * * 2"
