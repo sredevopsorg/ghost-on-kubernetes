@@ -1,4 +1,3 @@
-
 const fs = require("fs");
 const path = require("path");
 
@@ -30,6 +29,21 @@ var copyRecursiveSync = function(src, dest) {
     fs.copyFileSync(src, dest, fs.constants.COPYFILE_FICLONE);
   }
 };
+
+// Create required directories under GHOST_CONTENT if they don't exist
+const requiredDirectories = ['files', 'logs', 'apps', 'themes', 'data', 'public', 'settings', 'images', 'media'];
+const ghostContent = process.env.GHOST_CONTENT;
+console.log("Creating required directories under: ", ghostContent);
+
+requiredDirectories.forEach(function(dir) {
+  const dirPath = path.join(ghostContent, dir);
+  if (!fs.existsSync(dirPath)) {
+    console.log(`Creating directory: ${dirPath}`);
+    fs.mkdirSync(dirPath, { recursive: true });
+  } else {
+    console.log(`Directory already exists: ${dirPath}`);
+  }
+});
 
 // Define sources and destinations for both themes named "casper" and "source".
           // Get an environment variable that specifies the path for sourcePath + "/content/themes" 
