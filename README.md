@@ -152,6 +152,21 @@ To preview the website without configuring Ingress or a TLD, you can use port fo
   kubectl port-forward -n ghost-on-kubernetes services ghost-on-kubernetes-service 2368:2368
   ```
 
+## Alternate image for compatibility with Ghost Docker Hub images
+
+There are three Dockerfiles here used for building image variations:
+
+* `Dockerfile` - The original image for Kubernetes
+* `Dockerfile-dev.dockerfile` - Like the original, but sets NODE_ENV=development and includes SQLite3 support. Image tags include `-dev` suffix.
+* `Dockerfile-docker.dockerfile` - built for more compatiblity with the "Docker Official" image on Dockerhub:
+  * Image tags include `-docker` suffix
+  * Sets NODE_ENV=production
+  * Includes SQLite support
+  * Uses the same root path as Docker Hub image: `/var/lib/ghost`
+  * Works outside of Kubernetes
+
+`Dockerfile-docker.dockerfile` has an important difference from the Docker Hub different for improved security: By default, files are created with UID of 65532, while Docker Hub uses UID 1000. Because the UID of 1000 is likely to be used by another user on the system, using 65532 is more secure. If you are moving from the Docker Hub image and don't want to change the ownership of all your files, you can continue to use the same user with this image by specifying `--user 100:1000` on a `docker run` line or updating a `compose.yml` file where you set `image:` to also set `user: 1000:1000`
+
 ## Contributing
 
 We welcome contributions from the community! Please check the [CONTRIBUTING.md](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/CONTRIBUTING.md) file for more information on how to contribute to this project.
