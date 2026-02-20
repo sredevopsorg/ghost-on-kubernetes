@@ -1,0 +1,72 @@
+---
+# Automate rebuilding new "-docker" releases when Ghost has a new release.
+name: Check Ghost Releases
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'  # Every 6 hours
+  workflow_dispatch:  # Allow manual trigger
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  check-and-trigger:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      
+      - name: Get latest Ghost version
+        id: ghost
+        run: |
+          LATEST_VERSION=$(curl -s https://api.github.com/repos/tryghost/ghost/releases/latest | jq -r '.name')
+          echo "Latest Ghost version: $LATEST_VERSION"
+          echo "version=$LATEST_VERSION" >> $GITHUB_OUTPUT
+      
+      - name: Get last built version
+        id: last-built
+        continue-on-error: true
+        run: |
+          # Try to get the last built version from the latest docker image tag
+          LAST_BUILT=$(curl -s "https://ghcr.io/v2/${{ github.repository }}/tags/list" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" | \
+            jq -r '.tags[]' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+-docker$' | \
+            sed 's/-docker$//' | sort -V | tail -n1)
+          
+          if [ -z "$LAST_BUILT" ]; then
+            echo "No previous build found"
+            echo "version=none" >> $GITHUB_OUTPUT
+          else
+            echo "Last built version: $LAST_BUILT"
+            echo "version=$LAST_BUILT" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Check if build needed
+        id: check
+        run: |
+          LATEST="v${{ steps.ghost.outputs.version }}"
+          LAST_BUILT="${{ steps.last-built.outputs.version }}"
+          
+          echo "Latest: $LATEST"
+          echo "Last built: $LAST_BUILT"
+          
+          if [ "$LATEST" != "$LAST_BUILT" ]; then
+            echo "New version detected - build needed"
+            echo "build_needed=true" >> $GITHUB_OUTPUT
+          else
+            echo "Already up to date"
+            echo "build_needed=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Trigger docker-multi-build workflow
+        if: steps.check.outputs.build_needed == 'true'
+        run: |
+          gh workflow run docker-multi-build.yaml \
+            --ref main \
+            -f ghost_version="${{ steps.ghost.outputs.version }}" \
+            -f manual-tag="auto-${{ steps.ghost.outputs.version }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
