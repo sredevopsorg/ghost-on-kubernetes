@@ -4,9 +4,11 @@
 # Stage 1: Build Environment
 FROM docker.io/node:jod-trixie@sha256:b5977249434bca5b2efaf4eee25317ad8aecfa7ccf5168e3bcd5f179ba345e1c AS build-env
 USER root
-# Installs dependencies for sqlite3 node dependencies
+# Installs dependencies for sqlite3 node dependencies, and jemalloc for memory allocation
 RUN apt update && \
-    apt install -y python3-setuptools build-essential libsqlite3-dev
+    apt install -y python3-setuptools build-essential libsqlite3-dev libjemalloc2 && \
+    find /usr/lib -name 'libjemalloc.so.2' -exec cp {} /libjemalloc.so.2 \; && \
+    rm -rf /var/lib/apt/lists/*
 
 # Create a new user and group named "nonroot" with the UID 65532 and GID 65532, not a member of the root, sudo, and sys groups, and set the home directory to /home/nonroot.
 # This user is used to run the Ghost application in the container for security reasons.
@@ -64,6 +66,10 @@ ENV GHOST_CONTENT=/var/lib/ghost/content
 ENV GHOST_CONTENT_ORIGINAL=/var/lib/ghost/content.orig
 ENV NODE_ENV=production
 USER nonroot
+
+# Copy jemalloc from build stage and use it as the default memory allocator
+COPY --from=build-env /libjemalloc.so.2 /usr/lib/libjemalloc.so.2
+ENV LD_PRELOAD=/usr/lib/libjemalloc.so.2
 
 # Copy the Ghost installation directory from the build environment to the final image
 COPY --from=build-env $GHOST_INSTALL_SRC $GHOST_INSTALL
