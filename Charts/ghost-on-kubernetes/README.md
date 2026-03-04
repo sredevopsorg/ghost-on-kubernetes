@@ -275,7 +275,7 @@ kubectl delete pvc -n ghost -l app.kubernetes.io/instance=my-ghost
 
 ## Security Features
 
-- **Non-root containers**: Ghost runs as UID 65532, MySQL as UID 65534
+- **Non-root containers**: Ghost runs as UID 65532, MySQL as UID 65532
 - **Distroless base**: Minimal attack surface with no shell
 - **ReadOnlyRootFilesystem**: Immutable container filesystems
 - **Security contexts**: Drop all capabilities, no privilege escalation

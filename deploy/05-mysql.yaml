@@ -35,12 +35,12 @@ spec:
         - -c
         - |
           set -e
-          echo 'Changing ownership of mysql mount directory to 65534:65534'
-          chown -Rfv 65534:65534 /mnt/mysql || echo 'Error changing ownership of mysql mount directory to 65534:65534'
-          echo 'Changing ownership of tmp mount directory to 65534:65534'
-          chown -Rfv 65534:65534 /mnt/tmp || echo 'Error changing ownership of tmp mount directory to 65534:65534'
-          echo 'Changing ownership of socket mount directory to 65534:65534'
-          chown -Rfv 65534:65534 /mnt/var/run/mysqld || echo 'Error changing ownership of socket mount directory to 65534:65534'
+          echo 'Changing ownership of mysql mount directory to 65532:65532'
+          chown -Rfv 65532:65532 /mnt/mysql || echo 'Error changing ownership of mysql mount directory to 65532:65532'
+          echo 'Changing ownership of tmp mount directory to 65532:65532'
+          chown -Rfv 65532:65532 /mnt/tmp || echo 'Error changing ownership of tmp mount directory to 65532:65532'
+          echo 'Changing ownership of socket mount directory to 65532:65532'
+          chown -Rfv 65532:65532 /mnt/var/run/mysqld || echo 'Error changing ownership of socket mount directory to 65532:65532'
           
           
         volumeMounts:
@@ -73,7 +73,7 @@ spec:
           privileged: false
           readOnlyRootFilesystem: true
           runAsNonRoot: true
-          runAsUser: 65534
+          runAsUser: 65532
 
         image: docker.io/mysql:8.4
         imagePullPolicy: Always # You can change this value according to your needs

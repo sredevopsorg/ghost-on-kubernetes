@@ -130,8 +130,9 @@ spec:
       restartPolicy: Always
       terminationGracePeriodSeconds: 15
       dnsPolicy: ClusterFirst
-      {{- with .Values.ghost.affinity }}
+      {{- if .Values.ghost.affinity.enabled }}
       affinity:
-        {{- toYaml . | nindent 8 }}
+        {{- $yaml := toYaml .Values.ghost.affinity | replace "enabled: true\n" "" | replace "enabled: true" "" }}
+        {{ $yaml | nindent 8 }}
       {{- end }}
       securityContext: {}
