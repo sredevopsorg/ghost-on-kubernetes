@@ -62,8 +62,9 @@ ghost:
     runAsNonRoot: true
     runAsUser: 65532
 
-  # Node affinity
+  # Ghost Node affinity (optional)
   affinity:
+    enabled: false
     nodeAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
         nodeSelectorTerms:
@@ -121,10 +122,11 @@ mysql:
     readOnlyRootFilesystem: true
     allowPrivilegeEscalation: false
     runAsNonRoot: true
-    runAsUser: 65534
+    runAsUser: 65532
 
-  # Node affinity
+  # mysql Node affinity (optional)
   affinity:
+    enabled: false
     nodeAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
         nodeSelectorTerms:
@@ -202,7 +204,7 @@ ingress:
     hosts:
       - yourdomain.tld
 
-# Init container configuration
+# mysql Init container configuration
 initContainer:
   image:
     repository: docker.io/busybox

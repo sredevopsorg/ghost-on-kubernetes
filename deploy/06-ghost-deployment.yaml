@@ -46,56 +46,59 @@ spec:
       - name: tmp
         emptyDir:
           sizeLimit: 64Mi
-
-      initContainers:
-      - name: permissions-fix
-        imagePullPolicy: Always
-        image: docker.io/busybox:stable-musl
-        env:
-        - name: GHOST_INSTALL
-          value: /home/nonroot/app/ghost
-        - name: GHOST_CONTENT
-          value: /home/nonroot/app/ghost/content
-        - name: NODE_ENV
-          value: production
-        securityContext:
-          readOnlyRootFilesystem: true
-          allowPrivilegeEscalation: false
-        resources:
-          limits:
-            cpu: 900m
-            memory: 1000Mi
-          requests:
-            cpu: 100m
-            memory: 128Mi
-        command:
-          - /bin/sh
-          - '-c'
-          - |
-            set -e
-
-            export DIRS='files logs apps themes data public settings images media'
-            echo 'Check if base dirs exists, if not, create them'
-            echo "Directories to check: $DIRS"
-            for dir in $DIRS; do
-              if [ ! -d $GHOST_CONTENT/$dir ]; then
-                echo "Creating $GHOST_CONTENT/$dir directory"
-                mkdir -pv $GHOST_CONTENT/$dir || echo "Error creating $GHOST_CONTENT/$dir directory"
-              fi
-              chown -Rfv 65532:65532 $GHOST_CONTENT/$dir && echo "chown ok on $dir" || echo "Error changing ownership of $GHOST_CONTENT/$dir directory"
-            done
-            exit 0
-
-
-        volumeMounts:
-        - name: k8s-ghost-content
-          mountPath: /home/nonroot/app/ghost/content
-          readOnly: false
+      # Since ghost-on-kubernetes v6.20.0 the initContainer is optional because we moved this functionality into the image's entrypoint.js.
+      # Uncomment the following block if you want to keep an initContainer or if you have permissions issues.
+      # initContainers:
+      # - name: permissions-fix
+      #   imagePullPolicy: Always
+      #   image: docker.io/busybox:stable-musl
+      #   env:
+      #   - name: GHOST_INSTALL
+      #     value: /home/nonroot/app/ghost
+      #   - name: GHOST_CONTENT
+      #     value: /home/nonroot/app/ghost/content
+      #   - name: NODE_ENV
+      #     value: production
+      #   securityContext:
+      #     readOnlyRootFilesystem: true
+      #     allowPrivilegeEscalation: false
+      #   resources:
+      #     limits:
+      #       cpu: 900m
+      #       memory: 1000Mi
+      #     requests:
+      #       cpu: 100m
+      #       memory: 128Mi
+      #   command:
+      #     - /bin/sh
+      #     - '-c'
+      #     - |
+      #       set -e
+      #
+      #       export DIRS='files logs apps themes data public settings images media'
+      #       echo 'Check if base dirs exists, if not, create them'
+      #       echo "Directories to check: $DIRS"
+      #       for dir in $DIRS; do
+      #         if [ ! -d $GHOST_CONTENT/$dir ]; then
+      #           echo "Creating $GHOST_CONTENT/$dir directory"
+      #           mkdir -pv $GHOST_CONTENT/$dir || echo "Error creating $GHOST_CONTENT/$dir directory"
+      #         fi
+      #         chown -Rfv 65532:65532 $GHOST_CONTENT/$dir && echo "chown ok on $dir" || echo "Error changing ownership of $GHOST_CONTENT/$dir directory"
+      #       done
+      #       exit 0
+      #
+      #
+      #   volumeMounts:
+      #   - name: k8s-ghost-content
+      #     mountPath: /home/nonroot/app/ghost/content
+      #     readOnly: false
 
       containers:
       - name: ghost-on-kubernetes
         # For development, you can use the following image:
-        # image: ghcr.io/sredevopsorg/ghost-on-kubernetes:latest-dev
+        # Development image: ghcr.io/sredevopsorg/ghost-on-kubernetes:latest-dev
+        # Latest image tag: main
+        # You can also pin to a specific version, example: ghcr.io/sredevopsorg/ghost-on-kubernetes:v6.20.0
         image: ghcr.io/sredevopsorg/ghost-on-kubernetes:main
         imagePullPolicy: Always
         ports:
@@ -160,20 +163,20 @@ spec:
           readOnlyRootFilesystem: true
           allowPrivilegeEscalation: false
           runAsNonRoot: true
-          runAsUser: 65532
+          runAsUser: 65532 # The UID of the nonroot user
 
 
       restartPolicy: Always
       terminationGracePeriodSeconds: 15
       dnsPolicy: ClusterFirst
       # Optional: Uncomment the following to specify node selectors
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
-                  - key: node-role.kubernetes.io/worker
-                    operator: In
-                    values:
-                      - 'true'
+      # affinity:
+      #   nodeAffinity:
+      #     requiredDuringSchedulingIgnoredDuringExecution:
+      #       nodeSelectorTerms:
+      #         - matchExpressions:
+      #             - key: node-role.kubernetes.io/worker
+      #               operator: In
+      #               values:
+      #                 - 'true'
       securityContext: {}

@@ -30,12 +30,12 @@ spec:
         - -c
         - |
           set -e
-          echo 'Changing ownership of mysql mount directory to 65534:65534'
-          chown -Rfv 65534:65534 /mnt/mysql || echo 'Error changing ownership of mysql mount directory to 65534:65534'
-          echo 'Changing ownership of tmp mount directory to 65534:65534'
-          chown -Rfv 65534:65534 /mnt/tmp || echo 'Error changing ownership of tmp mount directory to 65534:65534'
-          echo 'Changing ownership of socket mount directory to 65534:65534'
-          chown -Rfv 65534:65534 /mnt/var/run/mysqld || echo 'Error changing ownership of socket mount directory to 65534:65534'
+          echo 'Changing ownership of mysql mount directory to 65532:65532'
+          chown -Rfv 65532:65532 /mnt/mysql || echo 'Error changing ownership of mysql mount directory to 65532:65532'
+          echo 'Changing ownership of tmp mount directory to 65532:65532'
+          chown -Rfv 65532:65532 /mnt/tmp || echo 'Error changing ownership of tmp mount directory to 65532:65532'
+          echo 'Changing ownership of socket mount directory to 65532:65532'
+          chown -Rfv 65532:65532 /mnt/var/run/mysqld || echo 'Error changing ownership of socket mount directory to 65532:65532'
         volumeMounts:
         - name: mysql-volume
           mountPath: /mnt/mysql
@@ -76,10 +76,12 @@ spec:
           mountPath: /var/run/mysqld
           readOnly: false
       automountServiceAccountToken: false
-      {{- with .Values.mysql.affinity }}
+      {{- if .Values.mysql.affinity.enabled }}
       affinity:
-        {{- toYaml . | nindent 8 }}
+        {{- $yaml := toYaml .Values.mysql.affinity | replace "enabled: true\n" "" | replace "enabled: true" "" }}
+        {{ $yaml | nindent 8 }}
       {{- end }}
+
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       volumes:
