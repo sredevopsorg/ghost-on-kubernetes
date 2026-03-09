@@ -87,6 +87,12 @@ COPY --chown=65532 entrypoint.js current/entrypoint.js
 
 # Expose port 2368 for Ghost
 EXPOSE 2368
+                 
+HEALTHCHECK --interval=30s \
+            --timeout=5s \
+            --retries=10 \
+            --start-period=5s \
+    CMD ["/nodejs/bin/node", "-e", "fetch('http://127.0.0.1:2368',{redirect:'manual'}).then(r=>process.exit(r.status<500?0:1)).catch(()=>process.exit(1))"]
 
 # Set the command to start Ghost with the entrypoint (See https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/entrypoint.js)
 CMD ["current/entrypoint.js"]
