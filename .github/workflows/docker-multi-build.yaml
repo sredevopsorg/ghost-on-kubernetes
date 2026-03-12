@@ -7,9 +7,14 @@ on:
     paths:
       - Dockerfile-docker.dockerfile
       - entrypoint.js
-      - .github/workflows/docker-multi-build.yaml
     tags:
       - v*
+  workflow_run:
+    workflows: [Check Ghost Releases]
+    types:
+      - completed
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       manual-tag:
