@@ -6,9 +6,6 @@ on:
   schedule:
     - cron: '0 */6 * * *'  # Every 6 hours
   workflow_dispatch:  # Allow manual trigger
-  push:
-    branches:
-      - main
 
 permissions:
   contents: read
@@ -17,7 +14,7 @@ jobs:
   check-and-trigger:
     runs-on: ubuntu-latest
     permissions:
-      actions: write  # Required to trigger other workflows
+#      actions: write  # Required to trigger other workflows
       contents: read
     
     steps:
