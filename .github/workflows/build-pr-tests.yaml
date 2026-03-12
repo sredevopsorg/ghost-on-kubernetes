@@ -75,9 +75,17 @@ jobs:
             echo "Dockerfile-dev.dockerfile was NOT modified."
           fi
 
+          # Check if Dockerfile-docker.dockerfile was modified
+          if git diff --name-only $BASE_REF $HEAD_REF | grep -q "^Dockerfile-docker.dockerfile$"; then
+            echo "Dockerfile-docker.dockerfile was modified."
+            echo "DOCKERFILE_DOCKER_MODIFIED=true" >> $GITHUB_OUTPUT
+          else
+            echo "Dockerfile-docker.dockerfile was NOT modified."
+          fi
+
       # --- Conditional Build Stages ---
 
-      - name: ⚙️ Build Production Image (if Dockerfile changed)
+      - name: Build Production Image (if Dockerfile changed)
         # Use the bash output for conditional check
         if: github.event_name == 'workflow_dispatch' || steps.check_files.outputs.DOCKERFILE_MODIFIED == 'true'
         uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
@@ -91,7 +99,7 @@ jobs:
           push: false
           build-args: GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }}
 
-      - name: 🧪 Build Development Image (if Dockerfile-dev.dockerfile changed)
+      - name: Build Development Image (if Dockerfile-dev.dockerfile changed)
         # Use the bash output for conditional check
         if: github.event_name == 'workflow_dispatch' || steps.check_files.outputs.DOCKERFILE_DEV_MODIFIED == 'true'
         uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
@@ -99,6 +107,21 @@ jobs:
         with:
           context: .
           file: ./Dockerfile-dev.dockerfile
+          platforms: linux/amd64
+          cache-from: type=gha,mode=max
+          cache-to: type=gha,mode=max
+          push: false
+          build-args: GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }}
+
+
+      - name: Build Docker Image (if Dockerfile-docker.dockerfile changed)
+        # Use the bash output for conditional check
+        if: github.event_name == 'workflow_dispatch' || steps.check_files.outputs.DOCKERFILE_DOCKER_MODIFIED == 'true'
+        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
+        id: build-docker-test
+        with:
+          context: .
+          file: ./Dockerfile-docker.dockerfile
           platforms: linux/amd64
           cache-from: type=gha,mode=max
           cache-to: type=gha,mode=max
