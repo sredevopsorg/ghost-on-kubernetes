@@ -6,6 +6,7 @@ on:
   schedule:
     - cron: '0 */6 * * *'  # Every 6 hours
   workflow_dispatch:  # Allow manual trigger
+  workflow_call:      
 
 permissions:
   contents: read
@@ -14,7 +15,7 @@ jobs:
   check-and-trigger:
     runs-on: ubuntu-latest
     permissions:
-#      actions: write  # Required to trigger other workflows
+      actions: write  # Required to trigger other workflows
       contents: read
     
     steps:
@@ -64,7 +65,7 @@ jobs:
           fi
       
       - name: Trigger docker-multi-build workflow
-        if: steps.check.outputs.build_needed == 'true' && github.ref == 'refs/heads/main'
+        if: steps.check.outputs.build_needed == 'true'
         run: |
           gh workflow run docker-multi-build.yaml \
             --ref main \
