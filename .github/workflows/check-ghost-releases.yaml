@@ -17,6 +17,8 @@ jobs:
     permissions:
       actions: write  # Required to trigger other workflows
       contents: read
+      artifact-metadata: read
+      packages: read
     
     steps:
       - name: Checkout
@@ -31,7 +33,7 @@ jobs:
       
       - name: Get last built version
         id: last-built
-        continue-on-error: true
+        continue-on-error: false
         run: |
           # Try to get the last built version from the latest docker image tag
           LAST_BUILT=$(curl -s "https://ghcr.io/v2/${{ github.repository }}/tags/list" \
