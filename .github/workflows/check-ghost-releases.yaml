@@ -33,14 +33,19 @@ jobs:
       
       - name: Get last built version
         id: last-built
-        continue-on-error: false
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Try to get the last built version from the latest docker image tag
-          LAST_BUILT=$(curl -s "https://ghcr.io/v2/${{ github.repository }}/tags/list" \
-            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" | \
-            jq -r '.tags[]' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+-docker$' | \
+          OWNER="${{ github.repository_owner }}"
+          PACKAGE="${{ github.event.repository.name }}"
+
+          LAST_BUILT=$(gh api \
+            "/orgs/${OWNER}/packages/container/${PACKAGE}/versions" \
+            --paginate \
+            --jq '.[].metadata.container.tags[]' 2>/dev/null | \
+            grep -E '^v[0-9]+\.[0-9]+\.[0-9]+-docker$' | \
             sed 's/-docker$//' | sort -V | tail -n1)
-          
+
           if [ -z "$LAST_BUILT" ]; then
             echo "No previous build found"
             echo "version=none" >> $GITHUB_OUTPUT
