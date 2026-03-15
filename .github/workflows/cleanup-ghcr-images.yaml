@@ -1,10 +1,13 @@
 name: Cleanup GHCR Images
 
 on:
+  schedule:
+    # Runs every Sunday at 01:00 UTC -4 (which is 21:00 on Saturday in UTC)
+    - cron: '0 1 * * 0' 
   workflow_dispatch:
     inputs:
       dry_run:
-        description: "Log what would be deleted without making changes"
+        description: "Dry run"
         required: false
         default: true
         type: boolean
@@ -22,12 +25,13 @@ on:
 permissions:
   contents: read
 env:
-  ORG: sredevopsorg
+  ORG: ${{ github.repository_owner }}
   RETENTION_DAYS: ${{ inputs.retention_days || 14 }}
   MIN_KEEP: ${{ inputs.min_keep || 10 }}
 
 jobs:
   cleanup:
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' && github.actor == 'ngeorger' }}
     permissions:
       id-token: write
       packages: write
@@ -43,7 +47,7 @@ jobs:
           DRY_RUN: ${{ github.event_name == 'schedule' && 'false' || inputs.dry_run }}
           PACKAGE: ${{ matrix.package }}
         run: |
-          set -euo pipefail
+          set -euox pipefail
 
           cutoff=$(date -u -d "-${RETENTION_DAYS} days" +%Y-%m-%dT%H:%M:%SZ 2>/dev/null \
             || date -u -v-${RETENTION_DAYS}d +%Y-%m-%dT%H:%M:%SZ)
@@ -99,8 +103,8 @@ jobs:
               continue
             fi
 
-            # Keep versions with 'latest' or 'main' or cache-main tags
-            if echo "$tags" | grep -qE '(^|,)(latest|main|cache-main)(,|$)'; then
+            # Keep versions with 'latest' or 'main' or cache-main or artifacthub or artifacthub.io tags
+            if echo "$tags" | grep -qE '(^|,)(latest|main|cache-main|artifacthub|artifacthub.io)(,|$)'; then
               keep=$((keep + 1))
               continue
             fi

@@ -94,8 +94,8 @@ jobs:
           context: .
           file: ./Dockerfile
           platforms: linux/amd64
-          cache-from: type=gha,mode=max
-          cache-to: type=gha,mode=max
+          cache-from: type=gha
+          cache-to: type=gha
           push: false
           build-args: GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }}
 
@@ -108,8 +108,8 @@ jobs:
           context: .
           file: ./Dockerfile-dev.dockerfile
           platforms: linux/amd64
-          cache-from: type=gha,mode=max
-          cache-to: type=gha,mode=max
+          cache-from: type=gha
+          cache-to: type=gha
           push: false
           build-args: GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }}
 
@@ -123,7 +123,7 @@ jobs:
           context: .
           file: ./Dockerfile-docker.dockerfile
           platforms: linux/amd64
-          cache-from: type=gha,mode=max
-          cache-to: type=gha,mode=max
+          cache-from: type=gha
+          cache-to: type=gha
           push: false
           build-args: GHOST_VERSION=${{ steps.versions.outputs.GHOST_VERSION }}
