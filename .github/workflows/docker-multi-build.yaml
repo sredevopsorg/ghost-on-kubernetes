@@ -13,8 +13,7 @@ on:
     workflows: [Check Ghost Releases]
     types:
       - completed
-    branches:
-      - main
+
   workflow_dispatch:
     inputs:
       manual-tag:
