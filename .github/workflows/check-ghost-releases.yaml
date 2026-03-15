@@ -65,7 +65,7 @@ jobs:
           echo "Latest: $LATEST"
           echo "Last built: $LAST_BUILT"
           
-          if [ "$LATEST" != "$LAST_BUILT" ]; then
+          if [ -n "$LAST_BUILT" ] && [ "$LAST_BUILT" != "none" ] && [ "$LAST_BUILT" != "$LATEST" ] && [ "$(printf '%s\n%s\n' "$LAST_BUILT" "$LATEST" | sort -V | head -1)" == "$LAST_BUILT" ]; then
             echo "New version detected - build needed"
             echo "build_needed=true" >> $GITHUB_OUTPUT
           else
@@ -76,7 +76,6 @@ jobs:
   trigger-build:
     needs: check-ghost-releases
     runs-on: ubuntu-latest
-    if: needs.check-ghost-releases.outputs.build_needed == 'true' && needs.check-ghost-releases.outputs.version != 'none'
     permissions:
       contents: read
       artifact-metadata: read
@@ -86,19 +85,13 @@ jobs:
       version: ${{ needs.check-ghost-releases.outputs.version }}
       manual-tag: "auto"
     steps:
-      - name: Fail if no version to build
+      - name: Exit with error if build not needed, otherwise exit with success
         id: conditional-check
-        if: needs.check-ghost-releases.outputs.version == 'none' || needs.check-ghost-releases.outputs.build_needed == 'false'
-        continue-on-error: false
         run: |
-          echo "No new version to build. Exiting."
-          exit 1
-      - name: Trigger docker-multi-build workflow
-        if: steps.conditional-check.outcome != 'failure'
-        run: |
-          echo "Triggering docker-multi-build workflow for version ${{ needs.check-ghost-releases.outputs.version }}"
-        # run: |
-          # gh workflow run docker-multi-build.yaml \
-            # --ref main \
-            # -f ghost_version="${{ needs.check-ghost-releases.outputs.version }}" \
-            # -f manual-tag="auto-${{ needs.check-ghost-releases.outputs.version }}"
+          if [ "${{ needs.check-ghost-releases.outputs.build_needed }}" != "true" ]; then
+            echo "No build needed, exiting with error to prevent downstream steps from running"
+            exit 1
+          else
+            echo "Build needed, exiting with success to allow downstream steps to run"
+            exit 0
+          fi
