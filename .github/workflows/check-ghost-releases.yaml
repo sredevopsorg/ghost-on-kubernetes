@@ -6,20 +6,22 @@ on:
   schedule:
     - cron: '0 */6 * * *'  # Every 6 hours
   workflow_dispatch:  # Allow manual trigger
-  workflow_call:      
+  workflow_call: # Allow this workflow to be called by other workflows
 
 permissions:
   contents: read
 
 jobs:
-  check-and-trigger:
+  check-ghost-releases:
     runs-on: ubuntu-latest
     permissions:
-      actions: write  # Required to trigger other workflows
       contents: read
       artifact-metadata: read
       packages: read
-    
+      actions: read
+    outputs:
+      version: ${{ steps.ghost.outputs.version }}
+      build_needed: ${{ steps.check.outputs.build_needed }}
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -70,13 +72,33 @@ jobs:
             echo "Already up to date"
             echo "build_needed=false" >> $GITHUB_OUTPUT
           fi
-      
-      - name: Trigger docker-multi-build workflow
-        if: steps.check.outputs.build_needed == 'true'
+
+  trigger-build:
+    needs: check-ghost-releases
+    runs-on: ubuntu-latest
+    if: needs.check-ghost-releases.outputs.build_needed == 'true' && needs.check-ghost-releases.outputs.version != 'none'
+    permissions:
+      contents: read
+      artifact-metadata: read
+      packages: read
+      actions: read
+    outputs:
+      version: ${{ needs.check-ghost-releases.outputs.version }}
+      manual-tag: "auto"
+    steps:
+      - name: Fail if no version to build
+        id: conditional-check
+        if: needs.check-ghost-releases.outputs.version == 'none' || needs.check-ghost-releases.outputs.build_needed == 'false'
+        continue-on-error: false
         run: |
-          gh workflow run docker-multi-build.yaml \
-            --ref main \
-            -f ghost_version="${{ steps.ghost.outputs.version }}" \
-            -f manual-tag="auto-${{ steps.ghost.outputs.version }}"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          echo "No new version to build. Exiting."
+          exit 1
+      - name: Trigger docker-multi-build workflow
+        if: steps.conditional-check.outcome != 'failure'
+        run: |
+          echo "Triggering docker-multi-build workflow for version ${{ needs.check-ghost-releases.outputs.version }}"
+        # run: |
+          # gh workflow run docker-multi-build.yaml \
+            # --ref main \
+            # -f ghost_version="${{ needs.check-ghost-releases.outputs.version }}" \
+            # -f manual-tag="auto-${{ needs.check-ghost-releases.outputs.version }}"
