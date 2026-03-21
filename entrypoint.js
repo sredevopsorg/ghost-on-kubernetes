@@ -11,12 +11,10 @@ const path = require("path");
  * @param {string} dest - The destination path to copy or create files/directories.
  */
 var copyRecursiveSync = function(src, dest) {
-  console.log(`Starting to copy from ${src} to ${dest}`);
   var exists = fs.existsSync(src);
   var stats = exists && fs.statSync(src);
   var isDirectory = exists && stats.isDirectory();
   if (isDirectory) {
-    console.log(`Creating directory: ${dest}`);
     fs.mkdirSync(dest, { recursive: true });
     fs.readdirSync(src).forEach(function(childItemName) {
       // Copies files recursively.
@@ -25,7 +23,6 @@ var copyRecursiveSync = function(src, dest) {
                         path.join(dest, childItemName));
     });
   } else {
-    console.log(`Copying file from ${src} to ${dest}`);
     fs.copyFileSync(src, dest, fs.constants.COPYFILE_FICLONE);
   }
 };
@@ -38,10 +35,7 @@ console.log("Creating required directories under: ", ghostContent);
 requiredDirectories.forEach(function(dir) {
   const dirPath = path.join(ghostContent, dir);
   if (!fs.existsSync(dirPath)) {
-    console.log(`Creating directory: ${dirPath}`);
     fs.mkdirSync(dirPath, { recursive: true });
-  } else {
-    console.log(`Directory already exists: ${dirPath}`);
   }
 });
 
