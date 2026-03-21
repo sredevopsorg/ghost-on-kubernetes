@@ -47,7 +47,7 @@ jobs:
           DRY_RUN: ${{ github.event_name == 'schedule' && 'false' || inputs.dry_run }}
           PACKAGE: ${{ matrix.package }}
         run: |
-          set -euox pipefail
+          set -euo pipefail
 
           cutoff=$(date -u -d "-${RETENTION_DAYS} days" +%Y-%m-%dT%H:%M:%SZ 2>/dev/null \
             || date -u -v-${RETENTION_DAYS}d +%Y-%m-%dT%H:%M:%SZ)
