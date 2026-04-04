@@ -4,7 +4,7 @@ name: Check Ghost Releases
 
 on:
   schedule:
-    - cron: '0 */6 * * *'  # Every 6 hours
+    - cron: '0 */12 * * *'  # Every 12 hours
   workflow_dispatch:  # Allow manual trigger
   workflow_call: # Allow this workflow to be called by other workflows
 
@@ -59,7 +59,7 @@ jobs:
       - name: Check if build needed
         id: check
         run: |
-          LATEST="v${{ steps.ghost.outputs.version }}"
+          LATEST="${{ steps.ghost.outputs.version }}"
           LAST_BUILT="${{ steps.last-built.outputs.version }}"
           
           echo "Latest: $LATEST"
