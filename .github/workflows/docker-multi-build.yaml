@@ -197,10 +197,9 @@ jobs:
           annotations: |
             type=org.opencontainers.image.description,value=${{ github.event.repository.description }}
           tags: |
-            type=raw,value=v${{ steps.versions.outputs.ghost-version }}
+            type=raw,value=${{ steps.versions.outputs.ghost-version }}
             type=raw,value=latest
             type=raw,value=${{ github.event.inputs.manual-tag }},enable=${{ github.event_name == 'workflow_dispatch' }}
-            type=raw,value=auto,enable=${{ github.event_name == 'workflow_run' }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
@@ -230,7 +229,7 @@ jobs:
             --annotation='index:org.opencontainers.image.created=${{ steps.timestamp.outputs.timestamp }}' \
             --annotation='index:org.opencontainers.image.url=${{ github.event.repository.url }}' \
             --annotation='index:org.opencontainers.image.source=${{ github.event.repository.url }}' \
-            --annotation='index:org.opencontainers.image.version=v${{ steps.versions.outputs.ghost-version }}' \
+            --annotation='index:org.opencontainers.image.version=${{ steps.versions.outputs.ghost-version }}' \
             --annotation='index:io.artifacthub.package.readme-url=https://raw.githubusercontent.com/sredevopsorg/ghost-on-kubernetes/main/README.md' \
             --annotation='index:org.opencontainers.image.vendor=SREDevOps.org' \
             --annotation='index:io.artifacthub.package.maintainers=[{"name":"Nicolas Georger","email":"info@sredevops.org"}]' \
@@ -251,31 +250,3 @@ jobs:
         continue-on-error: true
         run: |
           echo "DIGEST_0=$(docker buildx imagetools inspect --raw ${{ env.GHCR_IMAGE }}:${{ steps.meta.outputs.version }} | jq -r '.manifests[0].digest')" >> $GITHUB_OUTPUT
-
-      # - name: Sign image with a key
-      #   run: |
-      #     images=""
-      #     for tag in ${TAGS}; do
-      #       images+="${tag}@${DIGEST_0} "
-      #     done
-      #     cosign sign --recursive --yes --key env://COSIGN_PRIVATE_KEY ${images}
-      #   env:
-      #     TAGS: ${{ steps.meta.outputs.tags }}
-      #     COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
-      #     COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
-      #     DIGEST_0: ${{ steps.inspect.outputs.DIGEST_0 }}
-
-      # - name: Login to Docker Hub
-      #   uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
-      #   continue-on-error: true
-      #   with:
-      #     username: ${{ secrets.DOCKER_USER }}
-      #     password: ${{ secrets.DOCKER_PASS }}
-
-      # - name: Push to Docker Hub
-      #   continue-on-error: true
-      #   run: |
-      #     docker buildx imagetools create \
-      #       --tag ${{ env.DOCKER_IMAGE }}:${{ steps.meta.outputs.version }} \
-      #       --tag ${{ env.DOCKER_IMAGE }}:latest-docker \
-      #     ${{ env.GHCR_IMAGE }}:${{ steps.meta.outputs.version }}
