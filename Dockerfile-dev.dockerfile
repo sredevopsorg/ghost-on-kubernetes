@@ -15,6 +15,9 @@ RUN groupadd -g 65532 nonroot && \
     usermod -aG nonroot nonroot && \
     mkdir -pv /home/nonroot && \
     chown -Rfv 65532:65532 /home/nonroot
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
 
 USER nonroot
 ENV NODE_ENV=development
@@ -32,10 +35,12 @@ RUN mkdir -pv "$GHOST_INSTALL"
 
 # Install the latest version of Ghost CLI globally and config some workarounds to build arm64 version in Github without timeout failures
 RUN yarn config set network-timeout 60000 && \
-    yarn config set inline-builds true && \
     npm config set fetch-timeout 60000 && \
-    npm config set omit dev && \
-    export NODE_ENV=development
+    npm config set omit dev
+
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable || true
 
 RUN npx ghost-cli install $GHOST_VERSION --dir $GHOST_INSTALL --db mysql --dbhost mysql --no-prompt --no-stack --no-setup --color --process local
 
