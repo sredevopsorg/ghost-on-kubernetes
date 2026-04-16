@@ -46,7 +46,7 @@ RUN npx ghost-cli install $GHOST_VERSION --dir $GHOST_INSTALL --db mysql --dbhos
 
 WORKDIR /home/nonroot/app/ghost/current
 #RUN npm install --save --legacy-peer-deps sqlite3
-RUN pnpm add sqlite3
+RUN pnpm add --workspace-root sqlite3
 WORKDIR /home/nonroot
 
 # Move the original content directory to a backup location, create a new content directory, set the correct ownership and permissions, and switch back to the "node" user
