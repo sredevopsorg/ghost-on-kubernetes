@@ -45,7 +45,8 @@ RUN corepack enable || true
 RUN npx ghost-cli install $GHOST_VERSION --dir $GHOST_INSTALL --db mysql --dbhost mysql --no-prompt --no-stack --no-setup --color --process local
 
 WORKDIR /home/nonroot/app/ghost/current
-RUN npm install --save --legacy-peer-deps sqlite3
+#RUN npm install --save --legacy-peer-deps sqlite3
+RUN pnpm add sqlite3
 WORKDIR /home/nonroot
 
 # Move the original content directory to a backup location, create a new content directory, set the correct ownership and permissions, and switch back to the "node" user
