@@ -78,6 +78,36 @@ helm install my-ghost ./ghost-on-kubernetes \
   --set persistence.ghost.storageClassName=your-storage-class
 ```
 
+### With Valkey Application Caching
+
+Enable the internal non-root Valkey deployment to offload public Content API blocks, analytics, and asset metadata maps:
+Install from the Helm chart repository (recommended):
+
+```bash
+helm repo add sredevopsorg https://sredevopsorg.github.io/ghost-on-kubernetes
+helm repo update
+helm install my-ghost sredevopsorg/ghost-on-kubernetes \
+  --namespace ghost \
+  --create-namespace \
+  --set ghost.url=https://yourdomain.tld \
+  --set valkey.enabled=true \
+  --set valkey.auth.enabled=true \
+  --set valkey.auth.password=your-password \
+  --set persistence.valkey.storageClassName=your-storage-class
+```
+
+Or from the local chart:
+
+```bash
+helm install my-ghost ./ghost-on-kubernetes \
+  --namespace ghost \
+  --create-namespace \
+  --set ghost.url=https://yourdomain.tld \
+  --set valkey.enabled=true \
+  --set valkey.auth.enabled=true \
+  --set valkey.auth.password=your-password \
+  --set persistence.valkey.storageClassName=your-storage-class
+
 ### With cert-manager for TLS
 
 Install from the Helm chart repository (recommended):
@@ -149,12 +179,19 @@ helm install my-ghost ./ghost-on-kubernetes \
 | `ghost.adminUrl` | Ghost admin URL | `https://yourdomain.tld` |
 | `mysql.enabled` | Deploy MySQL StatefulSet | `true` |
 | `mysql.external.host` | External MySQL host | `external-mysql-host` |
+| `valkey.enabled` | Deploy internal non-root Valkey cache | `false` |
+| `valkey.auth.enabled` | Enable password authentication for internal Valkey | `false` |
+| `valkey.external.enabled` | Route application caching to an external Redis/Valkey instance | `false` |
+| `valkey.external.host` | Target host endpoint for external caching | `"external-valkey-host"` |
+| `valkey.external.keyPrefix` | Base keyspace tracking prefix string | `"ghost"` |
 | `persistence.ghost.enabled` | Enable Ghost content persistence | `true` |
 | `persistence.ghost.storageClassName` | StorageClass for Ghost content | `""` |
 | `persistence.ghost.accessMode` | Access mode for Ghost PVC | `ReadWriteOnce` |
 | `persistence.ghost.size` | Ghost content volume size | `1Gi` |
 | `persistence.mysql.enabled` | Enable MySQL persistence | `true` |
 | `persistence.mysql.storageClassName` | StorageClass for MySQL | `""` |
+| `persistence.valkey.enabled` | Enable persistent storage for internal Valkey state | `true` |
+| `persistence.valkey.storageClassName` | StorageClass for Valkey | `""` |
 | `ingress.enabled` | Enable Ingress | `true` |
 | `ingress.className` | Ingress class name | `traefik` |
 | `ingress.preset` | Ingress preset (traefik/nginx/custom) | `traefik` |
@@ -197,6 +234,15 @@ mysql:
     requests:
       cpu: 300m
       memory: 500Mi
+
+valkey:
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
 ```
 
 ### High Availability Setup
@@ -332,6 +378,11 @@ mysql:
     password: secure-password
     rootPassword: secure-root-password
 
+valkey:
+  enabled: true
+  auth:
+    password: secure-password
+
 persistence:
   ghost:
     storageClassName: fast-ssd
@@ -339,6 +390,9 @@ persistence:
   mysql:
     storageClassName: standard
     size: 10Gi
+  valkey:
+    storageClassName: standard
+    size: 2Gi
 
 ingress:
   className: nginx
