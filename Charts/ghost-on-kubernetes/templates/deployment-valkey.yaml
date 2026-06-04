@@ -1,0 +1,105 @@
+{{- if .Values.valkey.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ghost-on-kubernetes.fullname" . }}-valkey
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ include "ghost-on-kubernetes.name" . }}-valkey
+    {{- include "ghost-on-kubernetes.labels" . | nindent 4 }}
+    app.kubernetes.io/component: cache
+spec:
+  replicas: {{ .Values.valkey.replicaCount | default 1 }}
+  selector:
+    matchLabels:
+      app: {{ include "ghost-on-kubernetes.name" . }}-valkey
+  template:
+    metadata:
+      labels:
+        app: {{ include "ghost-on-kubernetes.name" . }}-valkey
+    spec:
+      initContainers:
+      - name: valkey-init
+        securityContext:
+          {{- toYaml .Values.initContainer.securityContext | nindent 10 }}
+        image: "{{ .Values.initContainer.image.repository }}:{{ .Values.initContainer.image.tag }}"
+        imagePullPolicy: {{ .Values.initContainer.image.pullPolicy }}
+        command:
+        - /bin/sh
+        - -c
+        - |
+          set -e
+          echo 'Changing ownership of valkey data directory to 65532:65532'
+          chown -Rfv 65532:65532 /mnt/data || echo 'Error changing ownership of valkey data directory to 65532:65532'
+          echo 'Changing ownership of tmp mount directory to 65532:65532'
+          chown -Rfv 65532:65532 /mnt/tmp || echo 'Error changing ownership of tmp mount directory to 65532:65532'
+        volumeMounts:
+        - name: valkey-data
+          mountPath: /mnt/data
+          readOnly: false
+        - name: valkey-tmp
+          mountPath: /mnt/tmp
+          readOnly: false
+        resources:
+          {{- toYaml .Values.valkey.initResources | nindent 10 }}
+      containers:
+      - name: valkey
+        securityContext:
+          {{- toYaml .Values.valkey.securityContext | nindent 10 }}
+        image: "{{ .Values.valkey.image.repository }}:{{ .Values.valkey.image.tag }}"
+        imagePullPolicy: {{ .Values.valkey.image.pullPolicy }}
+        # Default Valkey images run as user 999; explicitly executing valkey-server points config data to our writable directories
+        command:
+        - valkey-server
+        - --dir
+        - /data
+        - --protected-mode
+        - "no"
+        {{- if .Values.valkey.auth.enabled }}
+        - --requirepass
+        - $(VALKEY_PASSWORD)
+        {{- end }}
+        {{- if .Values.valkey.auth.enabled }}
+        env:
+        - name: VALKEY_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "ghost-on-kubernetes.fullname" . }}-valkey
+              key: valkey-password
+        {{- end }}
+        resources:
+          {{- toYaml .Values.valkey.resources | nindent 10 }}
+        ports:
+        - containerPort: 6379
+          protocol: TCP
+          name: valkey
+        volumeMounts:
+        - name: valkey-data
+          mountPath: /data
+          readOnly: false
+        - name: valkey-tmp
+          mountPath: /tmp
+          readOnly: false
+      automountServiceAccountToken: false
+      {{- if .Values.valkey.affinity.enabled }}
+      affinity:
+        {{- $yaml := toYaml .Values.valkey.affinity | replace "enabled: true\n" "" | replace "enabled: true" "" }}
+        {{ $yaml | nindent 8 }}
+      {{- end }}
+
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      volumes:
+      {{- if and .Values.persistence.valkey.enabled .Values.valkey.enabled }}
+      - name: valkey-data
+        persistentVolumeClaim:
+          claimName: {{ include "ghost-on-kubernetes.fullname" . }}-valkey-pvc
+      {{- else }}
+      - name: valkey-data
+        emptyDir:
+          sizeLimit: {{ .Values.volumes.valkeyData.sizeLimit | default "256Mi" }}
+      {{- end }}
+      - name: valkey-tmp
+        emptyDir:
+          sizeLimit: {{ .Values.volumes.valkeyTmp.sizeLimit | default "128Mi" }}
+{{- end }}

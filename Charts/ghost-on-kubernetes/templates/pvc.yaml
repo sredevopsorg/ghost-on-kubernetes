@@ -42,3 +42,24 @@ spec:
 {{- end }}
 
 ---
+{{- if and .Values.valkey.enabled .Values.persistence.valkey.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "ghost-on-kubernetes.fullname" . }}-valkey-pvc
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ include "ghost-on-kubernetes.name" . }}-valkey
+    {{- include "ghost-on-kubernetes.labels" . | nindent 4 }}
+    app.kubernetes.io/component: cache-storage
+spec:
+  {{- if .Values.persistence.valkey.storageClassName }}
+  storageClassName: {{ .Values.persistence.valkey.storageClassName | quote }}
+  {{- end }}
+  volumeMode: Filesystem
+  accessModes:
+    - {{ .Values.persistence.valkey.accessMode }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.valkey.size }}
+{{- end }}
