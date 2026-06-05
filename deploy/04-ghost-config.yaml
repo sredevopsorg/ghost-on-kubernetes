@@ -66,7 +66,9 @@ stringData:
             "port": 6379,
             "db": 0,
             "ttl": 86400,
-            "keyPrefix": "ghost:"
+            "keyPrefix": "ghost:",
+            "username": "default",
+            "password": "changeme"
           },
           "imageSizes": {
             "adapter": "Redis",
