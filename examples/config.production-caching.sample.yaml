@@ -1,0 +1,100 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ghost-config-prod
+  namespace: ghost-on-kubernetes
+type: Opaque
+stringData:
+  config.production.json: |-
+    {
+      "url": "https://yourdomain.tld",
+      "admin": {
+        "url": "https://yourdomain.tld"
+      },
+      "server": {
+        "port": 2368,
+        "host": "0.0.0.0"
+      },
+      "mail": {
+        "transport": "SMTP",
+        "from": "user@server.com",
+        "options": {
+          "service": "Google",
+          "host": "smtp.gmail.com",
+          "port": 465,
+          "secure": true,
+          "auth": {
+            "user": "user@server.com",
+            "pass": "passsword"
+          }
+        }
+      },
+      "logging": {
+        "transports": [
+          "stdout"
+        ]
+      },
+      "database": {
+        "client": "mysql",
+        "connection":
+        {
+          "host": "ghost-on-kubernetes-mysql-service",
+          "user": "mysql-db-user",
+          "password": "mysql-db-password",
+          "database": "mysql-db-name",
+          "port": "3306"
+        }
+      },
+      "hostSettings": {
+        "postsPublicCache": { "enabled": true },
+        "linkRedirectsPublicCache": { "enabled": true },
+        "tagsPublicCache": { "enabled": true },
+        "statsCache": { "enabled": true }
+      },
+      "adapters": {
+        "active": "Redis",
+        "cache": {
+          "Redis": {
+            "host": "ghost-on-kubernetes-valkey-service",
+            "port": 6379,
+            "db": 0,
+            "ttl": 86400,
+            "keyPrefix": "ghost:"
+          },
+          "imageSizes": {
+            "adapter": "Redis",
+            "ttl": 86400,
+            "keyPrefix": "ghost:imageSizes:"
+          },
+          "gscan": {
+            "adapter": "Redis",
+            "ttl": 43200,
+            "keyPrefix": "ghost:gscan:"
+          },
+          "postsPublic": {
+            "adapter": "Redis",
+            "ttl": 1800,
+            "keyPrefix": "ghost:postsPublic:"
+          },
+          "tagsPublic": {
+            "adapter": "Redis",
+            "ttl": 3600,
+            "keyPrefix": "ghost:tagsPublic:"
+          },
+          "linkRedirectsPublic": {
+            "adapter": "Redis",
+            "ttl": 7200,
+            "keyPrefix": "ghost:linkRedirectsPublic:"
+          },
+          "stats": {
+            "adapter": "Redis",
+            "ttl": 900,
+            "keyPrefix": "ghost:stats:"
+          }
+        }
+      },
+      "process": "local",
+      "paths": {
+        "contentPath": "/home/nonroot/app/ghost/content"
+      }
+    }
