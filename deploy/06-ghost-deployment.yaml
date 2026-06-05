@@ -10,8 +10,8 @@ metadata:
     app.kubernetes.io/version: '6.0'
     app.kubernetes.io/component: ghost
     app.kubernetes.io/part-of: ghost-on-kubernetes
-    
-    
+
+
 spec:
   # If you want HA for your Ghost instance, you can increase the number of replicas AFTER creation and you need to adjust the storage class. See 02-pvc.yaml for more information.
   replicas: 1
@@ -140,6 +140,12 @@ spec:
         env:
         - name: NODE_ENV
           value: production
+        # Uncomment the following to enable Valkey authentication
+        # - name: VALKEY_PASSWORD
+        #   valueFrom:
+        #     secretKeyRef:
+        #       name: ghost-on-kubernetes-valkey-env
+        #       key: VALKEY_PASSWORD
         resources:
           limits:
             cpu: 800m

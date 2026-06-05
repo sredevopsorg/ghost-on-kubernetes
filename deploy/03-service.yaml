@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/version: '6.0'
     app.kubernetes.io/component: service-frontend
     app.kubernetes.io/part-of: ghost-on-kubernetes
-    
+
 
 spec:
   ports:
@@ -35,7 +35,7 @@ metadata:
     app.kubernetes.io/version: '6.0'
     app.kubernetes.io/component: service-database
     app.kubernetes.io/part-of: ghost-on-kubernetes
-    
+
 spec:
   ports:
   - port: 3306
@@ -46,4 +46,28 @@ spec:
   clusterIP: None
   selector:
     app: ghost-on-kubernetes-mysql
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ghost-on-kubernetes-valkey-service
+  namespace: ghost-on-kubernetes
+  labels:
+    app: ghost-on-kubernetes-valkey
+    app.kubernetes.io/name: ghost-on-kubernetes-valkey-service
+    app.kubernetes.io/instance: ghost-on-kubernetes
+    app.kubernetes.io/version: '6.0'
+    app.kubernetes.io/component: service-cache
+    app.kubernetes.io/part-of: ghost-on-kubernetes
+
+spec:
+  ports:
+  - port: 6379
+    protocol: TCP
+    targetPort: valkey
+    name: valkey
+  type: ClusterIP
+  selector:
+    app: ghost-on-kubernetes-valkey
 
