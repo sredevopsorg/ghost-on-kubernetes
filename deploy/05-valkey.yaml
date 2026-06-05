@@ -21,44 +21,14 @@ spec:
       labels:
         app: ghost-on-kubernetes-valkey
     spec:
-      initContainers:
-      - name: valkey-init
-        securityContext:
-          readOnlyRootFilesystem: true
-          allowPrivilegeEscalation: false
-        image: docker.io/busybox:stable-musl
-        imagePullPolicy: Always
-        command:
-        - /bin/sh
-        - -c
-        - |
-          set -e
-          echo 'Changing ownership of valkey data directory to 65532:65532'
-          chown -Rfv 65532:65532 /mnt/data || echo 'Error changing ownership of valkey data directory to 65532:65532'
-          echo 'Changing ownership of tmp mount directory to 65532:65532'
-          chown -Rfv 65532:65532 /mnt/tmp || echo 'Error changing ownership of tmp mount directory to 65532:65532'
-        volumeMounts:
-        - name: valkey-data
-          mountPath: /mnt/data
-          readOnly: false
-        - name: valkey-tmp
-          mountPath: /mnt/tmp
-          readOnly: false
-        resources:
-          requests:
-            memory: 0Mi
-            cpu: 0m
-          limits:
-            memory: 256Mi
-            cpu: 200m
-
       containers:
       - name: valkey
         securityContext:
           readOnlyRootFilesystem: true
           allowPrivilegeEscalation: false
           runAsNonRoot: true
-          runAsUser: 65532
+          runAsUser: 999
+          runAsGroup: 1000
 
         image: docker.io/valkey/valkey:9.1-alpine
         imagePullPolicy: Always
@@ -115,6 +85,7 @@ spec:
       #                 - 'true'
 
       securityContext:
+        fsGroup: 1000
         seccompProfile:
           type: RuntimeDefault
 
