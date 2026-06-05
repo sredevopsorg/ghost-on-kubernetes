@@ -9,7 +9,7 @@ metadata:
     {{- include "ghost-on-kubernetes.labels" . | nindent 4 }}
     app.kubernetes.io/component: cache
 spec:
-  replicas: {{ .Values.valkey.replicaCount | default 1 }}
+  replicas: 1
   selector:
     matchLabels:
       app: {{ include "ghost-on-kubernetes.name" . }}-valkey
@@ -18,30 +18,6 @@ spec:
       labels:
         app: {{ include "ghost-on-kubernetes.name" . }}-valkey
     spec:
-      initContainers:
-      - name: valkey-init
-        securityContext:
-          {{- toYaml .Values.initContainer.securityContext | nindent 10 }}
-        image: "{{ .Values.initContainer.image.repository }}:{{ .Values.initContainer.image.tag }}"
-        imagePullPolicy: {{ .Values.initContainer.image.pullPolicy }}
-        command:
-        - /bin/sh
-        - -c
-        - |
-          set -e
-          echo 'Changing ownership of valkey data directory to 65532:65532'
-          chown -Rfv 65532:65532 /mnt/data || echo 'Error changing ownership of valkey data directory to 65532:65532'
-          echo 'Changing ownership of tmp mount directory to 65532:65532'
-          chown -Rfv 65532:65532 /mnt/tmp || echo 'Error changing ownership of tmp mount directory to 65532:65532'
-        volumeMounts:
-        - name: valkey-data
-          mountPath: /mnt/data
-          readOnly: false
-        - name: valkey-tmp
-          mountPath: /mnt/tmp
-          readOnly: false
-        resources:
-          {{- toYaml .Values.valkey.initResources | nindent 10 }}
       containers:
       - name: valkey
         securityContext:
@@ -88,6 +64,7 @@ spec:
       {{- end }}
 
       securityContext:
+        fsGroup: {{ .Values.valkey.securityContext.runAsGroup }}
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       volumes:
       {{- if and .Values.persistence.valkey.enabled .Values.valkey.enabled }}

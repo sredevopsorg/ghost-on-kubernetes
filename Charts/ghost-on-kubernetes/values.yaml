@@ -141,8 +141,6 @@ valkey:
   # Enable/disable internal cluster Valkey deployment
   enabled: false
 
-  replicaCount: 1
-
   # Global cache entry expiration in seconds (Default: 1 hour)
   ttl:
     imageSizes: 86400
@@ -159,7 +157,7 @@ valkey:
 
   # Authentication configuration for internal deployment
   auth:
-    enabled: false
+    enabled: true
     username: "default"
     password: "changeme"
 
@@ -196,7 +194,8 @@ valkey:
     readOnlyRootFilesystem: true
     allowPrivilegeEscalation: false
     runAsNonRoot: true
-    runAsUser: 65532
+    runAsUser: 999
+    runAsGroup: 1000
 
   # valkey Node affinity (optional)
   affinity:
