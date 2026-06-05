@@ -3,13 +3,6 @@ kind: Secret
 metadata:
   name: ghost-config-prod
   namespace: ghost-on-kubernetes
-  labels:
-    app: ghost-on-kubernetes
-    app.kubernetes.io/name: ghost-config-prod
-    app.kubernetes.io/instance: ghost-on-kubernetes
-    app.kubernetes.io/version: '6.0'
-    app.kubernetes.io/component: ghost-config
-    app.kubernetes.io/part-of: ghost-on-kubernetes
 type: Opaque
 stringData:
   config.production.json: |-
@@ -66,9 +59,7 @@ stringData:
             "port": 6379,
             "db": 0,
             "ttl": 86400,
-            "keyPrefix": "ghost:",
-            "username": "default",
-            "password": "changeme"
+            "keyPrefix": "ghost:"
           },
           "imageSizes": {
             "adapter": "Redis",

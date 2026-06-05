@@ -1,40 +1,22 @@
 apiVersion: v1
 kind: Secret
 metadata:
-  name: ghost-config-prod
+  name: ghost-config-dev
   namespace: ghost-on-kubernetes
-  labels:
-    app: ghost-on-kubernetes
-    app.kubernetes.io/name: ghost-config-prod
-    app.kubernetes.io/instance: ghost-on-kubernetes
-    app.kubernetes.io/version: '6.0'
-    app.kubernetes.io/component: ghost-config
-    app.kubernetes.io/part-of: ghost-on-kubernetes
 type: Opaque
 stringData:
-  config.production.json: |-
+  config.development.json: |-
     {
-      "url": "https://yourdomain.tld",
+      "url": "http://localhost:2368",
       "admin": {
-        "url": "https://yourdomain.tld"
+        "url": "http://localhost:2368"
       },
       "server": {
         "port": 2368,
         "host": "0.0.0.0"
       },
       "mail": {
-        "transport": "SMTP",
-        "from": "user@server.com",
-        "options": {
-          "service": "Google",
-          "host": "smtp.gmail.com",
-          "port": 465,
-          "secure": true,
-          "auth": {
-            "user": "user@server.com",
-            "pass": "passsword"
-          }
-        }
+        "transport": "Direct"
       },
       "logging": {
         "transports": [
@@ -66,9 +48,7 @@ stringData:
             "port": 6379,
             "db": 0,
             "ttl": 86400,
-            "keyPrefix": "ghost:",
-            "username": "default",
-            "password": "changeme"
+            "keyPrefix": "ghost:"
           },
           "imageSizes": {
             "adapter": "Redis",

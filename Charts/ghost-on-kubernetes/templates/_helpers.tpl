@@ -115,3 +115,68 @@ MySQL password
 {{- end }}
 {{- end }}
 
+{{/*
+Valkey host
+*/}}
+{{- define "ghost-on-kubernetes.valkey.host" -}}
+{{- if .Values.valkey.enabled }}
+{{- printf "%s-valkey-service" (include "ghost-on-kubernetes.fullname" .) }}
+{{- else }}
+{{- .Values.valkey.external.host }}
+{{- end }}
+{{- end }}
+
+{{/*
+Valkey port
+*/}}
+{{- define "ghost-on-kubernetes.valkey.port" -}}
+{{- if .Values.valkey.enabled }}
+{{- default 6379 .Values.service.valkey.port }}
+{{- else }}
+{{- .Values.valkey.external.port }}
+{{- end }}
+{{- end }}
+
+{{/*
+Valkey database
+*/}}
+{{- define "ghost-on-kubernetes.valkey.database" -}}
+{{- if .Values.valkey.enabled }}
+{{- default 0 .Values.valkey.database }}
+{{- else }}
+{{- .Values.valkey.external.database }}
+{{- end }}
+{{- end }}
+
+{{/*
+Valkey key prefix
+*/}}
+{{- define "ghost-on-kubernetes.valkey.keyPrefix" -}}
+{{- if .Values.valkey.enabled }}
+{{- printf "ghost:" }}
+{{- else }}
+{{- printf "%s:" (trimSuffix ":" .Values.valkey.external.keyPrefix) }}
+{{- end }}
+{{- end }}
+
+{{/*
+Valkey username
+*/}}
+{{- define "ghost-on-kubernetes.valkey.username" -}}
+{{- if .Values.valkey.enabled }}
+{{- .Values.valkey.auth.username }}
+{{- else }}
+{{- .Values.valkey.external.username }}
+{{- end }}
+{{- end }}
+
+{{/*
+Valkey password
+*/}}
+{{- define "ghost-on-kubernetes.valkey.password" -}}
+{{- if .Values.valkey.enabled }}
+{{- .Values.valkey.auth.password }}
+{{- else }}
+{{- .Values.valkey.external.password }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ghost-on-kubernetes-valkey
+  namespace: ghost-on-kubernetes
+  labels:
+    app: ghost-on-kubernetes-valkey
+    app.kubernetes.io/name: ghost-on-kubernetes-valkey
+    app.kubernetes.io/instance: ghost-on-kubernetes
+    app.kubernetes.io/version: '6.0'
+    app.kubernetes.io/component: cache
+    app.kubernetes.io/part-of: ghost-on-kubernetes
+
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ghost-on-kubernetes-valkey
+  template:
+    metadata:
+      labels:
+        app: ghost-on-kubernetes-valkey
+    spec:
+      containers:
+      - name: valkey
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 999
+          runAsGroup: 1000
+
+        image: docker.io/valkey/valkey:9.1-alpine
+        imagePullPolicy: Always
+        # Default Valkey images run as user 999; explicitly executing valkey-server points config data to our writable directories
+        command:
+        - valkey-server
+        - --dir
+        - /data
+        - --protected-mode
+        - "no"
+        - --requirepass
+        - $(VALKEY_PASSWORD)
+
+        # Comment the following to disable Valkey authentication
+        env:
+        - name: VALKEY_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: ghost-on-kubernetes-valkey-env
+              key: VALKEY_PASSWORD
+
+        resources:
+          requests:
+            memory: 128Mi
+            cpu: 100m
+          limits:
+            memory: 512Mi
+            cpu: 500m
+
+        ports:
+        - containerPort: 6379
+          protocol: TCP
+          name: valkey
+
+        volumeMounts:
+        - name: valkey-data
+          mountPath: /data
+          readOnly: false
+        - name: valkey-tmp
+          mountPath: /tmp
+          readOnly: false
+
+      automountServiceAccountToken: false
+
+      # Optional: Uncomment the following to specify node selectors
+      # affinity:
+      #   nodeAffinity:
+      #     requiredDuringSchedulingIgnoredDuringExecution:
+      #       nodeSelectorTerms:
+      #         - matchExpressions:
+      #             - key: node-role.kubernetes.io/worker
+      #               operator: In
+      #               values:
+      #                 - 'true'
+
+      securityContext:
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+
+      volumes:
+      - name: valkey-data
+        persistentVolumeClaim:
+          claimName: ghost-on-kubernetes-valkey-pvc
+      - name: valkey-tmp
+        emptyDir:
+          sizeLimit: 128Mi

@@ -50,6 +50,58 @@
         }
       }
     },
+    "valkey": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Deploy Valkey cache Deployment"
+        },
+        "replicaCount": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Number of Valkey pod replicas"
+        },
+        "ttl": {
+          "type": "object",
+          "description": "Cache TTL values in seconds",
+          "properties": {
+            "imageSizes": {"type": "integer", "minimum": 0},
+            "gscan": {"type": "integer", "minimum": 0},
+            "postsPublic": {"type": "integer", "minimum": 0},
+            "tagsPublic": {"type": "integer", "minimum": 0},
+            "linkRedirectsPublic": {"type": "integer", "minimum": 0},
+            "stats": {"type": "integer", "minimum": 0}
+          }
+        },
+        "auth": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enable Valkey authentication"
+            },
+            "username": {"type": "string"},
+            "password": {"type": "string"}
+          }
+        },
+        "external": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Use external Valkey/Redis instance"
+            },
+            "host": {"type": "string"},
+            "port": {"type": "integer", "minimum": 1, "maximum": 65535},
+            "database": {"type": "integer", "minimum": 0},
+            "keyPrefix": {"type": "string"},
+            "username": {"type": "string"},
+            "password": {"type": "string"}
+          }
+        }
+      }
+    },
     "persistence": {
       "type": "object",
       "properties": {

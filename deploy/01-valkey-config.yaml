@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ghost-on-kubernetes-valkey-env
+  namespace: ghost-on-kubernetes
+  labels:
+    app: ghost-on-kubernetes-valkey
+    app.kubernetes.io/name: ghost-on-kubernetes-valkey-env
+    app.kubernetes.io/instance: ghost-on-kubernetes
+    app.kubernetes.io/version: '6.0'
+    app.kubernetes.io/component: cache-secret
+    app.kubernetes.io/part-of: ghost-on-kubernetes
+type: Opaque
+stringData:
+  # Set to empty string to disable authentication, or set a strong password for production
+  VALKEY_PASSWORD: "changeme"

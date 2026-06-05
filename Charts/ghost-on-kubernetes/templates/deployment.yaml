@@ -112,6 +112,13 @@ spec:
         env:
         - name: NODE_ENV
           value: production
+        {{- if and .Values.valkey.enabled .Values.valkey.auth.enabled }}
+        - name: VALKEY_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "ghost-on-kubernetes.fullname" . }}-valkey
+              key: valkey-password
+        {{- end }}
         resources:
           {{- toYaml .Values.ghost.resources | nindent 10 }}
         volumeMounts:
