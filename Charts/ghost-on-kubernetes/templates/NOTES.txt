@@ -37,11 +37,24 @@ Your Ghost CMS has been deployed to namespace: {{ .Release.Namespace }}
 3. Using external MySQL at: {{ .Values.mysql.external.host }}:{{ .Values.mysql.external.port }}
 {{- end }}
 
-4. Monitor Ghost logs:
+{{- if or .Values.valkey.enabled .Values.valkey.external.enabled }}
+{{- if .Values.valkey.enabled }}
+
+4. Valkey is deployed internally as an application cache.
+   Connection Endpoint: {{ include "ghost-on-kubernetes.valkey.host" . }}:{{ include "ghost-on-kubernetes.valkey.port" . }}
+   Authentication: {{ if .Values.valkey.auth.enabled }}Enabled (Secret: {{ include "ghost-on-kubernetes.fullname" . }}-valkey){{ else }}Disabled{{ end }}
+{{- else }}
+
+4. Valkey caching is routed to an external instance.
+   Target Endpoint: {{ .Values.valkey.external.host }}:{{ .Values.valkey.external.port }}
+{{- end }}
+{{- end }}
+
+5. Monitor Ghost logs:
 
    kubectl logs -n {{ .Release.Namespace }} -l app.kubernetes.io/name={{ include "ghost-on-kubernetes.name" . }} -f
 
-5. To complete Ghost setup, visit your domain and follow the admin setup wizard.
+6. To complete Ghost setup, visit your domain and follow the admin setup wizard.
 
 {{- if and .Values.mysql.enabled (not .Values.persistence.mysql.enabled) }}
 

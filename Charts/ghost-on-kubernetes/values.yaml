@@ -136,6 +136,79 @@ mysql:
                 values:
                   - "true"
 
+# Valkey configuration
+valkey:
+  # Enable/disable internal cluster Valkey deployment
+  enabled: false
+
+  # Global cache entry expiration in seconds (Default: 1 hour)
+  ttl:
+    imageSizes: 86400
+    gscan: 43200
+    postsPublic: 1800
+    tagsPublic: 3600
+    linkRedirectsPublic: 7200
+    stats: 900
+
+  image:
+    repository: docker.io/valkey/valkey
+    tag: "9.1-alpine"
+    pullPolicy: IfNotPresent
+
+  # Authentication configuration for internal deployment
+  auth:
+    enabled: true
+    username: "default"
+    password: "changeme"
+
+  # External Valkey/Redis configuration (used when valkey.enabled=false)
+  external:
+    enabled: false
+    host: "external-valkey-host"
+    port: 6379
+    database: 0
+    keyPrefix: "ghost"
+    username: "default"
+    password: "changeme"
+
+  # Resource limits for the internal deployment
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+  # Init container resources for volume mounting permission fixes
+  initResources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 0m
+      memory: 0Mi
+
+  # Security context matching project non-root standards
+  securityContext:
+    readOnlyRootFilesystem: true
+    allowPrivilegeEscalation: false
+    runAsNonRoot: true
+    runAsUser: 999
+    runAsGroup: 1000
+
+  # valkey Node affinity (optional)
+  affinity:
+    enabled: false
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: node-role.kubernetes.io/worker
+                operator: In
+                values:
+                  - "true"
+
 # Persistence configuration
 persistence:
   ghost:
@@ -152,6 +225,12 @@ persistence:
     accessMode: ReadWriteOnce
     size: 1Gi
 
+  valkey:
+    enabled: true
+    storageClassName: ""
+    accessMode: ReadWriteOnce
+    size: 1Gi
+
 # Service configuration
 service:
   type: ClusterIP
@@ -160,6 +239,10 @@ service:
   mysql:
     type: ClusterIP
     port: 3306
+
+  valkey:
+    type: ClusterIP
+    port: 6379
 
 # Ingress configuration
 ingress:
@@ -237,6 +320,10 @@ volumes:
   mysqlTmp:
     sizeLimit: 128Mi
   mysqlSocket:
+    sizeLimit: 128Mi
+  valkeyData:
+    sizeLimit: 256Mi
+  valkeyTmp:
     sizeLimit: 128Mi
 
 # Pod security context

@@ -41,3 +41,25 @@ spec:
   selector:
     app: {{ include "ghost-on-kubernetes.name" . }}-mysql
 {{- end }}
+---
+{{- if .Values.valkey.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "ghost-on-kubernetes.fullname" . }}-valkey-service
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ include "ghost-on-kubernetes.name" . }}-valkey
+    {{- include "ghost-on-kubernetes.labels" . | nindent 4 }}
+    app.kubernetes.io/component: service-cache
+spec:
+  ports:
+  - port: {{ .Values.service.valkey.port }}
+    protocol: TCP
+    targetPort: valkey
+    name: valkey
+  type: {{ .Values.service.valkey.type }}
+  clusterIP: None
+  selector:
+    app: {{ include "ghost-on-kubernetes.name" . }}-valkey
+{{- end }}
