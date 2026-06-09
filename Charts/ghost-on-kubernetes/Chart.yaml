@@ -2,7 +2,7 @@ apiVersion: v2
 name: ghost-on-kubernetes
 description: Deploy the leading open-source publishing platform, Ghost, on Kubernetes and Docker with maximum security and efficiency using a hardened, multi-arch container image.
 type: application
-version: "1.0.9"
+version: "1.1.1"
 appVersion: "6.44.1"
 keywords:
   - ghost
