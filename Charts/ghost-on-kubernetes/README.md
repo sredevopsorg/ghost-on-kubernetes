@@ -107,6 +107,7 @@ helm install my-ghost ./ghost-on-kubernetes \
   --set valkey.auth.enabled=true \
   --set valkey.auth.password=your-password \
   --set persistence.valkey.storageClassName=your-storage-class
+```
 
 ### With cert-manager for TLS
 
