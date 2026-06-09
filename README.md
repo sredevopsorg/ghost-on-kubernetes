@@ -60,7 +60,24 @@ Follow these steps to deploy Ghost on your Kubernetes cluster.
 1. A functioning Kubernetes cluster (kubectl configured).
 2. A provisioned StorageClass (required for PVCs).
 
-### **0. Clone (or fork) the Repository**
+### **0. Option 1: Deploy with Helm**
+
+Alternatively, you can install the chart from our Helm repository (recommended):
+
+Detailed values and configurations available within [Chart readme](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/Charts/ghost-on-kubernetes/README.md) and [Chart values examples](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/Charts/ghost-on-kubernetes/examples)
+
+```bash
+helm repo add sredevopsorg https://sredevopsorg.github.io/ghost-on-kubernetes
+helm repo update
+helm install my-ghost sredevopsorg/ghost-on-kubernetes \
+  --namespace ghost \
+  --create-namespace \
+  --set ghost.url=https://yourdomain.tld \
+  --set persistence.ghost.storageClassName=your-storage-class
+```
+
+
+### **0. Option 2: Clone (or fork) the Repository**
 
 ```bash
 ## Clone the repository
@@ -81,18 +98,6 @@ Review the example configuration files and modify the manifests in the deploy/ f
 ### **2. Deployment Sequence**
 
 It is **crucial** to apply the manifests in the correct order to ensure dependency resolution (especially the database components).
-
-Alternatively, you can install the chart from our Helm repository (recommended):
-
-```bash
-helm repo add sredevopsorg https://sredevopsorg.github.io/ghost-on-kubernetes
-helm repo update
-helm install my-ghost sredevopsorg/ghost-on-kubernetes \
-  --namespace ghost \
-  --create-namespace \
-  --set ghost.url=https://yourdomain.tld \
-  --set persistence.ghost.storageClassName=your-storage-class
-```
 
 1. **Create the Namespace:**
 
