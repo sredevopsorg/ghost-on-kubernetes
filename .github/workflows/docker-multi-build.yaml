@@ -1,4 +1,4 @@
-name: Docker Multi build
+name: Docker image variant Multi build
 
 on:
   push:
@@ -30,7 +30,6 @@ on:
 env:
   REGISTRY: ghcr.io
   GHCR_IMAGE: ghcr.io/${{ github.repository }}
-  DOCKER_IMAGE: docker.io/${{ secrets.DOCKER_USER }}/${{ github.event.repository.name }}
 permissions:
   contents: read
 
