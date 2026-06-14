@@ -261,7 +261,7 @@ jobs:
         continue-on-error: true
         run: |
           docker buildx imagetools create \
-            --tag ${{ env.DOCKER_IMAGE }}:${{ steps.meta.outputs.version }} \
+            --tag ${{ env.DOCKER_IMAGE }}:${{ steps.versions.outputs.ghost-version }} \
             --tag ${{ env.DOCKER_IMAGE }}:latest \
             --tag ${{ env.DOCKER_IMAGE }}:main \
           ${{ env.GHCR_IMAGE }}:${{ steps.meta.outputs.version }}
