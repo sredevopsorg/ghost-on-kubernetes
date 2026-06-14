@@ -25,7 +25,6 @@ on:
 env:
   REGISTRY: ghcr.io
   GHCR_IMAGE: ghcr.io/${{ github.repository }}
-  DOCKER_IMAGE: docker.io/${{ secrets.DOCKER_USER }}/${{ github.event.repository.name }}
 permissions:
   contents: read
 
@@ -241,17 +240,3 @@ jobs:
         run: |
           echo "DIGEST_0=$(docker buildx imagetools inspect --raw ${{ env.GHCR_IMAGE }}:${{ steps.meta.outputs.version }} | jq -r '.manifests[0].digest')" >> $GITHUB_OUTPUT
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
-        continue-on-error: true
-        with:
-          username: ${{ secrets.DOCKER_USER }}
-          password: ${{ secrets.DOCKER_PASS }}
-
-      - name: Push to Docker Hub
-        continue-on-error: true
-        run: |
-          docker buildx imagetools create \
-            --tag ${{ env.DOCKER_IMAGE }}:${{ steps.meta.outputs.version }} \
-            --tag ${{ env.DOCKER_IMAGE }}:latest-dev \
-          ${{ env.GHCR_IMAGE }}:${{ steps.meta.outputs.version }}
