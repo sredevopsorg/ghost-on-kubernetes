@@ -88,7 +88,7 @@ jobs:
       - name: Build Production Image (if Dockerfile changed)
         # Use the bash output for conditional check
         if: github.event_name == 'workflow_dispatch' || steps.check_files.outputs.DOCKERFILE_MODIFIED == 'true'
-        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         id: build-test
         with:
           context: .
@@ -102,7 +102,7 @@ jobs:
       - name: Build Development Image (if Dockerfile-dev.dockerfile changed)
         # Use the bash output for conditional check
         if: github.event_name == 'workflow_dispatch' || steps.check_files.outputs.DOCKERFILE_DEV_MODIFIED == 'true'
-        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         id: build-dev-test
         with:
           context: .
@@ -117,7 +117,7 @@ jobs:
       - name: Build Docker Image (if Dockerfile-docker.dockerfile changed)
         # Use the bash output for conditional check
         if: github.event_name == 'workflow_dispatch' || steps.check_files.outputs.DOCKERFILE_DOCKER_MODIFIED == 'true'
-        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         id: build-docker-test
         with:
           context: .
