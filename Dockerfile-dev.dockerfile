@@ -41,10 +41,11 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable || true
 
-RUN npx ghost-cli install $GHOST_VERSION --dir $GHOST_INSTALL --db mysql --dbhost mysql --no-prompt --no-stack --no-setup --color --process local
+RUN npx ghost-cli install $GHOST_VERSION --dir $GHOST_INSTALL --db mysql --dbhost mysql --no-prompt --no-stack --no-setup --color --process local --development
 
 WORKDIR /home/nonroot/app/ghost/current
-RUN pnpm add --workspace-root sqlite3 || true
+RUN pnpm config set store-dir $PWD --global || true
+RUN pnpm add --workspace-root better-sqlite3 || true
 WORKDIR /home/nonroot
 
 # Move the original content directory to a backup location, create a new content directory, set the correct ownership and permissions, and switch back to the "node" user
