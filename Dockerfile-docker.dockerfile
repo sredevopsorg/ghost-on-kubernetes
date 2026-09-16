@@ -1,8 +1,8 @@
 # This Dockerfile is used to build a container image for running Ghost, a popular open-source blogging platform, on Docker.
-# The image is built with official Node 22 on Debian Trixie (LTS Jod)  image and uses the Google's Distroless nodejs22-debian13 image in the runtime for security and minimalism.
+# The image is built with official Node 24 on Debian Trixie (LTS)  image and uses the Google's Distroless nodejs24-debian13 image in the runtime for security and minimalism.
 
 # Stage 1: Build Environment
-FROM docker.io/node:jod-trixie@sha256:2082d2bf902c8835655c6bcfee3594c00ea900498a9f6e2b96d3352536f9e8d8 AS build-env
+FROM docker.io/node:24-trixie@sha256:9516e2220ff64c75233a3d6d8aa90f857381bc6266de5803d620b2b2dbaf9e60 AS build-env
 USER root
 # Installs dependencies for sqlite3 node dependencies, and jemalloc for memory allocation
 RUN apt update && \
@@ -63,7 +63,7 @@ RUN mv -v $GHOST_CONTENT $GHOST_CONTENT_ORIGINAL && \
     chmod -v 1755 $GHOST_CONTENT
 
 # Stage 2: Final Image
-FROM gcr.io/distroless/nodejs22-debian13:debug-nonroot@sha256:243b829804f0fa3a5c065269aa3ab9e751484d753604c6f9343a606f8760b176 AS runtime 
+FROM gcr.io/distroless/nodejs24-debian13:debug-nonroot AS runtime 
 
 # Set the installation directory and content directory for Ghost
 ENV GHOST_INSTALL_SRC=/var/lib/ghost
