@@ -1,8 +1,8 @@
 # This Dockerfile is used to build a container image for running Ghost, a popular open-source blogging platform, on Kubernetes.
-# The image is built with official Node 22 on Debian Bookworm (LTS Jod)  image and uses the Distroless base image for security and minimalism.
+# The image is built with official Node 24 on Debian Trixie (LTS) image and uses the Distroless base image for security and minimalism.
 
 # Stage 1: Build Environment
-FROM docker.io/node:jod-trixie@sha256:2082d2bf902c8835655c6bcfee3594c00ea900498a9f6e2b96d3352536f9e8d8 AS build-env
+FROM docker.io/node:24-trixie@sha256:9516e2220ff64c75233a3d6d8aa90f857381bc6266de5803d620b2b2dbaf9e60 AS build-env
 USER root
 # Create a new user and group named "nonroot" with the UID 65532 and GID 65532, not a member of the root, sudo, and sys groups, and set the home directory to /home/nonroot.
 # This user is used to run the Ghost application in the container for security reasons.
@@ -50,7 +50,7 @@ RUN mv -v $GHOST_CONTENT $GHOST_CONTENT_ORIGINAL && \
     chmod -v 1755 $GHOST_CONTENT
 
 # Stage 2: Final Image
-FROM gcr.io/distroless/nodejs22-debian13:latest@sha256:412a5f8fce490bcff01fc2a73ec43bb62071e1b71dd847eeacaae7b8ecef1dc1 AS runtime 
+FROM gcr.io/distroless/nodejs24-debian13:latest AS runtime 
 
 # Set the installation directory and content directory for Ghost
 ENV GHOST_INSTALL_SRC=/home/nonroot/app/ghost
