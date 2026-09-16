@@ -13,7 +13,7 @@ Este repositorio implementa Ghost CMS v6.xx.x de [@TryGhost (Oficial)](https://g
 ### **Seguridad Mejorada**
 
 * **Ejecución Sin Root:** Tanto los componentes de Ghost como los de MySQL se ejecutan exclusivamente como un **usuario sin privilegios (non-root)** (UID/GID 65532) en Kubernetes, previniendo posibles ataques de escalada de privilegios.
-* **Tiempo de Ejecución Distroless:** Utilizamos **Google Container Tools Distroless Debian 13 - NodeJS 22** como el entorno de tiempo de ejecución final. Las imágenes **Distroless** contienen solo las dependencias de la aplicación y el lenguaje requeridas, **excluyendo shells y gestores de paquetes**, lo que las hace sustancialmente más seguras y reduce la superficie de ataque.
+* **Tiempo de Ejecución Distroless:** Utilizamos **Google Container Tools Distroless Debian 13 - NodeJS 24** como el entorno de tiempo de ejecución final. Las imágenes **Distroless** contienen solo las dependencias de la aplicación y el lenguaje requeridas, **excluyendo shells y gestores de paquetes**, lo que las hace sustancialmente más seguras y reduce la superficie de ataque.
 * **Reducción de Vulnerabilidades:** Al reemplazar `gosu` con un flujo de ejecución de contenedor nativo y adoptar Distroless, eliminamos varias vulnerabilidades críticas reportadas en la imagen original de Ghost:
   * **Resultado:** Solo este cambio redujo **6 vulnerabilidades críticas** y **34 vulnerabilidades altas** reportadas por Docker Scout en la imagen oficial.
 
@@ -29,8 +29,8 @@ Este repositorio implementa Ghost CMS v6.xx.x de [@TryGhost (Oficial)](https://g
   * **Imagen de Producción:** La imagen principal construida utilizando nuestro proceso de construcción endurecido y multi-etapa. Ver el [Dockerfile](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/Dockerfile).
   * **Imagen de Desarrollo:** Una variante adaptada para pruebas, que incluye soporte para SQLite. Ver el [Dockerfile-dev](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/Dockerfile-dev).
 * **Soporte Multi-Arquitectura:** Las imágenes están construidas para las arquitecturas **amd64** y **arm64**.
-* **Build Multi-Etapa:** Utilizamos la imagen oficial de Node 22 Jod LTS para la construcción, lo que reduce significativamente el tamaño final de la imagen y mejora la seguridad al eliminar componentes de construcción innecesarios.
-* **Ghost v6 y NodeJS 22 LTS Actualizados:** Utilizando las últimas versiones estables para seguridad y rendimiento.
+* **Build Multi-Etapa:** Utilizamos la imagen oficial de Node 24 LTS para la construcción, lo que reduce significativamente el tamaño final de la imagen y mejora la seguridad al eliminar componentes de construcción innecesarios.
+* **Ghost v6 y NodeJS 24 LTS Actualizados:** Utilizando las últimas versiones estables para seguridad y rendimiento.
 * **Punto de Entrada Robusto (entrypoint.js):** Un script de punto de entrada **Node.js** personalizado, ejecutado por el usuario sin privilegios, maneja las operaciones de tiempo de ejecución necesarias, como la actualización de temas predeterminados, antes de iniciar la aplicación Ghost. El script se puede revisar aquí: [entrypoint.js](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/entrypoint.js).
 * **Contenedor Init Dedicado:** El despliegue incluye un **initContainer** para manejar la creación de directorios, la propiedad correcta (UID/GID 65532) y la configuración de permisos antes del lanzamiento del contenedor principal de Ghost, asegurando una operación fluida dentro del contenedor Distroless.
 
