@@ -152,7 +152,7 @@ valkey:
 
   image:
     repository: docker.io/valkey/valkey
-    tag: "9.1-alpine"
+    tag: "9.2-alpine"
     pullPolicy: IfNotPresent
 
   # Authentication configuration for internal deployment
