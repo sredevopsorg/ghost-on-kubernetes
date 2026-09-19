@@ -2,7 +2,7 @@
 # The image is built with official Node 22 on Debian Trixie (LTS Jod) and uses the Distroless base image for security and minimalism.
 
 # Stage 1: Build Environment
-FROM docker.io/node:jod-trixie@sha256:2082d2bf902c8835655c6bcfee3594c00ea900498a9f6e2b96d3352536f9e8d8 AS build-env
+FROM docker.io/node:jod-trixie@sha256:a122720f952e0dd686609b949358df06174e8b1f10c4db79347e603b38898c24 AS build-env
 USER root
 # Installs dependencies for sqlite3 node dependencies
 RUN apt update && \
