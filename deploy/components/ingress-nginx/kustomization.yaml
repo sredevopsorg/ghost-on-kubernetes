@@ -1,0 +1,14 @@
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+# OPTIONAL component: switch the Ingress from Traefik to the NGINX ingress
+# controller. Change the class for other controllers.
+
+patches:
+  - target:
+      kind: Ingress
+      name: ghost-on-kubernetes-ingress
+    patch: |-
+      - op: replace
+        path: /spec/ingressClassName
+        value: nginx

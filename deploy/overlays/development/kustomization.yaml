@@ -1,0 +1,44 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Development / single-node overlay.
+#
+#   kubectl apply -k deploy/overlays/development
+#
+# What it changes:
+#   * PVCs use the cluster default StorageClass (the base pins storageClassName: "").
+#   * The site is exposed on http://localhost:2368 without TLS.
+#   * The Ghost probes use the same host so they keep working locally.
+#
+# The overlay replaces the base URL values with http://localhost:2368 in
+# ghost-config-patch.yaml.
+
+resources:
+  - ../../base
+
+patches:
+  # Remove the explicit "" so Kubernetes picks the default StorageClass.
+  - target:
+      kind: PersistentVolumeClaim
+    patch: |-
+      - op: remove
+        path: /spec/storageClassName
+
+  # Use local URLs in Ghost's public and admin configuration.
+  - path: ghost-config-patch.yaml
+
+  - patch: |-
+      $patch: delete
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: tls-secret
+        namespace: ghost-on-kubernetes
+
+  - patch: |-
+      $patch: delete
+      apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      metadata:
+        name: ghost-on-kubernetes-ingress
+        namespace: ghost-on-kubernetes

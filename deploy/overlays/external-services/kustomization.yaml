@@ -1,0 +1,80 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Run Ghost against an external MySQL database and an external Valkey/Redis
+# cache: the in-cluster workloads and their storage, services and secrets are
+# removed and Ghost's config is repointed at placeholders you must replace.
+#
+#   kubectl apply -k deploy/overlays/external-services
+#
+# components/external-mysql and components/external-valkey do the same for a
+# single service. They cannot be combined in one overlay - and this overlay
+# does not use them - because every config change rewrites the whole
+# stringData["config.production.json"] value, so the last patch would win.
+
+resources:
+  - ../../base
+
+patches:
+  # ---- remove the in-cluster MySQL workload ----
+  - target: {kind: StatefulSet, name: ghost-on-kubernetes-mysql}
+    patch: |-
+      $patch: delete
+      apiVersion: apps/v1
+      kind: StatefulSet
+      metadata:
+        name: ghost-on-kubernetes-mysql
+  - target: {kind: Service, name: ghost-on-kubernetes-mysql-service}
+    patch: |-
+      $patch: delete
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: ghost-on-kubernetes-mysql-service
+  - target: {kind: PersistentVolumeClaim, name: ghost-on-kubernetes-mysql-pvc}
+    patch: |-
+      $patch: delete
+      apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: ghost-on-kubernetes-mysql-pvc
+  - target: {kind: Secret, name: ghost-on-kubernetes-mysql-env}
+    patch: |-
+      $patch: delete
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: ghost-on-kubernetes-mysql-env
+
+  # ---- remove the in-cluster Valkey workload ----
+  - target: {kind: Deployment, name: ghost-on-kubernetes-valkey}
+    patch: |-
+      $patch: delete
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: ghost-on-kubernetes-valkey
+  - target: {kind: Service, name: ghost-on-kubernetes-valkey-service}
+    patch: |-
+      $patch: delete
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: ghost-on-kubernetes-valkey-service
+  - target: {kind: PersistentVolumeClaim, name: ghost-on-kubernetes-valkey-pvc}
+    patch: |-
+      $patch: delete
+      apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: ghost-on-kubernetes-valkey-pvc
+  - target: {kind: Secret, name: ghost-on-kubernetes-valkey-env}
+    patch: |-
+      $patch: delete
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: ghost-on-kubernetes-valkey-env
+
+  # Point Ghost at the external services (hosts/credentials are placeholders).
+  - path: ghost-config-patch.yaml

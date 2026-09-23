@@ -1,0 +1,91 @@
+name: Kustomize Validation
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "deploy/**"
+      - .github/scripts/check-ghost-config-parity.mjs
+      - .github/workflows/kustomize-validate.yaml
+  push:
+    branches:
+      - main
+    paths:
+      - "deploy/**"
+      - .github/scripts/check-ghost-config-parity.mjs
+      - .github/workflows/kustomize-validate.yaml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Kustomize
+        run: |
+          set -euo pipefail
+          KUSTOMIZE_VERSION=v5.8.1
+          curl -sSL -o /tmp/kustomize.tar.gz "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F${KUSTOMIZE_VERSION}/kustomize_${KUSTOMIZE_VERSION}_linux_amd64.tar.gz"
+          tar -xzf /tmp/kustomize.tar.gz -C /tmp
+          sudo install -m 0755 /tmp/kustomize /usr/local/bin/kustomize
+          kustomize version
+
+      - name: Set up kubeconform
+        run: |
+          set -euo pipefail
+          KUBECONFORM_VERSION=v0.7.0
+          curl -sSL -o /tmp/kubeconform.tar.gz "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz"
+          tar -xzf /tmp/kubeconform.tar.gz -C /tmp
+          sudo install -m 0755 /tmp/kubeconform /usr/local/bin/kubeconform
+          kubeconform -v
+
+      - name: Build and validate the base and every overlay
+        run: |
+          set -euo pipefail
+          targets="deploy deploy/base"
+          for d in deploy/overlays/*/; do
+            targets="$targets ${d%/}"
+          done
+          for t in $targets; do
+            echo "::group::kustomize build $t"
+            kustomize build "$t" > /tmp/rendered.yaml
+            echo "rendered $(grep -c '^kind:' /tmp/rendered.yaml) objects"
+            kubeconform -strict -summary -ignore-missing-schemas /tmp/rendered.yaml
+            echo "::endgroup::"
+          done
+
+      - name: Smoke test every component
+        run: |
+          set -euo pipefail
+          for c in deploy/components/*/; do
+            name=$(basename "$c")
+            dir="deploy/overlays/_ci-component-$name"
+            mkdir -p "$dir"
+            printf 'apiVersion: kustomize.config.k8s.io/v1beta1\nkind: Kustomization\nresources:\n  - ../../base\ncomponents:\n  - ../../components/%s\n' "$name" > "$dir/kustomization.yaml"
+            echo "::group::component $name"
+            kustomize build "$dir" > /tmp/rendered.yaml
+            kubeconform -strict -summary -ignore-missing-schemas /tmp/rendered.yaml
+            echo "::endgroup::"
+            rm -rf "$dir"
+          done
+
+      - name: Base still renders its 15 objects
+        run: |
+          set -euo pipefail
+          count=$(kustomize build deploy/base | grep -c '^kind:')
+          echo "base objects: $count"
+          test "$count" -eq 15
+
+      - name: Config patches keep the base config structure
+        run: node .github/scripts/check-ghost-config-parity.mjs

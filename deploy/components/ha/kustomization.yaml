@@ -1,0 +1,24 @@
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+# OPTIONAL component: run two Ghost replicas with a shared content volume.
+#
+#   components:
+#     - ../../components/ha
+#
+# Requirements and caveats:
+#   * k8s-ghost-content switches to ReadWriteMany, which needs a compatible
+#     StorageClass. Set the class in your overlay - the base pins
+#     storageClassName: "".
+#   * Ghost does not officially support clustering; see the note in
+#     deploy/base/02-pvc.yaml and https://ghost.org/docs/faq/clustering-sharding-multi-server/
+
+patches:
+  - target:
+      kind: Deployment
+      name: ghost-on-kubernetes
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 2
+  - path: pvc-patch.yaml

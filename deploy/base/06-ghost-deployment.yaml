@@ -22,7 +22,7 @@ spec:
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxUnavailable: 0
+      maxUnavailable: 1
       maxSurge: 3
   revisionHistoryLimit: 4
   progressDeadlineSeconds: 600
@@ -48,50 +48,50 @@ spec:
           sizeLimit: 64Mi
       # Since ghost-on-kubernetes v6.20.0 the initContainer is optional because we moved this functionality into the image's entrypoint.js.
       # Uncomment the following block if you want to keep an initContainer or if you have permissions issues.
-      # initContainers:
-      # - name: permissions-fix
-      #   imagePullPolicy: Always
-      #   image: docker.io/busybox:stable-musl
-      #   env:
-      #   - name: GHOST_INSTALL
-      #     value: /home/nonroot/app/ghost
-      #   - name: GHOST_CONTENT
-      #     value: /home/nonroot/app/ghost/content
-      #   - name: NODE_ENV
-      #     value: production
-      #   securityContext:
-      #     readOnlyRootFilesystem: true
-      #     allowPrivilegeEscalation: false
-      #   resources:
-      #     limits:
-      #       cpu: 900m
-      #       memory: 1000Mi
-      #     requests:
-      #       cpu: 100m
-      #       memory: 128Mi
-      #   command:
-      #     - /bin/sh
-      #     - '-c'
-      #     - |
-      #       set -e
-      #
-      #       export DIRS='files logs apps themes data public settings images media'
-      #       echo 'Check if base dirs exists, if not, create them'
-      #       echo "Directories to check: $DIRS"
-      #       for dir in $DIRS; do
-      #         if [ ! -d $GHOST_CONTENT/$dir ]; then
-      #           echo "Creating $GHOST_CONTENT/$dir directory"
-      #           mkdir -pv $GHOST_CONTENT/$dir || echo "Error creating $GHOST_CONTENT/$dir directory"
-      #         fi
-      #         chown -Rfv 65532:65532 $GHOST_CONTENT/$dir && echo "chown ok on $dir" || echo "Error changing ownership of $GHOST_CONTENT/$dir directory"
-      #       done
-      #       exit 0
-      #
-      #
-      #   volumeMounts:
-      #   - name: k8s-ghost-content
-      #     mountPath: /home/nonroot/app/ghost/content
-      #     readOnly: false
+      initContainers:
+      - name: permissions-fix
+        imagePullPolicy: IfNotPresent
+        image: docker.io/busybox:stable-musl
+        env:
+        - name: GHOST_INSTALL
+          value: /home/nonroot/app/ghost
+        - name: GHOST_CONTENT
+          value: /home/nonroot/app/ghost/content
+        - name: NODE_ENV
+          value: production
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+        resources:
+          limits:
+            cpu: 900m
+            memory: 1000Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+        command:
+          - /bin/sh
+          - '-c'
+          - |
+            set -e
+      
+            export DIRS='files logs apps themes data public settings images media'
+            echo 'Check if base dirs exists, if not, create them'
+            echo "Directories to check: $DIRS"
+            for dir in $DIRS; do
+              if [ ! -d $GHOST_CONTENT/$dir ]; then
+                echo "Creating $GHOST_CONTENT/$dir directory"
+                mkdir -pv $GHOST_CONTENT/$dir || echo "Error creating $GHOST_CONTENT/$dir directory"
+              fi
+              chown -Rfv 65532:65532 $GHOST_CONTENT/$dir && echo "chown ok on $dir" || echo "Error changing ownership of $GHOST_CONTENT/$dir directory"
+            done
+            exit 0
+      
+      
+        volumeMounts:
+        - name: k8s-ghost-content
+          mountPath: /home/nonroot/app/ghost/content
+          readOnly: false
 
       containers:
       - name: ghost-on-kubernetes
@@ -106,46 +106,46 @@ spec:
           containerPort: 2368
           protocol: TCP
 
-        # You should uncomment the following lines in production. Change the values according to your environment.
-        readinessProbe:
-          httpGet:
-            path: /ghost/api/v4/admin/site/
-            port: ghk8s
-            httpHeaders:
-            - name: X-Forwarded-Proto
-              value: https
-            - name: Host
-              value: yourdomain.tld
-          periodSeconds: 10
-          timeoutSeconds: 3
-          successThreshold: 1
-          failureThreshold: 3
-          initialDelaySeconds: 10
+        # # You should uncomment the following lines in production. Change the values according to your environment.
+        # readinessProbe:
+        #   httpGet:
+        #     path: /ghost/api/v4/admin/site/
+        #     port: ghk8s
+        #     httpHeaders:
+        #     - name: X-Forwarded-Proto
+        #       value: https
+        #     - name: Host
+        #       value: yourdomain.tld
+        #   periodSeconds: 10
+        #   timeoutSeconds: 3
+        #   successThreshold: 1
+        #   failureThreshold: 3
+        #   initialDelaySeconds: 10
 
-        livenessProbe:
-          httpGet:
-            path: /ghost/api/v4/admin/site/
-            port: ghk8s
-            httpHeaders:
-            - name: X-Forwarded-Proto
-              value: https
-            - name: Host
-              value: yourdomain.tld
-          periodSeconds: 300
-          timeoutSeconds: 3
-          successThreshold: 1
-          failureThreshold: 1
-          initialDelaySeconds: 30
+        # livenessProbe:
+        #   httpGet:
+        #     path: /ghost/api/v4/admin/site/
+        #     port: ghk8s
+        #     httpHeaders:
+        #     - name: X-Forwarded-Proto
+        #       value: https
+        #     - name: Host
+        #       value: yourdomain.tld
+        #   periodSeconds: 300
+        #   timeoutSeconds: 3
+        #   successThreshold: 1
+        #   failureThreshold: 1
+        #   initialDelaySeconds: 30
 
         env:
         - name: NODE_ENV
           value: production
         # Uncomment the following to enable Valkey authentication
-        # - name: VALKEY_PASSWORD
-        #   valueFrom:
-        #     secretKeyRef:
-        #       name: ghost-on-kubernetes-valkey-env
-        #       key: VALKEY_PASSWORD
+        - name: VALKEY_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: ghost-on-kubernetes-valkey-env
+              key: VALKEY_PASSWORD
         resources:
           limits:
             cpu: 800m

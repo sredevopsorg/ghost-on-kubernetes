@@ -1,0 +1,29 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Ghost on Kubernetes - base manifests.
+#
+# These are the same manifests as before; they were moved from deploy/ into
+# deploy/base/ so that Kustomize can use this directory as a base for the
+# overlays in ../overlays/.
+#
+#   kubectl apply -k deploy/                 # apply this base
+#   kustomize build deploy/base              # render this base only
+#   kubectl apply -k deploy/overlays/production
+#
+# Do NOT add namePrefix/nameSuffix or rename objects here: Ghost's
+# config.production.json, the Ingress backend and the volume/secret references
+# embed literal object names that Kustomize cannot rewrite.
+
+resources:
+  - 00-namespace.yaml
+  - 01-mysql-config.yaml
+  - 01-tls.yaml # Optional
+  - 01-valkey-config.yaml
+  - 02-pvc.yaml
+  - 03-service.yaml
+  - 04-ghost-config.yaml
+  - 05-mysql.yaml
+  - 05-valkey.yaml
+  - 06-ghost-deployment.yaml
+  - 07-ingress.yaml

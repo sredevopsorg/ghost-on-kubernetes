@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/version: '6.0'
     app.kubernetes.io/component: database-secret
     app.kubernetes.io/part-of: ghost-on-kubernetes
-    
+
 type: Opaque
 stringData:
   MYSQL_DATABASE: mysql-db-name # Same as in config.production.json

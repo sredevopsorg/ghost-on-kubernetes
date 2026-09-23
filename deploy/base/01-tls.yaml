@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/version: '6.0'
     app.kubernetes.io/component: tls-secret
     app.kubernetes.io/part-of: ghost-on-kubernetes
-    
+
 
 type: kubernetes.io/tls
 stringData:
