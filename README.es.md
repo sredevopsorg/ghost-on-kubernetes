@@ -36,19 +36,19 @@ Este repositorio implementa Ghost CMS v6.xx.x de [@TryGhost (Oficial)](https://g
 
 ## **Resumen de la Arquitectura de Despliegue**
 
-Este proyecto proporciona archivos manifest completos de Kubernetes (`deploy/`) para ejecutar una instancia de Ghost lista para producción, respaldada por una base de datos **MySQL**.
+Este proyecto proporciona archivos manifest completos de Kubernetes (`deploy/base/`) para ejecutar una instancia de Ghost lista para producción, respaldada por una base de datos **MySQL**. Puedes aplicarlos directamente o mediante los overlays de Kustomize en `deploy/overlays/` (consulta [deploy/README.md](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/README.md)).
 
 | Recurso | Componentes | Detalles |
 | :---- | :---- | :---- |
-| **Namespace** | ghost-on-kubernetes | Proporciona aislamiento lógico para todos los componentes. (Archivo: [00-namespace.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/00-namespace.yaml)) |
-| **StatefulSet** | ghost-on-kubernetes-mysql | Gestiona la base de datos MySQL 8, asegurando red estable y almacenamiento persistente. (Archivo: [05-mysql.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/05-mysql.yaml)) |
-| **Deployment** | ghost-on-kubernetes | Gestiona los pods de la aplicación Ghost v6. (Archivo: [06-ghost-deployment.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/06-ghost-deployment.yaml)) |
-| **Services** | ghost-on-kubernetes-service, ghost-on-kubernetes-mysql-service | Expone Ghost (2368) y MySQL (3306) internamente dentro del clúster. (Archivo: [03-service.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/03-service.yaml)) |
-| **PersistentVolumeClaims (PVC)** | k8s-ghost-content, ghost-on-kubernetes-mysql-pvc | Solicita almacenamiento persistente para el contenido de Ghost (temas, imágenes) y los datos de MySQL. (Archivo: [02-pvc.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/02-pvc.yaml)) |
-| **Secrets** | ghost-config-prod, ghost-on-kubernetes-mysql-env, tls-secret | Almacena de forma segura la configuración de Ghost, las credenciales de la base de datos y los certificados TLS (opcional). (Archivos: [01-mysql-config.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/01-mysql-config.yaml), [04-ghost-config.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/04-ghost-config.yaml), [01-tls.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/01-tls.yaml)) |
-| **Ingress** | ghost-on-kubernetes-ingress | Expone la aplicación Ghost al mundo exterior a través de HTTP/HTTPS (requiere un TLD). (Archivo: [07-ingress.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/07-ingress.yaml)) |
+| **Namespace** | ghost-on-kubernetes | Proporciona aislamiento lógico para todos los componentes. (Archivo: [00-namespace.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/base/00-namespace.yaml)) |
+| **StatefulSet** | ghost-on-kubernetes-mysql | Gestiona la base de datos MySQL 8, asegurando red estable y almacenamiento persistente. (Archivo: [05-mysql.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/base/05-mysql.yaml)) |
+| **Deployment** | ghost-on-kubernetes | Gestiona los pods de la aplicación Ghost v6. (Archivo: [06-ghost-deployment.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/base/06-ghost-deployment.yaml)) |
+| **Services** | ghost-on-kubernetes-service, ghost-on-kubernetes-mysql-service | Expone Ghost (2368) y MySQL (3306) internamente dentro del clúster. (Archivo: [03-service.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/base/03-service.yaml)) |
+| **PersistentVolumeClaims (PVC)** | k8s-ghost-content, ghost-on-kubernetes-mysql-pvc | Solicita almacenamiento persistente para el contenido de Ghost (temas, imágenes) y los datos de MySQL. (Archivo: [02-pvc.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/base/02-pvc.yaml)) |
+| **Secrets** | ghost-config-prod, ghost-on-kubernetes-mysql-env, tls-secret | Almacena de forma segura la configuración de Ghost, las credenciales de la base de datos y los certificados TLS (opcional). (Archivos: [01-mysql-config.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/base/01-mysql-config.yaml), [04-ghost-config.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/base/04-ghost-config.yaml), [01-tls.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/base/01-tls.yaml)) |
+| **Ingress** | ghost-on-kubernetes-ingress | Expone la aplicación Ghost al mundo exterior a través de HTTP/HTTPS (requiere un TLD). (Archivo: [07-ingress.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/base/07-ingress.yaml)) |
 
-*Nota*: Puedes alojar múltiples instancias de Ghost reemplazando la especificación de Namespace en cada archivo manifest.
+*Nota*: Puedes alojar múltiples instancias de Ghost reemplazando la especificación de Namespace en cada archivo manifest, o con un overlay de Kustomize que defina `namespace:` - consulta [deploy/README.md](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/README.md).
 
 ## **Instrucciones de Instalación (Producción)**
 
@@ -68,9 +68,23 @@ git clone https://github.com/sredevopsorg/ghost-on-kubernetes.git --depth 1 --br
 cd ghost-on-kubernetes
 ```
 
+### **0. Opción: Desplegar con Kustomize**
+
+Los manifests también se pueden consumir con [Kustomize](https://kustomize.io/), incluido en `kubectl` v1.24+. La base está en `deploy/base/`, con overlays de ejemplo en `deploy/overlays/` y componentes reutilizables en `deploy/components/`:
+
+```bash
+# Aplicar la base (equivale a la secuencia ordenada de kubectl apply -f de abajo)
+kubectl apply -k deploy/
+
+# O aplicar un overlay de ejemplo
+kubectl apply -k deploy/overlays/production
+```
+
+Consulta [deploy/README.md](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/README.md) para el catálogo de overlays y componentes.
+
 ### **1. Revisar y Configurar**
 
-Revisa los archivos de configuración de ejemplo y modifica los manifests en la carpeta `deploy/` para adaptarlos a tu entorno (ej. clase de almacenamiento, nombre de dominio, valores de secretos).
+Revisa los archivos de configuración de ejemplo y modifica los manifests en la carpeta `deploy/base/` (o un overlay de Kustomize en `deploy/overlays/`) para adaptarlos a tu entorno (ej. clase de almacenamiento, nombre de dominio, valores de secretos).
 
 * **Configuraciones:** Revisa los archivos de configuración de ejemplo en el directorio [examples/](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/examples/):
   * `config.production.sample.yaml`: Configuración recomendada usando MySQL 8. Requiere un **dominio de nivel superior (TLD)** válido para el campo `url` y la configuración de Ingress.
@@ -79,7 +93,7 @@ Revisa los archivos de configuración de ejemplo y modifica los manifests en la 
 
 ### **2. Secuencia de Despliegue**
 
-Es **crucial** aplicar los manifests en el orden correcto para asegurar la resolución de dependencias (especialmente los componentes de la base de datos).
+Con Kustomize todo el stack se aplica con un solo comando, `kubectl apply -k deploy/` (o un overlay de `deploy/overlays/`). Aplicar los archivos individualmente sigue siendo compatible: hazlo en el orden de abajo para asegurar la resolución de dependencias (especialmente los componentes de la base de datos); todas las rutas son relativas a `deploy/base/`.
 
 Alternativamente, puedes instalar el chart desde nuestro repositorio Helm (recomendado):
 
@@ -95,43 +109,43 @@ helm install my-ghost sredevopsorg/ghost-on-kubernetes \
 
 1. **Crear el Namespace:**
 
-    `kubectl apply -f deploy/00-namespace.yaml`
+    `kubectl apply -f deploy/base/00-namespace.yaml`
 
 2. **Crear Secrets (Credenciales y Configuración):**
 
     ```bash
     # IMPORTANTE: Personaliza estos secretos antes de aplicarlos
-    kubectl apply -f deploy/01-mysql-config.yaml
-    kubectl apply -f deploy/04-ghost-config.yaml
-    kubectl apply -f deploy/01-tls.yaml
+    kubectl apply -f deploy/base/01-mysql-config.yaml
+    kubectl apply -f deploy/base/04-ghost-config.yaml
+    kubectl apply -f deploy/base/01-tls.yaml
     ```
 
 3. **Crear Almacenamiento Persistente y Services:**
 
     ```bash
-    kubectl apply -f deploy/02-pvc.yaml
-    kubectl apply -f deploy/03-service.yaml
+    kubectl apply -f deploy/base/02-pvc.yaml
+    kubectl apply -f deploy/base/03-service.yaml
     ```
 
 4. **Desplegar la Base de Datos MySQL (StatefulSet):**
 
     ```bash
     # Espera a que el PVC de MySQL esté enlazado
-    kubectl apply -f deploy/05-mysql.yaml
+    kubectl apply -f deploy/base/05-mysql.yaml
     ```
 
 5. **Desplegar la Aplicación Ghost (Deployment):**
 
     ```bash
     # Espera a que MySQL esté listo antes de comenzar
-    kubectl apply -f deploy/06-ghost-deployment.yaml
+    kubectl apply -f deploy/base/06-ghost-deployment.yaml
     ```
 
 6. **Exponer Ghost con Ingress (Opcional/Recomendado):**
 
     ```bash
     # Enruta el tráfico externo al Service de Ghost
-    kubectl apply -f deploy/07-ingress.yaml
+    kubectl apply -f deploy/base/07-ingress.yaml
     ```
 
 ## **¡Tu Blog Ghost está Desplegado\!**

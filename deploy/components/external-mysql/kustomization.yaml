@@ -1,0 +1,46 @@
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+# OPTIONAL component: replace the in-cluster MySQL StatefulSet with an external
+# MySQL server. It deletes the MySQL Secret, StatefulSet, Service and PVC and
+# points Ghost at placeholders you must replace.
+#
+#   components:
+#     - ../../components/external-mysql
+#
+# NOTE: this rewrites the whole stringData["config.production.json"] value, so
+# it cannot be combined with components/external-valkey in one overlay. Use
+# deploy/overlays/external-services when both services are external.
+
+patches:
+  # ---- remove the in-cluster MySQL workload ----
+  - target: {kind: StatefulSet, name: ghost-on-kubernetes-mysql}
+    patch: |-
+      $patch: delete
+      apiVersion: apps/v1
+      kind: StatefulSet
+      metadata:
+        name: ghost-on-kubernetes-mysql
+  - target: {kind: Service, name: ghost-on-kubernetes-mysql-service}
+    patch: |-
+      $patch: delete
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: ghost-on-kubernetes-mysql-service
+  - target: {kind: PersistentVolumeClaim, name: ghost-on-kubernetes-mysql-pvc}
+    patch: |-
+      $patch: delete
+      apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: ghost-on-kubernetes-mysql-pvc
+  - target: {kind: Secret, name: ghost-on-kubernetes-mysql-env}
+    patch: |-
+      $patch: delete
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: ghost-on-kubernetes-mysql-env
+
+  - path: ghost-config-patch.yaml

@@ -15,7 +15,7 @@ Valkey is a high-performance in-memory data store that Ghost uses for caching. I
 
 ## Files Involved
 
-When using Valkey with the static deployment, the following files are used:
+When using Valkey with the static deployment, the following files are used (all under `deploy/base/`):
 
 - `01-valkey-config.yaml` - Valkey authentication credentials
 - `02-pvc.yaml` - Persistent storage for Ghost, MySQL, and Valkey data
@@ -24,22 +24,30 @@ When using Valkey with the static deployment, the following files are used:
 - `04-ghost-config.yaml` - Ghost configuration with cache settings
 - `06-ghost-deployment.yaml` - Ghost deployment with Valkey environment variables
 
+With Kustomize you can apply everything in one command instead: `kubectl apply -k deploy/` (see [deploy/README.md](../deploy/README.md)).
+
 ## Deployment Order
 
-Apply the configuration files in this order:
+Apply everything at once:
 
 ```bash
-kubectl apply -f 00-namespace.yaml
-kubectl apply -f 01-mysql-config.yaml
-kubectl apply -f 01-valkey-config.yaml       # NEW
-kubectl apply -f 01-tls.yaml
-kubectl apply -f 02-pvc.yaml                 # Now includes Valkey PVC
-kubectl apply -f 03-service.yaml
-kubectl apply -f 04-ghost-config.yaml
-kubectl apply -f 05-mysql.yaml
-kubectl apply -f 05-valkey.yaml              # NEW
-kubectl apply -f 06-ghost-deployment.yaml
-kubectl apply -f 07-ingress.yaml
+kubectl apply -k deploy/
+```
+
+Or apply the files one by one, from `deploy/base/`, in this order:
+
+```bash
+kubectl apply -f deploy/base/00-namespace.yaml
+kubectl apply -f deploy/base/01-mysql-config.yaml
+kubectl apply -f deploy/base/01-valkey-config.yaml
+kubectl apply -f deploy/base/01-tls.yaml
+kubectl apply -f deploy/base/02-pvc.yaml
+kubectl apply -f deploy/base/03-service.yaml
+kubectl apply -f deploy/base/04-ghost-config.yaml
+kubectl apply -f deploy/base/05-mysql.yaml
+kubectl apply -f deploy/base/05-valkey.yaml
+kubectl apply -f deploy/base/06-ghost-deployment.yaml
+kubectl apply -f deploy/base/07-ingress.yaml
 ```
 
 ## Configuration
@@ -139,9 +147,9 @@ Adjust these values in `04-ghost-config.yaml` based on your needs.
 
 If you want to use an external Redis or Valkey instance instead of deploying one:
 
-1. **Skip files**: Do not apply `08-valkey-config.yaml`, `09-valkey-pvc.yaml`, and `10-valkey.yaml`
+1. **Use the Kustomize component**: add `../../components/external-valkey` to an overlay's `components:` list. It removes the Valkey Secret, Deployment, Service and PVC and repoints Ghost's config at your external server (see [deploy/README.md](../deploy/README.md)).
 
-2. **Do not apply the Valkey service**: Comment out or remove the Valkey service section from `03-service.yaml`
+2. **Or edit the base by hand**: remove `01-valkey-config.yaml`, the Valkey PVC in `02-pvc.yaml`, the Valkey service in `03-service.yaml` and `05-valkey.yaml`.
 
 3. **Update `04-ghost-config.yaml`** with your external Valkey/Redis details:
    ```json
@@ -169,7 +177,7 @@ These can be used as templates for your deployments.
 
 Valkey persistence is configured with:
 
-- **Storage Class**: Default (modify `09-valkey-pvc.yaml` if needed)
+- **Storage Class**: Default (modify the Valkey PVC in `deploy/base/02-pvc.yaml` if needed)
 - **Size**: 1Gi (adjust based on your cache needs)
 - **Access Mode**: ReadWriteOnce
 
@@ -177,7 +185,7 @@ For development, 1Gi is usually sufficient. Adjust for production based on your 
 
 ## Resource Limits
 
-Default Valkey resource limits in `10-valkey.yaml`:
+Default Valkey resource limits in `deploy/base/05-valkey.yaml`:
 
 ```yaml
 resources:

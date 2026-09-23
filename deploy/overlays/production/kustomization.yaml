@@ -1,0 +1,33 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Production overlay (example - review every placeholder before applying).
+#
+#   kubectl apply -k deploy/overlays/production
+#
+# What it changes:
+#   * PVCs use storage class "standard" and request 10Gi.
+#   * Ghost gets larger CPU/memory requests and limits.
+#   * Ghost serves https://blog.example.com (config, Ingress and TLS secret).
+#
+# ghost-config-patch.yaml is a full copy of the base config with the changed
+# values; see the note at the top of that file.
+
+resources:
+  - ../../base
+
+patches:
+  # All three PVCs: storage class and size.
+  - target:
+      kind: PersistentVolumeClaim
+    patch: |-
+      - op: replace
+        path: /spec/storageClassName
+        value: standard
+      - op: replace
+        path: /spec/resources/requests/storage
+        value: 10Gi
+
+  - path: ghost-deployment-patch.yaml
+  - path: ghost-config-patch.yaml
+  - path: ingress-patch.yaml

@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/version: '6.0'
     app.kubernetes.io/component: database
     app.kubernetes.io/part-of: ghost-on-kubernetes
-    
+
 spec:
   serviceName: ghost-on-kubernetes-mysql-service
   replicas: 1
@@ -41,8 +41,8 @@ spec:
           chown -Rfv 65532:65532 /mnt/tmp || echo 'Error changing ownership of tmp mount directory to 65532:65532'
           echo 'Changing ownership of socket mount directory to 65532:65532'
           chown -Rfv 65532:65532 /mnt/var/run/mysqld || echo 'Error changing ownership of socket mount directory to 65532:65532'
-          
-          
+
+
         volumeMounts:
         - name: ghost-on-kubernetes-mysql-volume
           mountPath: /mnt/mysql
@@ -56,7 +56,7 @@ spec:
         - name: ghost-on-kubernetes-mysql-socket
           mountPath: /mnt/var/run/mysqld
           readOnly: false
-        
+
         # YOu can ajust the resources according to your needs
         resources:
           requests:

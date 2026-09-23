@@ -1,0 +1,18 @@
+# Larger resources for a production blog.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ghost-on-kubernetes
+  namespace: ghost-on-kubernetes
+spec:
+  template:
+    spec:
+      containers:
+        - name: ghost-on-kubernetes
+          resources:
+            limits:
+              cpu: "2"
+              memory: 2Gi
+            requests:
+              cpu: 500m
+              memory: 512Mi

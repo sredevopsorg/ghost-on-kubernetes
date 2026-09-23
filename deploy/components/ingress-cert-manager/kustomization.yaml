@@ -1,0 +1,25 @@
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+# OPTIONAL component: issue the Ingress TLS certificate with cert-manager.
+# It drops the placeholder Secret/tls-secret (cert-manager creates it) and adds
+# a Certificate. Requires the cert-manager CRDs to be installed.
+#
+#   components:
+#     - ../../components/ingress-cert-manager
+#
+# Change the issuer in certificate.yaml and the annotation below to match your
+# cluster (for example a namespaced Issuer instead of a ClusterIssuer).
+
+resources:
+  - certificate.yaml
+
+patches:
+  - path: ingress-patch.yaml
+  - target: {kind: Secret, name: tls-secret}
+    patch: |-
+      $patch: delete
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: tls-secret
