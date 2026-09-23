@@ -2,7 +2,7 @@
 # The image is built with official Node 24 on Debian Trixie (LTS) image and uses the Distroless base image for security and minimalism.
 
 # Stage 1: Build Environment
-FROM docker.io/node:24-trixie@sha256:9516e2220ff64c75233a3d6d8aa90f857381bc6266de5803d620b2b2dbaf9e60 AS build-env
+FROM docker.io/node:24-trixie@sha256:be40f6a87b9b22215ddb20da0a2320a5c6d583fe3ee3b0024d9fa4f05b40c8fd AS build-env
 USER root
 # Create a new user and group named "nonroot" with the UID 65532 and GID 65532, not a member of the root, sudo, and sys groups, and set the home directory to /home/nonroot.
 # This user is used to run the Ghost application in the container for security reasons.
