@@ -32,14 +32,19 @@ patches.
 Render without applying to inspect the result:
 
 ```bash
-kubectl kustomize deploy/overlays/production
+kubectl kustomize deploy/overlays/development
 # or
-kustomize build deploy/overlays/production
+kustomize build deploy/overlays/development
 ```
 
 ## Quick start
 
 ```bash
+# A development example overlay:
+kubectl kustomize deploy/overlays/development 
+# Apply the previously generated manifest
+kubectl kustomize deploy/overlays/development | kubectl apply -f -
+
 # Base defaults (same objects as the old per-file kubectl apply sequence):
 kubectl apply -k deploy/
 
@@ -69,7 +74,7 @@ still the recommended way to change values for a single deployment.
 
 | Overlay | What it does |
 | :---- | :---- |
-| `overlays/development` | Removes the pinned `storageClassName` so the cluster default is used, and serves the site on `http://ghost.localhost` without TLS. Single replica. |
+| `overlays/development` | Removes the pinned `storageClassName` so the cluster default is used, and serves the site on `http://localhost:2368` without TLS. Single replica. |
 | `overlays/production` | Sets storage class `standard` + 10Gi, larger Ghost resources, `https://blog.example.com` in both the Ingress and Ghost's config, TLS from `tls-secret`. |
 | `overlays/external-services` | Removes the in-cluster MySQL and Valkey workloads (and their PVCs, Services, Secrets) and repoints Ghost at external MySQL and Valkey/Redis endpoints. |
 

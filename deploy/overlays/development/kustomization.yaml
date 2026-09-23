@@ -7,12 +7,11 @@ kind: Kustomization
 #
 # What it changes:
 #   * PVCs use the cluster default StorageClass (the base pins storageClassName: "").
-#   * The site is exposed on http://ghost.localhost without TLS.
+#   * The site is exposed on http://localhost:2368 without TLS.
 #   * The Ghost probes use the same host so they keep working locally.
 #
-# The base still ships url https://yourdomain.tld inside
-# deploy/base/04-ghost-config.yaml. For a fully local setup edit that file or
-# add a config patch like deploy/overlays/production/ghost-config-patch.yaml.
+# The overlay replaces the base URL values with http://localhost:2368 in
+# ghost-config-patch.yaml.
 
 resources:
   - ../../base
@@ -25,15 +24,21 @@ patches:
       - op: remove
         path: /spec/storageClassName
 
-  - path: ghost-deployment-patch.yaml
+  # Use local URLs in Ghost's public and admin configuration.
+  - path: ghost-config-patch.yaml
 
-  # Serve the site on a local hostname over plain HTTP.
-  - target:
+  - patch: |-
+      $patch: delete
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: tls-secret
+        namespace: ghost-on-kubernetes
+
+  - patch: |-
+      $patch: delete
+      apiVersion: networking.k8s.io/v1
       kind: Ingress
-      name: ghost-on-kubernetes-ingress
-    patch: |-
-      - op: replace
-        path: /spec/rules/0/host
-        value: ghost.localhost
-      - op: remove
-        path: /spec/tls
+      metadata:
+        name: ghost-on-kubernetes-ingress
+        namespace: ghost-on-kubernetes

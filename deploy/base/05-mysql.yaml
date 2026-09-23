@@ -108,15 +108,15 @@ spec:
       automountServiceAccountToken: false
 
       # Optional: Uncomment the following to specify node selectors
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
-                  - key: node-role.kubernetes.io/worker
-                    operator: In
-                    values:
-                      - 'true'
+      # affinity:
+      #   nodeAffinity:
+      #     requiredDuringSchedulingIgnoredDuringExecution:
+      #       nodeSelectorTerms:
+      #         - matchExpressions:
+      #             - key: node-role.kubernetes.io/worker
+      #               operator: In
+      #               values:
+      #                 - 'true'
 
       securityContext:
         seccompProfile:

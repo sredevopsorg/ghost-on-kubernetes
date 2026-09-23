@@ -18,7 +18,7 @@ kind: Kustomization
 resources:
   - 00-namespace.yaml
   - 01-mysql-config.yaml
-  - 01-tls.yaml
+  - 01-tls.yaml # Optional
   - 01-valkey-config.yaml
   - 02-pvc.yaml
   - 03-service.yaml
