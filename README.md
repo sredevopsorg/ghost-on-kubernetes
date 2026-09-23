@@ -13,7 +13,7 @@ This repository implements Ghost CMS v6.xx.x from [@TryGhost (Official)](https:/
 ### **Enhanced Security**
 
 * **Non-Root Execution:** Both the Ghost and MySQL components run exclusively as a non-root user (UID/GID 65532) in Kubernetes, preventing potential privilege escalation attacks.
-* **Distroless Runtime:** We utilize **Google Container Tools Distroless Debian 13 - NodeJS 22** as the final runtime environment. Distroless images contain only the required application and language dependencies, **excluding shells and package managers**, making them substantially more secure and reducing the attack surface.
+* **Distroless Runtime:** We utilize **Google Container Tools Distroless Debian 13 - NodeJS 24** as the final runtime environment. Distroless images contain only the required application and language dependencies, **excluding shells and package managers**, making them substantially more secure and reducing the attack surface.
 * **Vulnerability Reduction:** By replacing gosu with a native container execution flow and adopting Distroless, we removed several critical vulnerabilities reported in the original Ghost image:
   * **Result:** This change alone reduced **6 critical vulnerabilities** and **34 high vulnerabilities** reported by Docker Scout in the official image.
 
@@ -29,8 +29,8 @@ This repository implements Ghost CMS v6.xx.x from [@TryGhost (Official)](https:/
   * **Production Image:** The main image built using our hardened, multi-stage build process. See the [Dockerfile](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/Dockerfile).
   * **Development Image:** A variant tailored for testing, which bundles SQLite support. See the [Dockerfile-dev](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/Dockerfile-dev).
 * **Multi-Arch Support:** Images are built for both amd64 and arm64 architectures.
-* **Multi-Stage Build:** We use the official Node 22 Jod LTS image for building, which significantly reduces the final image size and improves security by removing unnecessary build components.
-* **Updated Ghost v6 & NodeJS 22 LTS:** Using the latest stable versions for security and performance.
+* **Multi-Stage Build:** We use the official Node 24 LTS image for building, which significantly reduces the final image size and improves security by removing unnecessary build components.
+* **Updated Ghost v6 & NodeJS 24 LTS:** Using the latest stable versions for security and performance.
 * **Robust Entrypoint (entrypoint.js):** A custom Node.js entrypoint script, executed by the unprivileged user, handles necessary runtime operations like updating default themes before starting the Ghost application. The script can be reviewed here: [entrypoint.js](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/entrypoint.js).
 * **Dedicated Init Container:** The deployment includes an initContainer to handle directory creation, correct ownership (UID/GID 65532), and permission setting prior to the main Ghost container launch, ensuring seamless operation inside the Distroless container.
 
