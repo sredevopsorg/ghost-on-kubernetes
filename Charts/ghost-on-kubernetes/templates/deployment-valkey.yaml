@@ -109,8 +109,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       securityContext:
-        fsGroup: {{ .Values.valkey.securityContext.runAsGroup }}
-        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+        {{- toYaml (mergeOverwrite (deepCopy .Values.podSecurityContext) (deepCopy .Values.valkey.podSecurityContext)) | nindent 8 }}
       volumes:
       {{- if and .Values.persistence.valkey.enabled .Values.valkey.enabled }}
       - name: valkey-data
