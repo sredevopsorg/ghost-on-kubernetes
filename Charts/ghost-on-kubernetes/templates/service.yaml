@@ -18,6 +18,7 @@ spec:
   type: {{ .Values.service.type | quote }}
   selector:
     {{- include "ghost-on-kubernetes.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: ghost
 {{- if .Values.mysql.enabled }}
 ---
 apiVersion: v1
