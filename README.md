@@ -1,190 +1,277 @@
-# **Ghost on Kubernetes (v6.x) by SREDevOps.Org**
+# Ghost on Kubernetes Helm Chart
 
-Deploy the leading open-source publishing platform, Ghost, on Kubernetes with maximum **security** and **efficiency** using a hardened, multi-arch container image.
+Deploy [Ghost](https://ghost.org) CMS on Kubernetes with a hardened, rootless,
+multi-arch container image.
 
-Maintained by ***[SREDevOps.org](https://www.sredevops.org)**: SRE, DevOps, Linux, Ethical Hacking, AI, ML, Open Source, Cloud Native, Platform Engineering in English, Español, and Portugués (Brasil).*
+## Prerequisites
 
-[![Build Multiarch](https://github.com/sredevopsorg/ghost-on-kubernetes/actions/workflows/multi-build.yaml/badge.svg?branch=main)](https://github.com/sredevopsorg/ghost-on-kubernetes/actions/workflows/multi-build.yaml) [![Image Size](https://ghcr-badge.egpl.dev/sredevopsorg/ghost-on-kubernetes/size?color=%2344cc11&tag=main&label=main+image+size)](https://github.com/sredevopsorg/ghost-on-kubernetes/pkgs/container/ghost-on-kubernetes) [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/sredevopsorg/ghost-on-kubernetes/badge)](https://securityscorecards.dev/viewer/?uri=github.com/sredevopsorg/ghost-on-kubernetes) [![Fork this repository](https://img.shields.io/github/forks/sredevopsorg/ghost-on-kubernetes?style=social)](https://github.com/sredevopsorg/ghost-on-kubernetes/fork) [![Star this repository](https://img.shields.io/github/stars/sredevopsorg/ghost-on-kubernetes?style=social)](https://github.com/sredevopsorg/ghost-on-kubernetes/stargazers) [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/8888/badge)](https://www.bestpractices.dev/projects/8888) [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/ghost-on-kubernetes)](https://artifacthub.io/packages/search?repo=ghost-on-kubernetes)[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/sredevopsorg/ghost-on-kubernetes)
+- Kubernetes 1.25 or newer (enforced by `kubeVersion` in `Chart.yaml`)
+- Helm 3.13 or newer
+- A default StorageClass, or an explicit `storageClassName` per claim
+- An Ingress controller (Traefik and nginx presets included) if you enable Ingress
+- cert-manager if you use `ingress.tls.mode: certManager` or `both`
 
-## **Key Highlights: Security & Efficiency**
-
-This repository implements Ghost CMS v6.xx.x from [@TryGhost (Official)](https://github.com/TryGhost/Ghost) on Kubernetes with a custom built image, which delivers significant improvements for production use and security features in Kubernetes.
-
-### **Enhanced Security**
-
-* **Non-Root Execution:** Both the Ghost and MySQL components run exclusively as a non-root user (UID/GID 65532) in Kubernetes, preventing potential privilege escalation attacks.
-* **Distroless Runtime:** We utilize **Google Container Tools Distroless Debian 13 - NodeJS 24** as the final runtime environment. Distroless images contain only the required application and language dependencies, **excluding shells and package managers**, making them substantially more secure and reducing the attack surface.
-* **Vulnerability Reduction:** By replacing gosu with a native container execution flow and adopting Distroless, we removed several critical vulnerabilities reported in the original Ghost image:
-  * **Result:** This change alone reduced **6 critical vulnerabilities** and **34 high vulnerabilities** reported by Docker Scout in the official image.
-
-**Example Security Reports:**
-
-| Ghost Official Image | Ghost on Kubernetes Image |
-| :---- | :---- |
-| Example scan for the [Ghost Official Image](https://hub.docker.com/_/ghost/tags): ![Docker Scout Report - Ghost Official Image](https://raw.githubusercontent.com/sredevopsorg/ghost-on-kubernetes/main/docs/images/dockerhub-ghost.png) | Example of our [Ghost on Kubernetes Image on Docker Hub](https://hub.docker.com/r/ngeorger/ghost-on-kubernetes/tags): ![Docker Scout Report - Ghost on Kubernetes Image](https://raw.githubusercontent.com/sredevopsorg/ghost-on-kubernetes/main/docs/images/dockerhub-ngeorger.png) |
-
-### **Performance & Architecture**
-
-* **Custom Build Artifacts:** We maintain two distinct Dockerfiles for production and development:
-  * **Production Image:** The main image built using our hardened, multi-stage build process. See the [Dockerfile](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/Dockerfile).
-  * **Development Image:** A variant tailored for testing, which bundles SQLite support. See the [Dockerfile-dev](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/Dockerfile-dev).
-* **Multi-Arch Support:** Images are built for both amd64 and arm64 architectures.
-* **Multi-Stage Build:** We use the official Node 24 LTS image for building, which significantly reduces the final image size and improves security by removing unnecessary build components.
-* **Updated Ghost v6 & NodeJS 24 LTS:** Using the latest stable versions for security and performance.
-* **Robust Entrypoint (entrypoint.js):** A custom Node.js entrypoint script, executed by the unprivileged user, handles necessary runtime operations like updating default themes before starting the Ghost application. The script can be reviewed here: [entrypoint.js](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/entrypoint.js).
-* **Dedicated Init Container:** The deployment includes an initContainer to handle directory creation, correct ownership (UID/GID 65532), and permission setting prior to the main Ghost container launch, ensuring seamless operation inside the Distroless container.
-
-## **Deployment Architecture Overview**
-
-This project provides complete Kubernetes manifest files (deploy/) to run a production-ready Ghost instance backed by a MySQL database.
-
-| Resource | Components | Details |
-| :---- | :---- | :---- |
-| **Namespace** | ghost-on-kubernetes | Provides logical isolation for all components. (File: [00-namespace.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/00-namespace.yaml)) |
-| **StatefulSet** | ghost-on-kubernetes-mysql | Manages the MySQL 8 database, ensuring stable networking and persistent storage. (File: [05-mysql.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/05-mysql.yaml)) |
-| **Deployment** | ghost-on-kubernetes-valkey | Manages the Valkey cache pods for improved performance. (File: [05-valkey.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/05-valkey.yaml)) |
-| **Deployment** | ghost-on-kubernetes | Manages the Ghost v6 application pods. (File: [06-ghost-deployment.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/06-ghost-deployment.yaml)) |
-| **Services** | ghost-on-kubernetes-service, ghost-on-kubernetes-mysql-service, ghost-on-kubernetes-valkey-service | Exposes Ghost (2368), MySQL (3306), and Valkey (6379) internally within the cluster. (File: [03-service.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/03-service.yaml)) |
-| **PersistentVolumeClaims (PVC)** | k8s-ghost-content, ghost-on-kubernetes-mysql-pvc, ghost-on-kubernetes-valkey-pvc | Requests persistent storage for Ghost content (themes, images), MySQL data, and Valkey cache data. (File: [02-pvc.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/02-pvc.yaml)) |
-| **Secrets** | ghost-config-prod, ghost-on-kubernetes-mysql-env, ghost-on-kubernetes-valkey-env, tls-secret | Securely stores Ghost configuration, database credentials, Valkey credentials, and TLS certificates (optional). (Files: [01-mysql-config.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/01-mysql-config.yaml), [01-valkey-config.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/01-valkey-config.yaml), [04-ghost-config.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/04-ghost-config.yaml), [01-tls.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/01-tls.yaml)) |
-| **Ingress** | ghost-on-kubernetes-ingress | Exposes the Ghost application to the outside world via HTTP/HTTPS (requires a TLD). (File: [07-ingress.yaml](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/deploy/07-ingress.yaml)) |
-
-*Note*: You can host multiple Ghost instances by replacing the Namespace specification in each manifest file.
-
-## **Installation Instructions (Production)**
-
-Follow these steps to deploy Ghost on your Kubernetes cluster.
-
-### **Prerequisites**
-
-1. A functioning Kubernetes cluster (kubectl configured).
-2. A provisioned StorageClass (required for PVCs).
-
-### **0. Option 1: Deploy with Helm**
-
-Alternatively, you can install the chart from our Helm repository (recommended):
-
-Detailed values and configurations available within [Chart readme](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/Charts/ghost-on-kubernetes/README.md) and [Chart values examples](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/Charts/ghost-on-kubernetes/examples)
+## Install
 
 ```bash
 helm repo add sredevopsorg https://sredevopsorg.github.io/ghost-on-kubernetes
 helm repo update
+
 helm install my-ghost sredevopsorg/ghost-on-kubernetes \
-  --namespace ghost \
-  --create-namespace \
+  --namespace ghost --create-namespace \
   --set ghost.url=https://yourdomain.tld \
-  --set persistence.ghost.storageClassName=your-storage-class
+  --set ingress.hosts[0].host=yourdomain.tld \
+  --set ingress.tls.hosts[0]=yourdomain.tld \
+  --set persistence.ghost.storageClassName=your-storage-class \
+  --set persistence.mysql.storageClassName=your-storage-class
 ```
 
+Run `helm install` and read the NOTES output: it prints the URL, the TLS state,
+and any warning that applies to the configuration you chose.
 
-### **0. Option 2: Clone (or fork) the Repository**
+## Common configurations
+
+Every example below is a file in `examples/` and is rendered by CI.
+
+| Example | Use it for |
+| ------- | ---------- |
+| `examples/production-values.yaml` | Internal MySQL, cert-manager TLS, disruption budget |
+| `examples/ha-values.yaml` | Three replicas over ReadWriteMany storage, spread across zones |
+| `examples/external-mysql-values.yaml` | A database managed outside this release |
+| `examples/development-values.yaml` | Local development, no Ingress, small footprint |
+| `examples/manual-tls-values.yaml` | A certificate you supply yourself |
 
 ```bash
-## Clone the repository
-git clone https://github.com/sredevopsorg/ghost-on-kubernetes.git --depth 1 --branch main --single-branch --no-tags
-## Change directory
-cd ghost-on-kubernetes
+helm install my-ghost sredevopsorg/ghost-on-kubernetes \
+  -n ghost --create-namespace \
+  -f examples/production-values.yaml
 ```
 
-### **1. Review and Configure**
+## Configuration
 
-Review the example configuration files and modify the manifests in the deploy/ folder to suit your environment (e.g., storage class, domain name, secret values).
+### Ghost
 
-* **Configurations:** Check the example configuration files in the [examples/](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/examples/) directory:
-  * config.production.sample.yaml: Recommended configuration using MySQL 8. Requires a valid top-level domain (TLD) for the url field and Ingress configuration.
-  * config.development.sample.yaml: Uses SQLite for testing environments.
-* **Official Ghost Docs:** Refer to the [official Ghost documentation](https://ghost.org/docs/config/#custom-configuration-files) for detailed configuration options.
+| Parameter | Description | Default |
+| --------- | ----------- | ------- |
+| `ghost.url` | Public site URL, including the scheme | `https://yourdomain.tld` |
+| `ghost.adminUrl` | Admin URL, defaults to `ghost.url` | `""` |
+| `ghost.probeHost` | Host header used by the probes, defaults to the hostname of `ghost.url` | `""` |
+| `ghost.contentPath` | Where Ghost stores uploads, themes and logs | `/home/nonroot/app/ghost/content` |
+| `ghost.config.existingSecret` | Mount `config.production.json` from a secret you manage | `""` |
+| `ghost.mail.*` | Outgoing mail, required before Ghost can send mail | SMTP settings |
+| `ghost.resources` | Ghost container requests and limits | 100m/256Mi – 800m/800Mi |
+| `ghost.securityContext` | Container security context, restricted-PSS compliant | non-root, read-only rootfs |
+| `ghost.extraConfig` | Merged into `config.production.json`, top-level keys win | `{}` |
+| `ghost.initContainer.enabled` | Root init container that chowns the content volume | `false` |
+| `ghost.readinessProbe.enabled` | Gates traffic to the pod | `true` |
+| `ghost.startupProbe.enabled` | Allows a slow first boot while the database migrates | `true` |
+| `ghost.livenessProbe.enabled` | Restarts a wedged process | `false` |
+| `ghost.affinity` | `nodeAffinity`, `podAffinity`, `podAntiAffinity`, each optional | `{}` |
+| `ghost.nodeSelector` / `tolerations` / `topologySpreadConstraints` | Scheduling control | empty |
 
-### **2. Deployment Sequence**
+### Database
 
-It is **crucial** to apply the manifests in the correct order to ensure dependency resolution (especially the database components).
+| Parameter | Description | Default |
+| --------- | ----------- | ------- |
+| `mysql.enabled` | Deploy the MySQL StatefulSet and its headless Service | `true` |
+| `mysql.auth.database` / `username` / `password` / `rootPassword` | Credentials | change me |
+| `mysql.auth.existingSecret` | Use a secret you manage, keys `MYSQL_DATABASE`, `MYSQL_USER`, `MYSQL_PASSWORD`, `MYSQL_ROOT_PASSWORD`, `MYSQL_HOST` | `""` |
+| `mysql.external.*` | Connection details used when `mysql.enabled=false` | placeholders |
+| `mysql.initContainer.enabled` | Root init container that chowns the data directory | `true` |
+| `mysql.livenessProbe.enabled` / `readinessProbe.enabled` | TCP checks | `true` |
 
-1. **Create the Namespace:**
+### Cache
+
+Valkey is a cache, not a database: Ghost works without it and simply serves more
+slowly.
+
+| Parameter | Description | Default |
+| --------- | ----------- | ------- |
+| `valkey.enabled` | Deploy the bundled Valkey | `false` |
+| `valkey.auth.enabled` | Require a password on it | `true` |
+| `valkey.auth.existingSecret` | Use a secret you manage, key `valkey-password` | `""` |
+| `valkey.external.enabled` | Cache through an external Valkey or Redis | `false` |
+| `valkey.keyPrefix` | Namespace for every cache key | `ghost` |
+| `valkey.ttl.*` | Entry lifetime per adapter, in seconds | 15 minutes to 24 hours |
+
+### Storage
+
+| Parameter | Description | Default |
+| --------- | ----------- | ------- |
+| `persistence.ghost.enabled` | Claim for Ghost content | `true` |
+| `persistence.ghost.accessMode` | Must be `ReadWriteMany` for more than one replica | `ReadWriteOnce` |
+| `persistence.ghost.size` / `storageClassName` / `selector` | Claim tuning | `1Gi`, default class |
+| `persistence.mysql.*` | Same keys for the database | `1Gi` |
+| `persistence.valkey.*` | Same keys for the cache | `1Gi` |
+
+Turning a claim off switches that workload to an `emptyDir`. Nothing breaks,
+but the data is lost on every pod restart. `NOTES.txt` warns when it happens.
+
+### Networking and exposure
+
+| Parameter | Description | Default |
+| --------- | ----------- | ------- |
+| `service.type` | Type of the Ghost Service | `ClusterIP` |
+| `service.port` / `targetPort` | Ghost Service port and container port | `2368` |
+| `ingress.enabled` | Create an Ingress | `true` |
+| `ingress.className` / `preset` / `entrypoint` / `annotations` | Ingress wiring | `traefik` |
+| `ingress.hosts[]` | Hosts and paths, with `path` and `pathType` | `yourdomain.tld` |
+| `ingress.tls.enabled` / `mode` / `secretName` / `certManager.*` / `certificate` / `key` / `hosts` | TLS | `manual`, `tls-secret` |
+| `networkPolicy.enabled` / `egress` | Restrict traffic to the Ghost pods | `false` |
+
+The MySQL and Valkey Services are always headless and internal: their `type` is
+not configurable, because a load balancer in front of a database or a cache is
+never what you want.
+
+### Platform
+
+| Parameter | Description | Default |
+| --------- | ----------- | ------- |
+| `replicaCount` | Ghost replicas, ignored when autoscaling is on | `1` |
+| `autoscaling.enabled` / `minReplicas` / `maxReplicas` / `metrics` / `behavior` | HorizontalPodAutoscaler | off |
+| `podDisruptionBudget.enabled` / `maxUnavailable` / `minAvailable` | Eviction safety | off |
+| `strategy` / `minReadySeconds` / `revisionHistoryLimit` / `progressDeadlineSeconds` | Rollout behaviour | RollingUpdate, surge 1 |
+| `serviceAccount.create` / `name` / `annotations` | Pod identity | created, token not mounted |
+| `valkey.podSecurityContext` | Merged over `podSecurityContext` for Valkey pods | `{}` |
+| `podSecurityContext` | Pod level security context, `fsGroup` grants volume access | `fsGroup: 65532` |
+| `priorityClassName` | Priority class for every pod | unset |
+| `imagePullSecrets` | `[{name: <secret>}]` for private registries | `[]` |
+| `labels` / `annotations` / `podLabels` / `podAnnotations` | Extra metadata | empty |
+| `extraEnv` / `extraEnvFrom` / `extraVolumes` / `extraVolumeMounts` | Escape hatches for the Ghost pod | empty |
+| `initContainer.*` | Shared root init container image and resources | busybox |
+| `volumes.*` | Sizes of the ephemeral volumes | see `values.yaml` |
+| `testImage.*` | Image used by `helm test` | busybox |
+
+### Anything else
+
+`ghost.extraConfig` is merged into `config.production.json` last, so any Ghost
+setting this chart does not model can still be set:
+
+```yaml
+ghost:
+  extraConfig:
+    imageOptimization:
+      sharp:
+        quality: 80
+    themes:
+      - mytheme
+```
+
+For full control, set `ghost.config.existingSecret` to a secret holding your own
+`config.production.json`. The chart then stops rendering one, but the rest of
+the release still references your `ghost.url`, the Service, and the content
+volume.
+
+## Upgrading from 1.x
+
+```bash
+helm upgrade my-ghost sredevopsorg/ghost-on-kubernetes -n ghost --reset-values -f my-values.yaml
+```
+
+Every release in the 2.0.x line contains changes that a plain `helm upgrade`
+cannot apply to a running 1.x release:
+
+1. **Workload selectors are release-scoped.** The MySQL StatefulSet and the
+   Valkey Deployment used to select on `app: ghost-on-kubernetes-mysql`, which
+   two releases in one namespace shared. Selectors are immutable, so recreate
+   those two workloads once, before or during the upgrade:
 
    ```bash
-    kubectl apply -f deploy/00-namespace.yaml
-    ```
-
-2. **Create Secrets (Credentials and Config):**
-
-   ```bash
-   # IMPORTANT: Customize these secrets before applying
-   kubectl apply -f deploy/01-mysql-config.yaml
-   kubectl apply -f deploy/01-valkey-config.yaml
-   kubectl apply -f deploy/04-ghost-config.yaml
-   kubectl apply -f deploy/01-tls.yaml
+   kubectl delete statefulset <fullname>-mysql --cascade=orphan -n ghost
+   kubectl delete deployment <fullname>-valkey --cascade=orphan -n ghost
+   helm upgrade my-ghost sredevopsorg/ghost-on-kubernetes -n ghost -f my-values.yaml
    ```
 
-3. **Create Persistent Storage and Services:**
+   Persistent volume claims are not touched by that delete, so the data stays.
+   If the delete is skipped, `helm upgrade` fails with an immutable-field error.
 
-   ```bash
-   kubectl apply -f deploy/02-pvc.yaml
-   kubectl apply -f deploy/03-service.yaml
-   ```
+2. **The Ghost pod no longer runs a root init container.** Ownership comes from
+   `podSecurityContext.fsGroup` now. Set `ghost.initContainer.enabled=true` if
+   your volume driver does not apply `fsGroup` (some NFS exports with
+   `root_squash`).
 
-4. **Deploy Database and Cache (StatefulSet and Deployment):**
+3. **Probes are on by default.** Readiness and startup now render where they
+   previously did not, which restarts the pods once on upgrade. Liveness stays
+   off unless you enable it, and `ghost.probeHost` now defaults to the hostname
+   of `ghost.url` rather than `ingress.hosts[0].host`, so probes no longer fail
+   when Ingress is disabled.
 
-   ```bash
-   # Wait for the MySQL and Valkey PVCs to be bound
-   kubectl apply -f deploy/05-mysql.yaml
-   kubectl apply -f deploy/05-valkey.yaml
-   ```
+4. **Values that were never read are gone or replaced.** `service.mysql.type` and
+   `service.valkey.type` no longer exist: those Services are headless and
+   ClusterIP. `valkey.initResources` was unused. `ghost.affinity.enabled` is
+   ignored; set `nodeAffinity`, `podAffinity` or `podAntiAffinity` instead.
 
-5. **Deploy the Ghost Application (Deployment):**
+5. **`strategy.rollingUpdate.maxSurge` defaults to 1 instead of 3.** With
+   `ReadWriteOnce` content, a surge pod cannot attach the volume on a second
+   node, so a lower surge stalls less often. For a single replica, `strategy.type:
+   Recreate` is the simplest safe choice.
 
-    ```bash
-    # Wait for MySQL and Valkey to be ready before starting
-   kubectl apply -f deploy/06-ghost-deployment.yaml
-   ```
+## Verifying
 
-6. **Expose Ghost with Ingress (Optional/Recommended):**
+```bash
+helm lint ./ghost-on-kubernetes --strict
+helm template rel ./ghost-on-kubernetes
+helm test my-ghost -n ghost
+```
 
-    ```bash
-    # Routes external traffic to the Ghost Service
-    kubectl apply -f deploy/07-ingress.yaml
-    ```
+## Troubleshooting
 
-## **Your Ghost Blog is Deployed!**
+**Ghost pod stuck in ContainerCreating with a pending PVC.**
+`kubectl describe pvc -n ghost` and check the StorageClass name and the access
+mode. For more than one replica the claim must be `ReadWriteMany`.
 
-Congratulations! You have deployed a highly secure and scalable Ghost v6 instance on Kubernetes.
+**Ghost logs: permission denied on the content volume.**
+The volume driver is not applying `fsGroup`. Set
+`ghost.initContainer.enabled=true`, or chown the volume to 65532 once by hand.
 
-### **Accessing Without a Domain Name (Testing)**
+**Rollout stuck after an image change.**
+A `ReadWriteOnce` volume plus `maxUnavailable: 0` means the old pod holds the
+volume until the new one is ready, and the new pod may be waiting on a volume
+another node already has. Use `strategy.type=Recreate`, ReadWriteMany storage, or
+raise `maxUnavailable` to 1.
 
-To preview the website without configuring Ingress or a TLD, you can use port forwarding:
+**Probes fail with 404 or a wrong site.**
+Set `ghost.probeHost` to the host Ghost serves, and check that `ghost.url` has
+the scheme (`https://`). Set `ghost.readinessProbe.scheme=HTTPS` when the
+probes must go through TLS.
 
-1. Temporarily configure both url and admin URLs in your config.production.json Secret to use `http://localhost:2368/`.
-2. Restart the Ghost pod(s) after updating the Secret.
-3. Run the port-forwarding command:
+**MySQL will not start.**
+`kubectl logs -n ghost <pod> -c mysql-init` for the ownership fix, then the
+`mysql` container. Check that the claim is bound, and that
+`mysql.auth.*` values are the ones the database was initialised with: the
+MySQL image only applies them on first start, so changing them later needs a
+manual `ALTER USER`.
 
-  ```bash
-  kubectl port-forward -n ghost-on-kubernetes services ghost-on-kubernetes-service 2368:2368
-  ```
+**TLS never becomes valid.**
+With `ingress.tls.mode=manual`, create the secret yourself or set
+`ingress.tls.certificate` and `ingress.tls.key`. `NOTES.txt` says so at install
+time.
 
-## Alternate image for compatibility with Ghost Docker Hub images
+## Security notes
 
-There are three Dockerfiles here used for building image variations:
+- Ghost runs as UID 65532 with a read-only root filesystem, all capabilities
+  dropped and no service account token mounted.
+- MySQL runs as UID 65532, Valkey as UID 999, both with dropped capabilities.
+- Every pod sets `seccompProfile: RuntimeDefault` and `fsGroup: 65532`.
+- Containers that must start as root set `runAsNonRoot: false` explicitly. A
+  container that inherits `runAsNonRoot: true` without an explicit
+  `runAsUser` is rejected by the kubelet unless its image declares a non-root
+  user, so the opt-in init containers carry that override.
+- The MySQL pod still starts with a root init container by default, which the
+  restricted Pod Security Standard rejects. Set
+  `mysql.initContainer.enabled=false` to drop it and rely on `fsGroup`.
+- Credentials live in values, Helm release secrets and rendered Secrets. Prefer
+  `mysql.auth.existingSecret`, `valkey.auth.existingSecret` and
+  `ghost.config.existingSecret` when a secret manager is available.
 
-* `Dockerfile` - The original image for Kubernetes
-* `Dockerfile-dev.dockerfile` - Like the original, but sets NODE_ENV=development and includes SQLite3 support. Image tags include `-dev` suffix.
-* `Dockerfile-docker.dockerfile` - built for more compatiblity with the "Docker Official" image on Dockerhub:
-  * Image tags include `-docker` suffix
-  * Sets NODE_ENV=production
-  * Includes SQLite support
-  * Uses the same root path as Docker Hub image: `/var/lib/ghost`
-  * Works outside of Kubernetes
+## Uninstall
 
-`Dockerfile-docker.dockerfile` has an important difference from the Docker Hub different for improved security: By default, files are created with UID of 65532, while Docker Hub uses UID 1000. Because the UID of 1000 is likely to be used by another user on the system, using 65532 is more secure. If you are moving from the Docker Hub image and don't want to change the ownership of all your files, you can continue to use the same user with this image by specifying `--user 100:1000` on a `docker run` line or updating a `compose.yml` file where you set `image:` to also set `user: 1000:1000`
+```bash
+helm uninstall my-ghost -n ghost
+```
 
-## Contributing
+Claims are not deleted with the release:
 
-We welcome contributions from the community! Please check the [CONTRIBUTING.md](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/CONTRIBUTING.md) file for more information on how to contribute to this project.
-
-## License and Credits
-
-* This project is licensed under the MIT License. Please check the [LICENSE](https://github.com/sredevopsorg/ghost-on-kubernetes/blob/main/LICENSE) file for more information.
-* The Ghost CMS is licensed under the [MIT License](https://github.com/TryGhost/Ghost/blob/main/LICENSE).
-* The node image and the Distroless image are licensed by their respective owners.
-
-## Star History
-
-![Star History Chart](https://api.star-history.com/svg?repos=sredevopsorg/ghost-on-kubernetes&type=Date&theme=dark)
+```bash
+kubectl delete pvc -n ghost -l app.kubernetes.io/instance=my-ghost
+```
