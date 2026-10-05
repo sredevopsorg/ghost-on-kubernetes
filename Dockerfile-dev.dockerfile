@@ -1,13 +1,9 @@
 # This Dockerfile is used to build a container image for running Ghost, a popular open-source blogging platform, on Kubernetes.
-# The image is built with official Node 22 on Debian Trixie (LTS Jod) and uses the Distroless base image for security and minimalism.
+# The image is built with official Node 24 on Debian Trixie (LTS) image and uses the Distroless base image for security and minimalism.
 
 # Stage 1: Build Environment
-FROM docker.io/node:jod-trixie@sha256:072889700aecef94c5cee46c6e60107cc2aaad9aa9e418ce05abaa1e85752ee3 AS build-env
+FROM docker.io/node:24-trixie@sha256:be40f6a87b9b22215ddb20da0a2320a5c6d583fe3ee3b0024d9fa4f05b40c8fd AS build-env
 USER root
-# Installs dependencies for sqlite3 node dependencies
-RUN apt update && \
-    apt install -y python3-setuptools build-essential libsqlite3-dev
-
 # Create a new user and group named "nonroot" with the UID 65532 and GID 65532, not a member of the root, sudo, and sys groups, and set the home directory to /home/nonroot.
 # This user is used to run the Ghost application in the container for security reasons.
 RUN groupadd -g 65532 nonroot && \
@@ -15,6 +11,7 @@ RUN groupadd -g 65532 nonroot && \
     usermod -aG nonroot nonroot && \
     mkdir -pv /home/nonroot && \
     chown -Rfv 65532:65532 /home/nonroot
+
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
@@ -35,19 +32,13 @@ RUN mkdir -pv "$GHOST_INSTALL"
 
 # Install the latest version of Ghost CLI globally and config some workarounds to build arm64 version in Github without timeout failures
 RUN yarn config set network-timeout 60000 && \
-    npm config set fetch-timeout 60000 && \
-    npm config set omit dev
+    npm config set fetch-timeout 60000
 
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable || true
 
-RUN npx ghost-cli install $GHOST_VERSION --dir $GHOST_INSTALL --db mysql --dbhost mysql --no-prompt --no-stack --no-setup --color --process local
-
-WORKDIR /home/nonroot/app/ghost/current
-#RUN npm install --save --legacy-peer-deps sqlite3
-RUN pnpm add --workspace-root sqlite3
-WORKDIR /home/nonroot
+RUN npx ghost-cli install $GHOST_VERSION --dir $GHOST_INSTALL --db mysql --dbhost mysql --no-prompt --no-stack --no-setup --color --process local 
 
 # Move the original content directory to a backup location, create a new content directory, set the correct ownership and permissions, and switch back to the "node" user
 RUN mv -v $GHOST_CONTENT $GHOST_CONTENT_ORIGINAL && \
@@ -58,8 +49,7 @@ RUN mv -v $GHOST_CONTENT $GHOST_CONTENT_ORIGINAL && \
     chmod -v 1755 $GHOST_CONTENT
 
 # Stage 2: Final Image
-# For this development image variant, we moved from nodejs22-debian13:latest into nodejs22-debian13:debug-nonroot
-FROM gcr.io/distroless/nodejs22-debian13:debug-nonroot@sha256:243b829804f0fa3a5c065269aa3ab9e751484d753604c6f9343a606f8760b176 AS runtime 
+FROM gcr.io/distroless/nodejs24-debian13:debug-nonroot AS runtime 
 
 # Set the installation directory and content directory for Ghost
 ENV GHOST_INSTALL_SRC=/home/nonroot/app/ghost
@@ -75,7 +65,7 @@ COPY --from=build-env $GHOST_INSTALL_SRC $GHOST_INSTALL
 # Set the working directory to the Ghost installation directory and create a volume for the content directory
 # The volume is used to persist the data across container restarts, upgrades, and migrations. 
 # It's going to be handled with an init container that will copy the content from your original content directory to the new content directory (If there is any)
-# The CMD script will update the included default themes (Casper and Source) and then init Ghost.
+# The CMD script will handle default themes included (Casper and Source) and init Ghost.
 
 WORKDIR $GHOST_INSTALL
 VOLUME $GHOST_CONTENT
