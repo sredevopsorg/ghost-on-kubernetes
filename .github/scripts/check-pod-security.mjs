@@ -52,7 +52,11 @@ function indentOf(line) {
   return line.length - line.trimStart().length
 }
 
-// Splits a rendered manifest into one scan per YAML document.
+// Splits a rendered manifest into one scan per YAML document, and marks the
+// lines that belong to a block scalar. A block scalar holds opaque text, not
+// YAML: config.production.json is JSON inside one, and JSON legitimately
+// repeats keys such as "host" at the same indent in sibling objects. Those are
+// not duplicate YAML keys, so block bodies are skipped everywhere below.
 function documents(text) {
   const docs = []
   let current = []
@@ -65,23 +69,65 @@ function documents(text) {
     }
   }
   if (current.length > 0) docs.push(current)
-  return docs.map((doc) => ({
-    raw: doc,
-    rows: doc.map((text, index) => ({
+
+  return docs.map((doc) => {
+    const rows = doc.map((raw, index) => ({
       number: index + 1,
-      text,
-      clean: stripComment(text),
-      indent: indentOf(text),
-    })),
-  }))
+      text: raw,
+      clean: stripComment(raw),
+      indent: indentOf(raw),
+      block: false,
+    }))
+    let blockIndent = -1
+    for (const row of rows) {
+      if (blockIndent >= 0) {
+        // A blank line never ends a block scalar.
+        if (row.clean.trim() === '') {
+          row.block = true
+          continue
+        }
+        if (row.indent > blockIndent) {
+          row.block = true
+          continue
+        }
+        blockIndent = -1
+      }
+      const match = /^([^:]+):(\s.*|)$/.exec(row.clean.trim())
+      if (!match) continue
+      if (/^[|>][+-]?\d*$/.test(match[2].trim())) blockIndent = row.indent
+    }
+    return { rows }
+  })
 }
 
-// A mapping at one indent: the keys seen since the last dedent below it, or
-// since the last sequence item started at that indent.
+// A mapping at one indent: the keys collected since that mapping started, which
+// is either its parent mapping or the sequence item currently being read.
+//
+// Two shapes have to stay apart, because they land on the same indent:
+//
+//     containers:
+//     - env:                  <- sequence item mapping starts at indent 6
+//       - name: NODE_ENV      <- sequence item mapping at indent 8
+//         value: production
+//       name: ghost           <- container mapping, also indent 8
+//
+// The inner "name" and the outer "name" are different keys in different
+// mappings. Tracking keys by indent alone merges them and reports a duplicate
+// that does not exist, so each level records whether it belongs to a sequence
+// item and is reset when that item ends.
 function keyTracker() {
   const levels = new Map()
+  const level = (indent) => {
+    let entry = levels.get(indent)
+    if (!entry) {
+      entry = { keys: new Set(), item: false }
+      levels.set(indent, entry)
+    }
+    return entry
+  }
   return {
     note(row) {
+      if (row.block) return
       const trimmed = row.clean.trim()
       if (trimmed === '' || trimmed.startsWith('#')) return
       const isItem = trimmed === '-' || trimmed.startsWith('- ')
@@ -89,16 +135,26 @@ function keyTracker() {
       const match = /^([^:]+):(\s.*|)$/.exec(body)
       if (!match) return
       const key = unquote(match[1])
-      if (isItem) levels.set(row.indent, new Set())
-      const seen = levels.get(row.indent) || new Set()
-      if (seen.has(key)) {
-        report(currentFile, row.number, 'duplicate key "' + key + '" in the same mapping')
-      }
-      seen.add(key)
-      levels.set(row.indent, seen)
+
       for (const indent of [...levels.keys()]) {
         if (indent > row.indent) levels.delete(indent)
       }
+
+      if (isItem) {
+        levels.set(row.indent, { keys: new Set([key]), item: true })
+        return
+      }
+
+      // A plain key here means any sequence item at this indent has ended.
+      const entry = level(row.indent)
+      if (entry.item) {
+        entry.keys = new Set()
+        entry.item = false
+      }
+      if (entry.keys.has(key)) {
+        report(currentFile, row.number, 'duplicate key "' + key + '" in the same mapping')
+      }
+      entry.keys.add(key)
     },
   }
 }
@@ -112,6 +168,7 @@ function readSecurityContext(rows, startIndex, keys) {
   const found = {}
   for (let i = startIndex + 1; i < rows.length; i++) {
     const row = rows[i]
+    if (row.block) continue
     if (row.clean.trim() === '') continue
     if (row.indent < childIndent) break
     if (row.indent !== childIndent) continue
@@ -142,6 +199,7 @@ function checkContainerBlock(doc, startIndex, podContext) {
   let i = startIndex + 1
   while (i < rows.length) {
     const row = rows[i]
+    if (row.block) { i++; continue }
     if (row.clean.trim() === '') { i++; continue }
     if (row.indent < listIndent) break
     const trimmed = row.clean.trim()
@@ -151,6 +209,7 @@ function checkContainerBlock(doc, startIndex, podContext) {
     let end = i + 1
     while (end < rows.length) {
       const next = rows[end]
+      if (next.block) { end++; continue }
       if (next.clean.trim() === '') { end++; continue }
       if (next.indent <= listIndent) break
       end++
