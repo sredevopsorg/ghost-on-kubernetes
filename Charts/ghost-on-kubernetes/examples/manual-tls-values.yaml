@@ -1,4 +1,5 @@
-# Configuration with manually provided TLS certificates
+# manual-tls-values.yaml
+# Ingress with a certificate you supply yourself.
 
 ghost:
   url: "https://secure.example.com"
@@ -39,16 +40,11 @@ ingress:
 
   tls:
     enabled: true
+    # "manual" points the Ingress at secretName. Create the secret yourself with
+    # kubectl, or set certificate and key below and let the chart create it.
     mode: "manual"
     secretName: "manual-tls-secret"
-    # These would typically be base64 encoded
-    # certificate: |
-    #   -----BEGIN CERTIFICATE-----
-    #   ... certificate content ...
-    #   -----END CERTIFICATE-----
-    # key: |
-    #   -----BEGIN PRIVATE KEY-----
-    #   ... key content ...
-    #   -----END PRIVATE KEY-----
+    certificate: ""
+    key: ""
     hosts:
       - secure.example.com

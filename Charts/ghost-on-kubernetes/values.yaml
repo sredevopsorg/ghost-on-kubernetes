@@ -1,23 +1,125 @@
 # yaml-language-server: $schema=./values.schema.json
 # Default values for ghost-on-kubernetes
 
+# replicaCount is the number of Ghost pods. Ignored when autoscaling.enabled is true.
 replicaCount: 1
 
+# image is the Ghost container image.
 image:
   repository: ghcr.io/sredevopsorg/ghost-on-kubernetes
+  # pullPolicy: Always keeps mutable tags such as "main" fresh; pin a released
+  # tag or a digest and switch to IfNotPresent for reproducible rollbacks.
   pullPolicy: Always
   tag: "main"
 
+# imagePullSecrets is a list of {name: <secret>} entries added to every pod.
 imagePullSecrets: []
+
+# nameOverride overrides the chart name inside generated resource names.
 nameOverride: ""
+# fullnameOverride replaces the generated <release>-<chart> name prefix entirely.
 fullnameOverride: ""
 
-# Ghost configuration
-ghost:
-  url: "https://yourdomain.tld"
-  adminUrl: "https://yourdomain.tld"
+# labels are extra labels added to every object the chart creates. Selector
+# labels are generated separately and cannot be overridden here.
+labels: {}
+# annotations are extra annotations added to every object the chart creates.
+annotations: {}
+# podLabels are extra labels added to the Ghost pod template only.
+podLabels: {}
+# podAnnotations are extra annotations added to the Ghost pod template only.
+podAnnotations: {}
 
-  # Mail configuration
+# priorityClassName is applied to every pod the chart creates.
+priorityClassName: ""
+
+# minReadySeconds is how long a new Ghost pod must be ready before it counts as
+# available, which lets a rollout drain the previous pod only once the new one
+# actually serves traffic.
+minReadySeconds: 5
+# revisionHistoryLimit caps the number of old ReplicaSets kept for rollback.
+revisionHistoryLimit: 4
+# progressDeadlineSeconds is how long a rolling update may take before Helm and
+# kubectl mark it as failed.
+progressDeadlineSeconds: 600
+
+# strategy is the Deployment update strategy.
+# Note: with a ReadWriteOnce content volume a surge pod cannot attach the volume
+# on a second node, so maxSurge > 0 with maxUnavailable: 0 can stall a rollout.
+# Use type: Recreate (or ReadWriteMany) for ReadWriteOnce volumes.
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 0
+    maxSurge: 1
+
+# autoscaling manages the Ghost replica count with a HorizontalPodAutoscaler.
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 3
+  behavior: {}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 80
+
+# podDisruptionBudget keeps voluntary evictions from taking Ghost fully down.
+podDisruptionBudget:
+  enabled: false
+  # maxUnavailable and minAvailable are mutually exclusive; maxUnavailable wins.
+  maxUnavailable: 1
+  minAvailable: ""
+
+# serviceAccount is the identity every workload in this release runs as. The
+# chart never needs API access, so automountServiceAccountToken stays false.
+serviceAccount:
+  create: true
+  # name defaults to the fullname when create is true, otherwise to "default".
+  name: ""
+  annotations: {}
+
+# networkPolicy restricts traffic to the Ghost pods. The rendered rules always
+# allow inbound HTTP on the Ghost port plus DNS and database/cache egress; add
+# your own rules under egress (for example an SMTP relay).
+networkPolicy:
+  enabled: false
+  egress: []
+
+# testImage is the image used by the "helm test" connection check.
+testImage:
+  repository: docker.io/busybox
+  tag: "stable-musl"
+  pullPolicy: IfNotPresent
+
+# ghost holds the Ghost CMS configuration and workload settings.
+ghost:
+  # url is the public site URL. Must include the scheme.
+  url: "https://yourdomain.tld"
+  # adminUrl defaults to url when empty.
+  adminUrl: ""
+  # probeHost is the Host header sent by the probes. Defaults to the hostname of
+  # ghost.url, so probes work without an Ingress.
+  probeHost: ""
+  # contentPath is where Ghost stores uploads, themes and logs. It must match the
+  # mount path of the Ghost content volume.
+  contentPath: "/home/nonroot/app/ghost/content"
+  # terminationGracePeriodSeconds is how long Ghost gets to finish in-flight
+  # requests on shutdown.
+  terminationGracePeriodSeconds: 30
+
+  # config.existingSecret mounts config.production.json from a secret you manage
+  # yourself instead of the one this chart renders. Required when credentials
+  # come from a secret manager rather than values, because Ghost reads the
+  # database and mail credentials from the file itself.
+  config:
+    existingSecret: ""
+
+  # mail configures Ghost's outgoing mail. Required before Ghost can send
+  # member signup or password reset emails.
   mail:
     enabled: true
     transport: "SMTP"
@@ -29,7 +131,7 @@ ghost:
     user: "user@server.com"
     password: "password"
 
-  # Resource limits
+  # resources are the Ghost container resource requests and limits.
   resources:
     limits:
       cpu: 800m
@@ -38,60 +140,115 @@ ghost:
       cpu: 100m
       memory: 256Mi
 
-  # Probes configuration
-  livenessProbe:
-    enabled: false
-    initialDelaySeconds: 30
-    periodSeconds: 300
-    timeoutSeconds: 3
-    successThreshold: 1
-    failureThreshold: 1
-
-  readinessProbe:
-    enabled: false
-    initialDelaySeconds: 10
-    periodSeconds: 10
-    timeoutSeconds: 3
-    successThreshold: 1
-    failureThreshold: 3
-
-  # Security context
+  # securityContext is the Ghost container security context. The chart defaults
+  # satisfy the restricted Pod Security Standard.
   securityContext:
     readOnlyRootFilesystem: true
     allowPrivilegeEscalation: false
     runAsNonRoot: true
     runAsUser: 65532
+    runAsGroup: 65532
+    capabilities:
+      drop:
+        - ALL
 
-  # Ghost Node affinity (optional)
-  affinity:
+  # initContainer.enabled adds a root init container that chowns the content
+  # volume. Only needed for volume drivers where the kubelet cannot apply
+  # podSecurityContext.fsGroup, such as some NFS exports with root_squash.
+  # It keeps the pod out of compliance with the restricted Pod Security Standard.
+  initContainer:
     enabled: false
-    nodeAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-        nodeSelectorTerms:
-          - matchExpressions:
-              - key: node-role.kubernetes.io/worker
-                operator: In
-                values:
-                  - "true"
 
-# MySQL configuration
+  # readinessProbe gates traffic to a pod and is on by default.
+  readinessProbe:
+    enabled: true
+    # path defaults to the unauthenticated Ghost admin site endpoint.
+    path: "/ghost/api/v4/admin/site/"
+    scheme: "HTTP"
+    extraHttpHeaders: []
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 3
+
+  # startupProbe gives Ghost time to migrate the database on first boot before
+  # the liveness probe starts counting failures.
+  startupProbe:
+    enabled: true
+    path: "/ghost/api/v4/admin/site/"
+    scheme: "HTTP"
+    extraHttpHeaders: []
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 30
+
+  # livenessProbe restarts a wedged Ghost process. Off by default: the probe
+  # depends on the database, so a database outage would otherwise restart Ghost
+  # repeatedly instead of just taking it out of rotation.
+  livenessProbe:
+    enabled: false
+    path: "/ghost/api/v4/admin/site/"
+    scheme: "HTTP"
+    extraHttpHeaders: []
+    initialDelaySeconds: 60
+    periodSeconds: 30
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 3
+
+  # affinity accepts nodeAffinity, podAffinity and podAntiAffinity. Each key is
+  # optional and rendered verbatim, so only set the ones you need.
+  affinity: {}
+  # nodeSelector constrains Ghost pods to nodes with these labels.
+  nodeSelector: {}
+  # tolerations lets Ghost pods schedule onto tainted nodes.
+  tolerations: []
+  # topologySpreadConstraints spreads Ghost replicas across nodes or zones.
+  topologySpreadConstraints: []
+
+  # extraEnv is appended to the Ghost container environment.
+  extraEnv: []
+  # extraVolumeMounts is appended to the Ghost container volume mounts.
+  extraVolumeMounts: []
+  # extraConfig is merged into config.production.json after everything else.
+  # Top-level keys win over the generated ones, so any Ghost setting the chart
+  # does not model (imageOptimization, themes, frontend, ...) can be set here.
+  extraConfig: {}
+
+# mysql holds the bundled database. Set enabled to false to use an external
+# server through mysql.external instead.
 mysql:
-  # Enable/disable MySQL deployment
+  # enabled deploys the MySQL StatefulSet and its headless Service.
   enabled: true
+  # replicaCount is kept at 1: Ghost needs exactly one writer.
+  replicaCount: 1
+  # containerPort is the port MySQL listens on.
+  containerPort: 3306
+  # podAnnotations are extra annotations for the MySQL pod template.
+  podAnnotations: {}
+  # terminationGracePeriodSeconds lets InnoDB flush cleanly on shutdown.
+  terminationGracePeriodSeconds: 120
 
   image:
     repository: docker.io/mysql
     tag: "8.4"
     pullPolicy: IfNotPresent
 
-  # Database credentials
+  # auth holds the database credentials for the bundled MySQL.
   auth:
     database: "mysql-db-name"
     username: "mysql-db-user"
     password: "mysql-db-password"
     rootPassword: "mysql-db-root-password"
+    # existingSecret uses a secret you manage with the keys MYSQL_DATABASE,
+    # MYSQL_USER, MYSQL_PASSWORD, MYSQL_ROOT_PASSWORD and MYSQL_HOST instead of
+    # the secret this chart creates.
+    existingSecret: ""
 
-  # External database configuration (used when mysql.enabled=false)
+  # external points Ghost at a database this release does not manage.
   external:
     host: "external-mysql-host"
     port: 3306
@@ -99,7 +256,7 @@ mysql:
     username: "ghost"
     password: "changeme"
 
-  # Resource limits
+  # resources are the MySQL container resource requests and limits.
   resources:
     limits:
       cpu: 900m
@@ -108,40 +265,60 @@ mysql:
       cpu: 300m
       memory: 500Mi
 
-  # Init container resources
+  # initContainer.enabled runs a root init container that chowns the data
+  # directory. Turn it off to satisfy the restricted Pod Security Standard;
+  # podSecurityContext.fsGroup then grants the non-root MySQL access instead.
+  initContainer:
+    enabled: true
+  # initResources are for that ownership init container.
   initResources:
     limits:
       cpu: 900m
       memory: 1Gi
     requests:
-      cpu: 0m
-      memory: 0Mi
+      cpu: 100m
+      memory: 128Mi
 
-  # Security context
+  # securityContext is the MySQL container security context.
   securityContext:
     readOnlyRootFilesystem: true
     allowPrivilegeEscalation: false
     runAsNonRoot: true
     runAsUser: 65532
+    runAsGroup: 65532
+    capabilities:
+      drop:
+        - ALL
 
-  # mysql Node affinity (optional)
-  affinity:
-    enabled: false
-    nodeAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-        nodeSelectorTerms:
-          - matchExpressions:
-              - key: node-role.kubernetes.io/worker
-                operator: In
-                values:
-                  - "true"
+  # livenessProbe and readinessProbe are TCP checks on the MySQL port.
+  livenessProbe:
+    enabled: true
+  readinessProbe:
+    enabled: true
 
-# Valkey configuration
+  # affinity accepts nodeAffinity, podAffinity and podAntiAffinity.
+  affinity: {}
+  nodeSelector: {}
+  tolerations: []
+  topologySpreadConstraints: []
+
+# valkey is the optional application cache. It is a cache: Ghost keeps working
+# without it, it only serves content faster.
 valkey:
-  # Enable/disable internal cluster Valkey deployment
+  # enabled deploys the bundled Valkey Deployment and its headless Service.
   enabled: false
+  # replicaCount is how many Valkey pods to run.
+  replicaCount: 1
+  # containerPort is the port Valkey listens on.
+  containerPort: 6379
+  # database is the logical database index used inside Valkey.
+  database: 0
+  # keyPrefix namespaces every cache key Ghost writes.
+  keyPrefix: "ghost"
+  # podAnnotations are extra annotations for the Valkey pod template.
+  podAnnotations: {}
 
-  # Global cache entry expiration in seconds (Default: 1 hour)
+  # ttl holds the cache entry lifetime in seconds, per adapter.
   ttl:
     imageSizes: 86400
     gscan: 43200
@@ -155,13 +332,16 @@ valkey:
     tag: "9.2-alpine"
     pullPolicy: IfNotPresent
 
-  # Authentication configuration for internal deployment
+  # auth configures password authentication for the bundled Valkey.
   auth:
     enabled: true
     username: "default"
     password: "changeme"
+    # existingSecret uses a secret you manage with the key valkey-password.
+    existingSecret: ""
 
-  # External Valkey/Redis configuration (used when valkey.enabled=false)
+  # external routes caching to a Valkey or Redis instance this release does not
+  # manage. Credentials are sent when external.password is set.
   external:
     enabled: false
     host: "external-valkey-host"
@@ -169,9 +349,9 @@ valkey:
     database: 0
     keyPrefix: "ghost"
     username: "default"
-    password: "changeme"
+    password: ""
 
-  # Resource limits for the internal deployment
+  # resources are the Valkey container resource requests and limits.
   resources:
     limits:
       cpu: 500m
@@ -180,87 +360,84 @@ valkey:
       cpu: 100m
       memory: 128Mi
 
-  # Init container resources for volume mounting permission fixes
-  initResources:
-    limits:
-      cpu: 200m
-      memory: 256Mi
-    requests:
-      cpu: 0m
-      memory: 0Mi
-
-  # Security context matching project non-root standards
+  # securityContext is the Valkey container security context.
   securityContext:
     readOnlyRootFilesystem: true
     allowPrivilegeEscalation: false
     runAsNonRoot: true
     runAsUser: 999
     runAsGroup: 1000
+    capabilities:
+      drop:
+        - ALL
 
-  # valkey Node affinity (optional)
-  affinity:
-    enabled: false
-    nodeAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-        nodeSelectorTerms:
-          - matchExpressions:
-              - key: node-role.kubernetes.io/worker
-                operator: In
-                values:
-                  - "true"
+  # probe.enabled adds TCP liveness and readiness checks.
+  probe:
+    enabled: true
 
-# Persistence configuration
+  # extraEnv is appended to the Valkey container environment.
+  extraEnv: []
+  # extraVolumeMounts is appended to the Valkey container volume mounts.
+  extraVolumeMounts: []
+
+  # affinity accepts nodeAffinity, podAffinity and podAntiAffinity.
+  affinity: {}
+  nodeSelector: {}
+  tolerations: []
+  topologySpreadConstraints: []
+
+# persistence holds the volume claims. Turning a claim off falls back to an
+# emptyDir, which keeps the release schedulable at the cost of losing data on
+# pod restart. It is meant for throwaway environments, not production.
 persistence:
   ghost:
     enabled: true
     storageClassName: ""
+    # accessMode must be ReadWriteMany for more than one Ghost replica.
     accessMode: ReadWriteOnce
     size: 1Gi
-    # For HA, use ReadWriteMany (requires compatible storage class)
-    # accessMode: ReadWriteMany
-
+    # selector picks PVs by label, for pre-provisioned storage.
+    selector: {}
   mysql:
     enabled: true
     storageClassName: ""
     accessMode: ReadWriteOnce
     size: 1Gi
-
+    selector: {}
   valkey:
     enabled: true
     storageClassName: ""
     accessMode: ReadWriteOnce
     size: 1Gi
+    selector: {}
 
-# Service configuration
+# service exposes Ghost, and the bundled MySQL and Valkey as headless services.
 service:
   type: ClusterIP
+  # port is the port the Service listens on.
   port: 2368
-
+  # targetPort is the Ghost container port.
+  targetPort: 2368
   mysql:
-    type: ClusterIP
     port: 3306
-
   valkey:
-    type: ClusterIP
     port: 6379
 
-# Ingress configuration
+# ingress exposes the Ghost Service through an Ingress controller.
 ingress:
   enabled: true
+  # className is the ingressClassName of the Ingress.
   className: "traefik"
-
-  # Ingress controller presets
-  # Options: traefik, nginx, custom
+  # preset adds controller specific annotations: traefik, nginx or custom.
   preset: "traefik"
-
-  annotations:
-    {}
+  # entrypoint is the Traefik entrypoint used by the traefik preset.
+  entrypoint: "websecure"
+  annotations: {}
     # For nginx:
     # kubernetes.io/ingress.class: nginx
     # cert-manager.io/cluster-issuer: letsencrypt-prod
     # For traefik:
     # traefik.ingress.kubernetes.io/router.entrypoints: websecure
-
   hosts:
     - host: yourdomain.tld
       paths:
@@ -269,31 +446,34 @@ ingress:
 
   tls:
     enabled: true
-    # TLS mode: manual, certManager, or both
+    # mode is manual, certManager or both.
     mode: "manual"
 
-    # For manual mode
+    # secretName is the secret cert-manager writes to, and the secret the
+    # Ingress points at in manual and both mode.
     secretName: tls-secret
 
-    # For cert-manager mode
+    # certManager configures the issuer annotation for certManager and both mode.
     certManager:
       issuer: "letsencrypt-prod"
       issuerKind: "ClusterIssuer"
 
-    # Manual certificate data (when mode=manual)
+    # certificate and key create that secret from values. Leave them empty when
+    # the secret already exists or cert-manager owns it.
     certificate: ""
     key: ""
 
     hosts:
       - yourdomain.tld
 
-# mysql Init container configuration
+# initContainer is the shared root init container image, security context and
+# resources. Used by the MySQL StatefulSet always, and by the Ghost pod when
+# ghost.initContainer.enabled is true.
 initContainer:
   image:
     repository: docker.io/busybox
     tag: "stable-musl"
     pullPolicy: IfNotPresent
-
   resources:
     limits:
       cpu: 900m
@@ -301,22 +481,16 @@ initContainer:
     requests:
       cpu: 100m
       memory: 128Mi
-
   securityContext:
     readOnlyRootFilesystem: true
     allowPrivilegeEscalation: false
 
-# Deployment strategy
-strategy:
-  type: RollingUpdate
-  rollingUpdate:
-    maxUnavailable: 0
-    maxSurge: 3
-
-# Additional volumes
+# volumes sizes the ephemeral volumes and the emptyDir fallbacks.
 volumes:
   tmp:
     sizeLimit: 64Mi
+  mysqlData:
+    sizeLimit: 1Gi
   mysqlTmp:
     sizeLimit: 128Mi
   mysqlSocket:
@@ -326,13 +500,21 @@ volumes:
   valkeyTmp:
     sizeLimit: 128Mi
 
-# Pod security context
+# podSecurityContext is the pod level security context for every workload.
+# fsGroup is what lets the non-root Ghost and MySQL processes write to the
+# mounted volumes without a root init container.
 podSecurityContext:
+  runAsNonRoot: true
+  fsGroup: 65532
+  fsGroupChangePolicy: OnRootMismatch
   seccompProfile:
     type: RuntimeDefault
 
-# Additional labels
-labels: {}
-
-# Additional annotations
-annotations: {}
+# extraEnv is appended to the Ghost container environment.
+extraEnv: []
+# extraEnvFrom is appended to the Ghost container envFrom list.
+extraEnvFrom: []
+# extraVolumes adds volumes to the Ghost pod.
+extraVolumes: []
+# extraVolumeMounts adds mounts to the Ghost container.
+extraVolumeMounts: []

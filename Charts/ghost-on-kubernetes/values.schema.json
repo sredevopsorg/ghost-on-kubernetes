@@ -1,33 +1,354 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ghost-on-kubernetes values",
   "type": "object",
-  "required": ["ghost", "persistence"],
+  "required": [
+    "ghost",
+    "persistence"
+  ],
   "properties": {
     "replicaCount": {
       "type": "integer",
       "minimum": 1,
-      "description": "Number of Ghost pod replicas"
+      "description": "Number of Ghost pods. Ignored when autoscaling.enabled is true."
     },
     "image": {
       "type": "object",
       "properties": {
-        "repository": {"type": "string"},
-        "tag": {"type": "string"},
-        "pullPolicy": {"enum": ["Always", "IfNotPresent", "Never"]}
+        "repository": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tag": {
+          "type": "string",
+          "minLength": 1
+        },
+        "pullPolicy": {
+          "enum": [
+            "Always",
+            "IfNotPresent",
+            "Never"
+          ]
+        }
+      }
+    },
+    "imagePullSecrets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "nameOverride": {
+      "type": "string"
+    },
+    "fullnameOverride": {
+      "type": "string"
+    },
+    "labels": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "annotations": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "podLabels": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "podAnnotations": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "priorityClassName": {
+      "type": "string"
+    },
+    "minReadySeconds": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "revisionHistoryLimit": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "progressDeadlineSeconds": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "strategy": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "enum": [
+            "RollingUpdate",
+            "Recreate"
+          ]
+        },
+        "rollingUpdate": {
+          "type": "object",
+          "properties": {
+            "maxUnavailable": {
+              "type": [
+                "integer",
+                "string"
+              ]
+            },
+            "maxSurge": {
+              "type": [
+                "integer",
+                "string"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "autoscaling": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "minReplicas": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxReplicas": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "behavior": {
+          "type": "object"
+        },
+        "metrics": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "podDisruptionBudget": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "maxUnavailable": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "minAvailable": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        }
+      }
+    },
+    "serviceAccount": {
+      "type": "object",
+      "properties": {
+        "create": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        },
+        "annotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "networkPolicy": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "egress": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "testImage": {
+      "type": "object",
+      "properties": {
+        "repository": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tag": {
+          "type": "string",
+          "minLength": 1
+        },
+        "pullPolicy": {
+          "enum": [
+            "Always",
+            "IfNotPresent",
+            "Never"
+          ]
+        }
       }
     },
     "ghost": {
       "type": "object",
-      "required": ["url"],
+      "required": [
+        "url"
+      ],
       "properties": {
         "url": {
           "type": "string",
           "pattern": "^https?://",
-          "description": "Ghost site URL"
+          "description": "Public site URL including the scheme."
         },
         "adminUrl": {
           "type": "string",
-          "pattern": "^https?://"
+          "pattern": "^$|^https?://",
+          "description": "Defaults to ghost.url when empty."
+        },
+        "probeHost": {
+          "type": "string"
+        },
+        "contentPath": {
+          "type": "string",
+          "pattern": "^/"
+        },
+        "terminationGracePeriodSeconds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "config": {
+          "type": "object",
+          "properties": {
+            "existingSecret": {
+              "type": "string"
+            }
+          }
+        },
+        "mail": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "transport": {
+              "type": "string",
+              "minLength": 1
+            },
+            "from": {
+              "type": "string",
+              "minLength": 1
+            },
+            "service": {
+              "type": "string",
+              "minLength": 1
+            },
+            "host": {
+              "type": "string",
+              "minLength": 1
+            },
+            "port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            },
+            "secure": {
+              "type": "boolean"
+            },
+            "user": {
+              "type": "string",
+              "minLength": 1
+            },
+            "password": {
+              "type": "string"
+            }
+          }
+        },
+        "resources": {
+          "type": "object"
+        },
+        "securityContext": {
+          "type": "object"
+        },
+        "initContainer": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            }
+          }
+        },
+        "readinessProbe": {
+          "$ref": "#/definitions/probe"
+        },
+        "livenessProbe": {
+          "$ref": "#/definitions/probe"
+        },
+        "startupProbe": {
+          "$ref": "#/definitions/probe"
+        },
+        "affinity": {
+          "$ref": "#/definitions/affinity"
+        },
+        "nodeSelector": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "tolerations": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "topologySpreadConstraints": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "extraEnv": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "extraVolumeMounts": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "extraConfig": {
+          "type": "object",
+          "description": "Merged into config.production.json; top-level keys win."
         }
       }
     },
@@ -36,16 +357,121 @@
       "properties": {
         "enabled": {
           "type": "boolean",
-          "description": "Deploy MySQL StatefulSet"
+          "description": "Deploy the MySQL StatefulSet and its headless Service."
+        },
+        "replicaCount": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1
+        },
+        "containerPort": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "podAnnotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "terminationGracePeriodSeconds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "image": {
+          "$ref": "#/definitions/image"
+        },
+        "auth": {
+          "type": "object",
+          "properties": {
+            "database": {
+              "type": "string",
+              "minLength": 1
+            },
+            "username": {
+              "type": "string",
+              "minLength": 1
+            },
+            "password": {
+              "type": "string"
+            },
+            "rootPassword": {
+              "type": "string"
+            },
+            "existingSecret": {
+              "type": "string"
+            }
+          }
         },
         "external": {
           "type": "object",
           "properties": {
-            "host": {"type": "string"},
-            "port": {"type": "integer", "minimum": 1, "maximum": 65535},
-            "database": {"type": "string"},
-            "username": {"type": "string"},
-            "password": {"type": "string"}
+            "host": {
+              "type": "string",
+              "minLength": 1
+            },
+            "port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            },
+            "database": {
+              "type": "string",
+              "minLength": 1
+            },
+            "username": {
+              "type": "string",
+              "minLength": 1
+            },
+            "password": {
+              "type": "string"
+            }
+          }
+        },
+        "initContainer": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Run the root init container that chowns the MySQL data directory."
+            }
+          }
+        },
+        "resources": {
+          "type": "object"
+        },
+        "initResources": {
+          "type": "object"
+        },
+        "securityContext": {
+          "type": "object"
+        },
+        "livenessProbe": {
+          "$ref": "#/definitions/toggle"
+        },
+        "readinessProbe": {
+          "$ref": "#/definitions/toggle"
+        },
+        "affinity": {
+          "$ref": "#/definitions/affinity"
+        },
+        "nodeSelector": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "tolerations": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "topologySpreadConstraints": {
+          "type": "array",
+          "items": {
+            "type": "object"
           }
         }
       }
@@ -55,34 +481,81 @@
       "properties": {
         "enabled": {
           "type": "boolean",
-          "description": "Deploy Valkey cache Deployment"
+          "description": "Deploy the bundled Valkey cache."
         },
         "replicaCount": {
           "type": "integer",
+          "minimum": 1
+        },
+        "containerPort": {
+          "type": "integer",
           "minimum": 1,
-          "description": "Number of Valkey pod replicas"
+          "maximum": 65535
+        },
+        "database": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "keyPrefix": {
+          "type": "string",
+          "minLength": 1
+        },
+        "podAnnotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
         },
         "ttl": {
           "type": "object",
-          "description": "Cache TTL values in seconds",
+          "description": "Cache TTL values in seconds, per adapter.",
           "properties": {
-            "imageSizes": {"type": "integer", "minimum": 0},
-            "gscan": {"type": "integer", "minimum": 0},
-            "postsPublic": {"type": "integer", "minimum": 0},
-            "tagsPublic": {"type": "integer", "minimum": 0},
-            "linkRedirectsPublic": {"type": "integer", "minimum": 0},
-            "stats": {"type": "integer", "minimum": 0}
+            "imageSizes": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "gscan": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "postsPublic": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "tagsPublic": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "linkRedirectsPublic": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "stats": {
+              "type": "integer",
+              "minimum": 0
+            }
           }
+        },
+        "image": {
+          "$ref": "#/definitions/image"
         },
         "auth": {
           "type": "object",
           "properties": {
             "enabled": {
               "type": "boolean",
-              "description": "Enable Valkey authentication"
+              "description": "Require a password on the bundled Valkey."
             },
-            "username": {"type": "string"},
-            "password": {"type": "string"}
+            "username": {
+              "type": "string",
+              "minLength": 1
+            },
+            "password": {
+              "type": "string"
+            },
+            "existingSecret": {
+              "type": "string"
+            }
           }
         },
         "external": {
@@ -90,14 +563,73 @@
           "properties": {
             "enabled": {
               "type": "boolean",
-              "description": "Use external Valkey/Redis instance"
+              "description": "Cache through an external Valkey or Redis instance."
             },
-            "host": {"type": "string"},
-            "port": {"type": "integer", "minimum": 1, "maximum": 65535},
-            "database": {"type": "integer", "minimum": 0},
-            "keyPrefix": {"type": "string"},
-            "username": {"type": "string"},
-            "password": {"type": "string"}
+            "host": {
+              "type": "string",
+              "minLength": 1
+            },
+            "port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            },
+            "database": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "keyPrefix": {
+              "type": "string",
+              "minLength": 1
+            },
+            "username": {
+              "type": "string"
+            },
+            "password": {
+              "type": "string"
+            }
+          }
+        },
+        "resources": {
+          "type": "object"
+        },
+        "securityContext": {
+          "type": "object"
+        },
+        "probe": {
+          "$ref": "#/definitions/toggle"
+        },
+        "extraEnv": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "extraVolumeMounts": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "affinity": {
+          "$ref": "#/definitions/affinity"
+        },
+        "nodeSelector": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "tolerations": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "topologySpreadConstraints": {
+          "type": "array",
+          "items": {
+            "type": "object"
           }
         }
       }
@@ -106,27 +638,356 @@
       "type": "object",
       "properties": {
         "ghost": {
-          "type": "object",
-          "properties": {
-            "enabled": {"type": "boolean"},
-            "storageClassName": {"type": "string"},
-            "accessMode": {"enum": ["ReadWriteOnce", "ReadWriteMany"]},
-            "size": {"type": "string", "pattern": "^[0-9]+(Gi|Mi|Ti)$"}
-          }
+          "$ref": "#/definitions/persistence"
+        },
+        "mysql": {
+          "$ref": "#/definitions/persistence"
+        },
+        "valkey": {
+          "$ref": "#/definitions/persistence"
+        }
+      }
+    },
+    "service": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "enum": [
+            "ClusterIP",
+            "NodePort",
+            "LoadBalancer"
+          ]
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "targetPort": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "mysql": {
+          "$ref": "#/definitions/servicePort"
+        },
+        "valkey": {
+          "$ref": "#/definitions/servicePort"
         }
       }
     },
     "ingress": {
       "type": "object",
       "properties": {
-        "enabled": {"type": "boolean"},
-        "preset": {"enum": ["traefik", "nginx", "custom"]},
+        "enabled": {
+          "type": "boolean"
+        },
+        "className": {
+          "type": "string"
+        },
+        "preset": {
+          "enum": [
+            "traefik",
+            "nginx",
+            "custom"
+          ]
+        },
+        "entrypoint": {
+          "type": "string",
+          "minLength": 1
+        },
+        "annotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "hosts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "host"
+            ],
+            "properties": {
+              "host": {
+                "type": "string",
+                "minLength": 1
+              },
+              "paths": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string",
+                      "pattern": "^/"
+                    },
+                    "pathType": {
+                      "enum": [
+                        "Exact",
+                        "Prefix",
+                        "ImplementationSpecific"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
         "tls": {
           "type": "object",
           "properties": {
-            "enabled": {"type": "boolean"},
-            "mode": {"enum": ["manual", "certManager", "both"]}
+            "enabled": {
+              "type": "boolean"
+            },
+            "mode": {
+              "enum": [
+                "manual",
+                "certManager",
+                "both"
+              ]
+            },
+            "secretName": {
+              "type": "string",
+              "minLength": 1
+            },
+            "certManager": {
+              "type": "object",
+              "properties": {
+                "issuer": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "issuerKind": {
+                  "enum": [
+                    "Issuer",
+                    "ClusterIssuer"
+                  ]
+                }
+              }
+            },
+            "certificate": {
+              "type": "string"
+            },
+            "key": {
+              "type": "string"
+            },
+            "hosts": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
           }
+        }
+      }
+    },
+    "initContainer": {
+      "type": "object",
+      "properties": {
+        "image": {
+          "$ref": "#/definitions/image"
+        },
+        "resources": {
+          "type": "object"
+        },
+        "securityContext": {
+          "type": "object"
+        }
+      }
+    },
+    "volumes": {
+      "type": "object",
+      "properties": {
+        "tmp": {
+          "$ref": "#/definitions/sizeLimit"
+        },
+        "mysqlData": {
+          "$ref": "#/definitions/sizeLimit"
+        },
+        "mysqlTmp": {
+          "$ref": "#/definitions/sizeLimit"
+        },
+        "mysqlSocket": {
+          "$ref": "#/definitions/sizeLimit"
+        },
+        "valkeyData": {
+          "$ref": "#/definitions/sizeLimit"
+        },
+        "valkeyTmp": {
+          "$ref": "#/definitions/sizeLimit"
+        }
+      }
+    },
+    "podSecurityContext": {
+      "type": "object"
+    },
+    "extraEnv": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "extraEnvFrom": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "extraVolumes": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "extraVolumeMounts": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    }
+  },
+  "definitions": {
+    "image": {
+      "type": "object",
+      "properties": {
+        "repository": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tag": {
+          "type": "string",
+          "minLength": 1
+        },
+        "pullPolicy": {
+          "enum": [
+            "Always",
+            "IfNotPresent",
+            "Never"
+          ]
+        }
+      }
+    },
+    "toggle": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        }
+      }
+    },
+    "probe": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "path": {
+          "type": "string",
+          "pattern": "^/"
+        },
+        "scheme": {
+          "enum": [
+            "HTTP",
+            "HTTPS"
+          ]
+        },
+        "extraHttpHeaders": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "value"
+            ]
+          }
+        },
+        "initialDelaySeconds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "periodSeconds": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "successThreshold": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "failureThreshold": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "affinity": {
+      "type": "object",
+      "description": "Only the keys you set are rendered; the legacy 'enabled' flag is ignored.",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "deprecated": true
+        },
+        "nodeAffinity": {
+          "type": "object"
+        },
+        "podAffinity": {
+          "type": "object"
+        },
+        "podAntiAffinity": {
+          "type": "object"
+        }
+      }
+    },
+    "persistence": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "storageClassName": {
+          "type": "string"
+        },
+        "accessMode": {
+          "enum": [
+            "ReadWriteOnce",
+            "ReadOnlyMany",
+            "ReadWriteMany",
+            "ReadWriteOncePod"
+          ]
+        },
+        "size": {
+          "type": "string",
+          "pattern": "^[0-9]+(\\.[0-9]+)?(Ei|Pi|Ti|Gi|Mi|Ki|E|P|T|G|M|k)?$"
+        },
+        "selector": {
+          "type": "object"
+        }
+      }
+    },
+    "servicePort": {
+      "type": "object",
+      "properties": {
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        }
+      }
+    },
+    "sizeLimit": {
+      "type": "object",
+      "properties": {
+        "sizeLimit": {
+          "type": "string",
+          "minLength": 1
         }
       }
     }

@@ -2,47 +2,77 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "ghost-on-kubernetes.fullname" . }}
-  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "ghost-on-kubernetes.labels" . | nindent 4 }}
     app.kubernetes.io/component: ghost
+  {{- with .Values.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
+  {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
+  {{- end }}
   selector:
     matchLabels:
       {{- include "ghost-on-kubernetes.selectorLabels" . | nindent 6 }}
-  minReadySeconds: 5
+  minReadySeconds: {{ .Values.minReadySeconds }}
   strategy:
     {{- toYaml .Values.strategy | nindent 4 }}
-  revisionHistoryLimit: 4
-  progressDeadlineSeconds: 600
+  revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
+  progressDeadlineSeconds: {{ .Values.progressDeadlineSeconds }}
   template:
     metadata:
-      namespace: {{ .Release.Namespace }}
       labels:
         {{- include "ghost-on-kubernetes.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/secret-ghost-config.yaml") . | sha256sum }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+      {{- range . }}
+      - name: {{ .name | quote }}
+      {{- end }}
+      {{- end }}
+      serviceAccountName: {{ include "ghost-on-kubernetes.serviceAccountName" . }}
       automountServiceAccountToken: false
+      {{- with .Values.priorityClassName }}
+      priorityClassName: {{ . }}
+      {{- end }}
       volumes:
       - name: ghost-content
+        {{- if .Values.persistence.ghost.enabled }}
         persistentVolumeClaim:
           claimName: {{ include "ghost-on-kubernetes.fullname" . }}-content
+        {{- else }}
+        emptyDir: {}
+        {{- end }}
       - name: ghost-config
         secret:
-          secretName: {{ include "ghost-on-kubernetes.fullname" . }}-config
+          secretName: {{ .Values.ghost.config.existingSecret | default (printf "%s-config" (include "ghost-on-kubernetes.fullname" .)) }}
           defaultMode: 420
       - name: tmp
         emptyDir:
-          sizeLimit: {{ .Values.volumes.tmp.sizeLimit }}
+          sizeLimit: {{ .Values.volumes.tmp.sizeLimit | quote }}
+      {{- with .Values.extraVolumes }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+      {{- if .Values.ghost.initContainer.enabled }}
       initContainers:
       - name: permissions-fix
-        imagePullPolicy: {{ .Values.initContainer.image.pullPolicy }}
+        imagePullPolicy: {{ .Values.initContainer.image.pullPolicy | quote }}
         image: "{{ .Values.initContainer.image.repository }}:{{ .Values.initContainer.image.tag }}"
         env:
         - name: GHOST_INSTALL
           value: /home/nonroot/app/ghost
         - name: GHOST_CONTENT
-          value: /home/nonroot/app/ghost/content
+          value: {{ .Values.ghost.contentPath | quote }}
         - name: NODE_ENV
           value: production
         securityContext:
@@ -67,47 +97,28 @@ spec:
             exit 0
         volumeMounts:
         - name: ghost-content
-          mountPath: /home/nonroot/app/ghost/content
+          mountPath: {{ .Values.ghost.contentPath | quote }}
           readOnly: false
+      {{- end }}
       containers:
       - name: ghost
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
         ports:
         - name: ghk8s
-          containerPort: 2368
+          containerPort: {{ .Values.service.targetPort }}
           protocol: TCP
         {{- if .Values.ghost.readinessProbe.enabled }}
         readinessProbe:
-          httpGet:
-            path: /ghost/api/v4/admin/site/
-            port: ghk8s
-            httpHeaders:
-            - name: X-Forwarded-Proto
-              value: https
-            - name: Host
-              value: {{ (first .Values.ingress.hosts).host }}
-          periodSeconds: {{ .Values.ghost.readinessProbe.periodSeconds }}
-          timeoutSeconds: {{ .Values.ghost.readinessProbe.timeoutSeconds }}
-          successThreshold: {{ .Values.ghost.readinessProbe.successThreshold }}
-          failureThreshold: {{ .Values.ghost.readinessProbe.failureThreshold }}
-          initialDelaySeconds: {{ .Values.ghost.readinessProbe.initialDelaySeconds }}
+          {{- include "ghost-on-kubernetes.probe" (dict "root" . "probe" .Values.ghost.readinessProbe) | nindent 10 }}
         {{- end }}
         {{- if .Values.ghost.livenessProbe.enabled }}
         livenessProbe:
-          httpGet:
-            path: /ghost/api/v4/admin/site/
-            port: ghk8s
-            httpHeaders:
-            - name: X-Forwarded-Proto
-              value: https
-            - name: Host
-              value: {{ (first .Values.ingress.hosts).host }}
-          periodSeconds: {{ .Values.ghost.livenessProbe.periodSeconds }}
-          timeoutSeconds: {{ .Values.ghost.livenessProbe.timeoutSeconds }}
-          successThreshold: {{ .Values.ghost.livenessProbe.successThreshold }}
-          failureThreshold: {{ .Values.ghost.livenessProbe.failureThreshold }}
-          initialDelaySeconds: {{ .Values.ghost.livenessProbe.initialDelaySeconds }}
+          {{- include "ghost-on-kubernetes.probe" (dict "root" . "probe" .Values.ghost.livenessProbe) | nindent 10 }}
+        {{- end }}
+        {{- if .Values.ghost.startupProbe.enabled }}
+        startupProbe:
+          {{- include "ghost-on-kubernetes.probe" (dict "root" . "probe" .Values.ghost.startupProbe) | nindent 10 }}
         {{- end }}
         env:
         - name: NODE_ENV
@@ -116,14 +127,23 @@ spec:
         - name: VALKEY_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: {{ include "ghost-on-kubernetes.fullname" . }}-valkey
+              name: {{ include "ghost-on-kubernetes.valkey.secretName" . }}
               key: valkey-password
+        {{- end }}
+        {{- with .Values.ghost.extraEnv }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.extraEnv }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.extraEnvFrom }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}
         resources:
           {{- toYaml .Values.ghost.resources | nindent 10 }}
         volumeMounts:
         - name: ghost-content
-          mountPath: /home/nonroot/app/ghost/content
+          mountPath: {{ .Values.ghost.contentPath | quote }}
           readOnly: false
         - name: ghost-config
           readOnly: true
@@ -132,14 +152,32 @@ spec:
         - name: tmp
           mountPath: /tmp
           readOnly: false
+        {{- with .Values.ghost.extraVolumeMounts }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.extraVolumeMounts }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
         securityContext:
           {{- toYaml .Values.ghost.securityContext | nindent 10 }}
       restartPolicy: Always
-      terminationGracePeriodSeconds: 15
+      terminationGracePeriodSeconds: {{ .Values.ghost.terminationGracePeriodSeconds }}
       dnsPolicy: ClusterFirst
-      {{- if .Values.ghost.affinity.enabled }}
+      {{- with (include "ghost-on-kubernetes.affinity" .Values.ghost.affinity | fromYaml) }}
       affinity:
-        {{- $yaml := toYaml .Values.ghost.affinity | replace "enabled: true\n" "" | replace "enabled: true" "" }}
-        {{ $yaml | nindent 8 }}
+        {{- toYaml . | nindent 8 }}
       {{- end }}
-      securityContext: {}
+      {{- with .Values.ghost.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.ghost.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.ghost.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
