@@ -132,6 +132,7 @@ never what you want.
 | `podDisruptionBudget.enabled` / `maxUnavailable` / `minAvailable` | Eviction safety | off |
 | `strategy` / `minReadySeconds` / `revisionHistoryLimit` / `progressDeadlineSeconds` | Rollout behaviour | RollingUpdate, surge 1 |
 | `serviceAccount.create` / `name` / `annotations` | Pod identity | created, token not mounted |
+| `valkey.podSecurityContext` | Merged over `podSecurityContext` for Valkey pods | `{}` |
 | `podSecurityContext` | Pod level security context, `fsGroup` grants volume access | `fsGroup: 65532` |
 | `priorityClassName` | Priority class for every pod | unset |
 | `imagePullSecrets` | `[{name: <secret>}]` for private registries | `[]` |
@@ -167,8 +168,8 @@ volume.
 helm upgrade my-ghost sredevopsorg/ghost-on-kubernetes -n ghost --reset-values -f my-values.yaml
 ```
 
-`2.0.0` contains changes that a plain `helm upgrade` cannot apply to a running
-release:
+Every release in the 2.0.x line contains changes that a plain `helm upgrade`
+cannot apply to a running 1.x release:
 
 1. **Workload selectors are release-scoped.** The MySQL StatefulSet and the
    Valkey Deployment used to select on `app: ghost-on-kubernetes-mysql`, which
@@ -252,6 +253,10 @@ time.
   dropped and no service account token mounted.
 - MySQL runs as UID 65532, Valkey as UID 999, both with dropped capabilities.
 - Every pod sets `seccompProfile: RuntimeDefault` and `fsGroup: 65532`.
+- Containers that must start as root set `runAsNonRoot: false` explicitly. A
+  container that inherits `runAsNonRoot: true` without an explicit
+  `runAsUser` is rejected by the kubelet unless its image declares a non-root
+  user, so the opt-in init containers carry that override.
 - The MySQL pod still starts with a root init container by default, which the
   restricted Pod Security Standard rejects. Set
   `mysql.initContainer.enabled=false` to drop it and rely on `fsGroup`.

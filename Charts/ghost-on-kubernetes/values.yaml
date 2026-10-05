@@ -375,6 +375,11 @@ valkey:
   probe:
     enabled: true
 
+  # podSecurityContext is merged over the chart-wide one for Valkey pods only.
+  # Set fsGroup here when the data volume must be group-owned by
+  # valkey.securityContext.runAsGroup instead of the shared fsGroup.
+  podSecurityContext: {}
+
   # extraEnv is appended to the Valkey container environment.
   extraEnv: []
   # extraVolumeMounts is appended to the Valkey container volume mounts.
@@ -484,6 +489,10 @@ initContainer:
   securityContext:
     readOnlyRootFilesystem: true
     allowPrivilegeEscalation: false
+    # This container chowns the volume, so it has to start as root. Setting
+    # runAsNonRoot here overrides the pod-level runAsNonRoot: without it the
+    # kubelet rejects the pod, because the image declares no non-root user.
+    runAsNonRoot: false
 
 # volumes sizes the ephemeral volumes and the emptyDir fallbacks.
 volumes:

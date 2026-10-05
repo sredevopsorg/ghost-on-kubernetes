@@ -599,6 +599,10 @@
         "probe": {
           "$ref": "#/definitions/toggle"
         },
+        "podSecurityContext": {
+          "type": "object",
+          "description": "Merged over the chart-wide podSecurityContext for Valkey pods only."
+        },
         "extraEnv": {
           "type": "array",
           "items": {

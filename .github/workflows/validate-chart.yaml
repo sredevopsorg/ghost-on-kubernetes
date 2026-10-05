@@ -92,6 +92,21 @@ jobs:
             node .github/scripts/check-ghost-config-parity.mjs --config-from-stdin /tmp/rendered.yaml
           done
 
+      - name: No container runs as root under runAsNonRoot
+        run: |
+          set -euo pipefail
+          chart=./Charts/ghost-on-kubernetes
+          render() {
+            name="$1"; shift
+            helm template rel "${chart}" "$@" > "/tmp/podsec-${name}.yaml"
+          }
+          render defaults
+          render internal-valkey --set valkey.enabled=true
+          render ghost-init --set ghost.initContainer.enabled=true
+          render restricted-pss --set mysql.initContainer.enabled=false
+          render ha -f "${chart}/examples/ha-values.yaml"
+          node .github/scripts/check-pod-security.mjs /tmp/podsec-*.yaml
+
       - name: Chart configuration matches the static manifests
         run: node .github/scripts/check-ghost-config-parity.mjs --with-helm
 
