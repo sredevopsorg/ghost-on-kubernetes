@@ -1,0 +1,110 @@
+name: Validate Chart
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "Charts/**"
+      - ".github/scripts/check-ghost-config-parity.mjs"
+      - ".github/workflows/validate-chart.yaml"
+  pull_request:
+    paths:
+      - "Charts/**"
+      - ".github/scripts/check-ghost-config-parity.mjs"
+      - ".github/workflows/validate-chart.yaml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install Helm
+        uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
+        with:
+          version: v4.3.0
+
+      - name: Lint
+        run: helm lint ./Charts/ghost-on-kubernetes --strict
+
+      - name: Template with default values
+        run: helm template rel ./Charts/ghost-on-kubernetes > /dev/null
+
+      - name: Template with every example
+        run: |
+          set -euo pipefail
+          for values in ./Charts/ghost-on-kubernetes/examples/*.yaml; do
+            echo "::group::$(basename "${values}")"
+            helm template rel ./Charts/ghost-on-kubernetes -f "${values}" > /dev/null
+            echo "::endgroup::"
+          done
+
+      - name: Template the combinations CI cannot miss
+        run: |
+          set -euo pipefail
+          chart=./Charts/ghost-on-kubernetes
+          render() {
+            echo "::group::$1"
+            shift
+            helm template rel "${chart}" "$@" > /dev/null
+            echo "::endgroup::"
+          }
+          render "ephemeral storage" --set persistence.ghost.enabled=false --set persistence.mysql.enabled=false
+          render "no ingress, no hosts, probes on" \
+            --set ingress.enabled=false --set-json 'ingress.hosts=[]' \
+            --set ghost.readinessProbe.enabled=true --set ghost.livenessProbe.enabled=true
+          render "internal valkey" --set valkey.enabled=true
+          render "external valkey with credentials" \
+            --set valkey.external.enabled=true --set valkey.external.host=redis.example.com \
+            --set valkey.external.password=secret
+          render "external mysql" \
+            --set mysql.enabled=false --set mysql.external.host=db.example.com \
+            --set mysql.external.password=secret
+          render "tls from cert-manager" --set ingress.tls.mode=certManager
+          render "tls from both sources" --set ingress.tls.mode=both
+          render "tls secret rendered from values" \
+            --set ingress.tls.mode=manual --set ingress.tls.certificate=cert --set ingress.tls.key=key
+          render "autoscaling and disruption budget" \
+            --set autoscaling.enabled=true --set podDisruptionBudget.enabled=true
+          render "existing secrets" \
+            --set mysql.auth.existingSecret=db-secret \
+            --set valkey.auth.existingSecret=cache-secret \
+            --set ghost.config.existingSecret=config-secret
+          render "restricted pss shape" \
+            --set mysql.initContainer.enabled=false \
+            --set serviceAccount.create=false
+          render "network policy" --set networkPolicy.enabled=true
+          render "image pull secrets" --set-json 'imagePullSecrets=[{"name":"regcred"}]'
+          render "recreate strategy" --set strategy.type=Recreate
+
+      - name: Generated Ghost configuration is valid JSON
+        run: |
+          set -euo pipefail
+          chart=./Charts/ghost-on-kubernetes
+          for args in "" "--set valkey.enabled=true" "--set valkey.external.enabled=true --set valkey.external.host=redis.example.com --set valkey.external.password=secret" "--set mysql.enabled=false --set mysql.external.host=db.example.com --set mysql.external.password=secret"; do
+            helm template rel "${chart}" ${args} > /tmp/rendered.yaml
+            node .github/scripts/check-ghost-config-parity.mjs --config-from-stdin /tmp/rendered.yaml
+          done
+
+      - name: Chart configuration matches the static manifests
+        run: node .github/scripts/check-ghost-config-parity.mjs --with-helm
+
+      - name: Package and inspect the archive
+        run: |
+          set -euo pipefail
+          helm package ./Charts/ghost-on-kubernetes -d /tmp
+          tar -tzf /tmp/ghost-on-kubernetes-*.tgz | sort | tee /tmp/package-contents.txt
+          if grep -Eq '\.git/|\.tgz$|node_modules' /tmp/package-contents.txt; then
+            echo "the package contains files .helmignore should have excluded"
+            exit 1
+          fi
+          if ! grep -q 'ghost-on-kubernetes/templates/NOTES.txt' /tmp/package-contents.txt; then
+            echo "NOTES.txt is missing from the package"
+            exit 1
+          fi

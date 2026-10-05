@@ -1,4 +1,5 @@
-# Configuration with external MySQL database
+# external-mysql-values.yaml
+# Ghost against a database this release does not manage.
 
 replicaCount: 1
 
@@ -22,9 +23,6 @@ persistence:
     storageClassName: "nfs-client"
     accessMode: ReadWriteMany # Required for multiple replicas
     size: 5Gi
-
-  mysql:
-    enabled: false
 
 ingress:
   enabled: true

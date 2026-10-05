@@ -1,0 +1,66 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ include "ghost-on-kubernetes.fullname" . }}-test-connection
+  labels:
+    {{- include "ghost-on-kubernetes.labels" . | nindent 4 }}
+    app.kubernetes.io/component: test
+  annotations:
+    helm.sh/hook: test
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  restartPolicy: Never
+  {{- with .Values.imagePullSecrets }}
+  imagePullSecrets:
+      {{- range . }}
+  - name: {{ .name | quote }}
+  {{- end }}
+  {{- end }}
+  automountServiceAccountToken: false
+  containers:
+  - name: curl
+    image: "{{ .Values.testImage.repository }}:{{ .Values.testImage.tag }}"
+    imagePullPolicy: {{ .Values.testImage.pullPolicy | quote }}
+    command:
+    - /bin/sh
+    - -c
+    - |
+      set -e
+      host="{{ include "ghost-on-kubernetes.fullname" . }}-service.{{ .Release.Namespace }}.svc.cluster.local"
+      echo "Waiting for Ghost on $host:{{ .Values.service.port }} ..."
+      i=0
+      until wget -q -O /dev/null --header="Host: {{ .Values.ghost.probeHost | default (urlParse .Values.ghost.url).hostname }}" "http://$host:{{ .Values.service.port }}/"; do
+        i=$((i+1))
+        if [ "$i" -ge 30 ]; then
+          echo "Ghost did not answer on $host after 30 attempts"
+          exit 1
+        fi
+        sleep 5
+      done
+      echo "Ghost answered on $host:{{ .Values.service.port }}"
+{{- if .Values.mysql.enabled }}
+      host="{{ include "ghost-on-kubernetes.fullname" . }}-mysql-service.{{ .Release.Namespace }}.svc.cluster.local"
+      echo "Checking MySQL on $host:{{ .Values.service.mysql.port }} ..."
+      until nc -z "$host" {{ .Values.service.mysql.port }}; do
+        i=$((i+1))
+        if [ "$i" -ge 30 ]; then
+          echo "MySQL did not accept connections on $host"
+          exit 1
+        fi
+        sleep 5
+      done
+      echo "MySQL accepted a connection on $host:{{ .Values.service.mysql.port }}"
+      {{- end }}
+{{- if .Values.valkey.enabled }}
+      host="{{ include "ghost-on-kubernetes.fullname" . }}-valkey-service.{{ .Release.Namespace }}.svc.cluster.local"
+      echo "Checking Valkey on $host:{{ .Values.service.valkey.port }} ..."
+      until nc -z "$host" {{ .Values.service.valkey.port }}; do
+        i=$((i+1))
+        if [ "$i" -ge 30 ]; then
+          echo "Valkey did not accept connections on $host"
+          exit 1
+        fi
+        sleep 5
+      done
+      echo "Valkey accepted a connection on $host:{{ .Values.service.valkey.port }}"
+      {{- end }}

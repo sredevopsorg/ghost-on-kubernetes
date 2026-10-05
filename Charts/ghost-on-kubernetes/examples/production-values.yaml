@@ -1,12 +1,12 @@
-#production-values.yaml
-# Production configuration with internal MySQL and cert-manager
+# production-values.yaml
+# Production: internal MySQL, cert-manager TLS, validated probe defaults.
 
 replicaCount: 1
 
 image:
   repository: ghcr.io/sredevopsorg/ghost-on-kubernetes
   pullPolicy: Always
-  tag: "main"
+  tag: "6.55.0"
 
 ghost:
   url: "https://blog.example.com"
@@ -31,15 +31,24 @@ ghost:
       cpu: 200m
       memory: 512Mi
 
+  # Restarting Ghost on a database blip turns an outage into a restart loop, so
+  # liveness stays off here; readiness and the startup probe are on by default.
   livenessProbe:
+    enabled: false
+
+  startupProbe:
     enabled: true
-    initialDelaySeconds: 60
-    periodSeconds: 300
+    failureThreshold: 60
+    periodSeconds: 5
 
   readinessProbe:
     enabled: true
-    initialDelaySeconds: 30
     periodSeconds: 10
+    failureThreshold: 3
+
+podDisruptionBudget:
+  enabled: true
+  maxUnavailable: 0
 
 mysql:
   enabled: true

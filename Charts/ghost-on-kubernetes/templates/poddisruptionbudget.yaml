@@ -1,0 +1,22 @@
+{{- if .Values.podDisruptionBudget.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "ghost-on-kubernetes.fullname" . }}
+  labels:
+    {{- include "ghost-on-kubernetes.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ghost
+  {{- with .Values.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if kindIs "invalid" .Values.podDisruptionBudget.maxUnavailable }}
+  minAvailable: {{ required "podDisruptionBudget.minAvailable is required when maxUnavailable is unset" .Values.podDisruptionBudget.minAvailable | quote }}
+  {{- else }}
+  maxUnavailable: {{ .Values.podDisruptionBudget.maxUnavailable }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "ghost-on-kubernetes.selectorLabels" . | nindent 6 }}
+{{- end }}

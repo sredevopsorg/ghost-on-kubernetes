@@ -3,63 +3,81 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: {{ include "ghost-on-kubernetes.fullname" . }}-content
-  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "ghost-on-kubernetes.labels" . | nindent 4 }}
     app.kubernetes.io/component: storage
+  {{- with .Values.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
-  {{- if .Values.persistence.ghost.storageClassName }}
-  storageClassName: {{ .Values.persistence.ghost.storageClassName | quote }}
+  {{- with .Values.persistence.ghost.storageClassName }}
+  storageClassName: {{ . | quote }}
   {{- end }}
   volumeMode: Filesystem
   accessModes:
-    - {{ .Values.persistence.ghost.accessMode }}
+    - {{ .Values.persistence.ghost.accessMode | quote }}
+  {{- with .Values.persistence.ghost.selector }}
+  selector:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   resources:
     requests:
-      storage: {{ .Values.persistence.ghost.size }}
+      storage: {{ required "persistence.ghost.size is required when persistence.ghost.enabled is true" .Values.persistence.ghost.size | quote }}
 {{- end }}
----
 {{- if and .Values.mysql.enabled .Values.persistence.mysql.enabled }}
+---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: {{ include "ghost-on-kubernetes.fullname" . }}-mysql-pvc
-  namespace: {{ .Release.Namespace }}
   labels:
-    app: {{ include "ghost-on-kubernetes.name" . }}-mysql
     {{- include "ghost-on-kubernetes.labels" . | nindent 4 }}
     app.kubernetes.io/component: database-storage
+  {{- with .Values.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
-  {{- if .Values.persistence.mysql.storageClassName }}
-  storageClassName: {{ .Values.persistence.mysql.storageClassName | quote }}
+  {{- with .Values.persistence.mysql.storageClassName }}
+  storageClassName: {{ . | quote }}
   {{- end }}
   volumeMode: Filesystem
   accessModes:
-    - {{ .Values.persistence.mysql.accessMode }}
+    - {{ .Values.persistence.mysql.accessMode | quote }}
+  {{- with .Values.persistence.mysql.selector }}
+  selector:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   resources:
     requests:
-      storage: {{ .Values.persistence.mysql.size }}
+      storage: {{ required "persistence.mysql.size is required when mysql.enabled and persistence.mysql.enabled are true" .Values.persistence.mysql.size | quote }}
 {{- end }}
-
----
 {{- if and .Values.valkey.enabled .Values.persistence.valkey.enabled }}
+---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: {{ include "ghost-on-kubernetes.fullname" . }}-valkey-pvc
-  namespace: {{ .Release.Namespace }}
   labels:
-    app: {{ include "ghost-on-kubernetes.name" . }}-valkey
     {{- include "ghost-on-kubernetes.labels" . | nindent 4 }}
     app.kubernetes.io/component: cache-storage
+  {{- with .Values.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
-  {{- if .Values.persistence.valkey.storageClassName }}
-  storageClassName: {{ .Values.persistence.valkey.storageClassName | quote }}
+  {{- with .Values.persistence.valkey.storageClassName }}
+  storageClassName: {{ . | quote }}
   {{- end }}
   volumeMode: Filesystem
   accessModes:
-    - {{ .Values.persistence.valkey.accessMode }}
+    - {{ .Values.persistence.valkey.accessMode | quote }}
+  {{- with .Values.persistence.valkey.selector }}
+  selector:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   resources:
     requests:
-      storage: {{ .Values.persistence.valkey.size }}
+      storage: {{ required "persistence.valkey.size is required when valkey.enabled and persistence.valkey.enabled are true" .Values.persistence.valkey.size | quote }}
 {{- end }}

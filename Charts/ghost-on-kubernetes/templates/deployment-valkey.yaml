@@ -3,27 +3,40 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "ghost-on-kubernetes.fullname" . }}-valkey
-  namespace: {{ .Release.Namespace }}
   labels:
-    app: {{ include "ghost-on-kubernetes.name" . }}-valkey
     {{- include "ghost-on-kubernetes.labels" . | nindent 4 }}
     app.kubernetes.io/component: cache
+  {{- with .Values.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.valkey.replicaCount }}
   selector:
     matchLabels:
-      app: {{ include "ghost-on-kubernetes.name" . }}-valkey
+      {{- include "ghost-on-kubernetes.valkey.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        app: {{ include "ghost-on-kubernetes.name" . }}-valkey
+        {{- include "ghost-on-kubernetes.valkey.selectorLabels" . | nindent 8 }}
+      {{- with .Values.valkey.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
     spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+      {{- range . }}
+      - name: {{ .name | quote }}
+      {{- end }}
+      {{- end }}
+      serviceAccountName: {{ include "ghost-on-kubernetes.serviceAccountName" . }}
       containers:
       - name: valkey
         securityContext:
           {{- toYaml .Values.valkey.securityContext | nindent 10 }}
         image: "{{ .Values.valkey.image.repository }}:{{ .Values.valkey.image.tag }}"
-        imagePullPolicy: {{ .Values.valkey.image.pullPolicy }}
+        imagePullPolicy: {{ .Values.valkey.image.pullPolicy | quote }}
         # Default Valkey images run as user 999; explicitly executing valkey-server points config data to our writable directories
         command:
         - valkey-server
@@ -40,15 +53,34 @@ spec:
         - name: VALKEY_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: {{ include "ghost-on-kubernetes.fullname" . }}-valkey
+              name: {{ include "ghost-on-kubernetes.valkey.secretName" . }}
               key: valkey-password
+        {{- end }}
+        {{- with .Values.valkey.extraEnv }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}
         resources:
           {{- toYaml .Values.valkey.resources | nindent 10 }}
         ports:
-        - containerPort: 6379
+        - containerPort: {{ .Values.valkey.containerPort }}
           protocol: TCP
           name: valkey
+        {{- if .Values.valkey.probe.enabled }}
+        livenessProbe:
+          tcpSocket:
+            port: valkey
+          initialDelaySeconds: 15
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          tcpSocket:
+            port: valkey
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+        {{- end }}
         volumeMounts:
         - name: valkey-data
           mountPath: /data
@@ -56,13 +88,26 @@ spec:
         - name: valkey-tmp
           mountPath: /tmp
           readOnly: false
+        {{- with .Values.valkey.extraVolumeMounts }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       automountServiceAccountToken: false
-      {{- if .Values.valkey.affinity.enabled }}
+      {{- with (include "ghost-on-kubernetes.affinity" .Values.valkey.affinity | fromYaml) }}
       affinity:
-        {{- $yaml := toYaml .Values.valkey.affinity | replace "enabled: true\n" "" | replace "enabled: true" "" }}
-        {{ $yaml | nindent 8 }}
+        {{- toYaml . | nindent 8 }}
       {{- end }}
-
+      {{- with .Values.valkey.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.valkey.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.valkey.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       securityContext:
         fsGroup: {{ .Values.valkey.securityContext.runAsGroup }}
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
@@ -74,9 +119,9 @@ spec:
       {{- else }}
       - name: valkey-data
         emptyDir:
-          sizeLimit: {{ .Values.volumes.valkeyData.sizeLimit | default "256Mi" }}
+          sizeLimit: {{ .Values.volumes.valkeyData.sizeLimit | default "256Mi" | quote }}
       {{- end }}
       - name: valkey-tmp
         emptyDir:
-          sizeLimit: {{ .Values.volumes.valkeyTmp.sizeLimit | default "128Mi" }}
-{{- end }}
+          sizeLimit: {{ .Values.volumes.valkeyTmp.sizeLimit | default "128Mi" | quote }}
+          {{- end }}

@@ -1,10 +1,14 @@
-# High Availability configuration with multiple replicas
+# ha-values.yaml
+# High availability: three Ghost replicas over ReadWriteMany storage.
+# Ghost itself does not support active/active clustering; this configuration
+# spreads replicas for read availability and fast failover, not for write
+# concurrency.
 
 replicaCount: 3
 
 image:
   repository: ghcr.io/sredevopsorg/ghost-on-kubernetes
-  tag: "main"
+  tag: "6.55.0"
   pullPolicy: Always
 
 ghost:
@@ -19,6 +23,7 @@ ghost:
       cpu: 100m
       memory: 256Mi
 
+  # Only the keys you set are rendered, so no "enabled" flag is needed here.
   affinity:
     podAntiAffinity:
       preferredDuringSchedulingIgnoredDuringExecution:
@@ -31,6 +36,18 @@ ghost:
                   values:
                     - ghost-on-kubernetes
             topologyKey: kubernetes.io/hostname
+
+  topologySpreadConstraints:
+    - maxSkew: 1
+      topologyKey: topology.kubernetes.io/zone
+      whenUnsatisfiable: ScheduleAnyway
+      labelSelector:
+        matchLabels:
+          app.kubernetes.io/name: ghost-on-kubernetes
+
+  # ReadWriteMany storage is shared by every replica, so a surge pod can attach
+  # it during a rollout and the update never stalls.
+  terminationGracePeriodSeconds: 60
 
 mysql:
   enabled: true
@@ -61,6 +78,10 @@ persistence:
     storageClassName: "fast-ssd"
     accessMode: ReadWriteOnce
     size: 50Gi
+
+podDisruptionBudget:
+  enabled: true
+  maxUnavailable: 1
 
 strategy:
   type: RollingUpdate

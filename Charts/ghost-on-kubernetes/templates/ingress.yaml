@@ -1,30 +1,30 @@
 {{- if .Values.ingress.enabled }}
-{{- $ := . }}
+{{- $fullname := include "ghost-on-kubernetes.fullname" . }}
+{{- $tls := .Values.ingress.tls }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ include "ghost-on-kubernetes.fullname" $ }}-ingress
-  namespace: {{ .Release.Namespace }}
+  name: {{ $fullname }}-ingress
   labels:
-    {{- include "ghost-on-kubernetes.labels" $ | nindent 4 }}
+    {{- include "ghost-on-kubernetes.labels" . | nindent 4 }}
     app.kubernetes.io/component: ingress
   annotations:
     {{- if eq .Values.ingress.preset "nginx" }}
-    kubernetes.io/ingress.class: nginx
+    kubernetes.io/ingress.class: {{ .Values.ingress.className | default "nginx" | quote }}
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     {{- end }}
     {{- if eq .Values.ingress.preset "traefik" }}
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.entrypoints: {{ .Values.ingress.entrypoint | default "websecure" | quote }}
     {{- end }}
-    {{- if and .Values.ingress.tls.enabled (eq .Values.ingress.tls.mode "certManager") }}
-    cert-manager.io/{{ .Values.ingress.tls.certManager.issuerKind | lower }}: {{ .Values.ingress.tls.certManager.issuer }}
+    {{- if and $tls.enabled (or (eq $tls.mode "certManager") (eq $tls.mode "both")) }}
+    cert-manager.io/{{ $tls.certManager.issuerKind | lower }}: {{ $tls.certManager.issuer | quote }}
     {{- end }}
     {{- with .Values.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
-  {{- if .Values.ingress.className }}
-  ingressClassName: {{ .Values.ingress.className }}
+  {{- with .Values.ingress.className }}
+  ingressClassName: {{ . | quote }}
   {{- end }}
   rules:
   {{- range .Values.ingress.hosts }}
@@ -32,25 +32,25 @@ spec:
     http:
       paths:
       {{- range .paths }}
-      - path: {{ .path }}
-        pathType: {{ .pathType }}
+      - path: {{ .path | default "/" | quote }}
+        pathType: {{ .pathType | default "ImplementationSpecific" | quote }}
         backend:
           service:
-            name: {{ include "ghost-on-kubernetes.fullname" $ }}-service
+            name: {{ $fullname }}-service
             port:
               name: ghk8s
       {{- end }}
   {{- end }}
-  {{- if .Values.ingress.tls.enabled }}
+  {{- if $tls.enabled }}
   tls:
   - hosts:
-    {{- range .Values.ingress.tls.hosts }}
+    {{- range $tls.hosts }}
     - {{ . | quote }}
     {{- end }}
-    {{- if eq .Values.ingress.tls.mode "manual" }}
-    secretName: {{ .Values.ingress.tls.secretName }}
-    {{- else if eq .Values.ingress.tls.mode "certManager" }}
-    secretName: {{ include "ghost-on-kubernetes.fullname" $ }}-tls-cert
+    {{- if or (eq $tls.mode "manual") (eq $tls.mode "both") }}
+    secretName: {{ $tls.secretName }}
+    {{- else if eq $tls.mode "certManager" }}
+    secretName: {{ $fullname }}-tls-cert
     {{- end }}
   {{- end }}
 {{- end }}

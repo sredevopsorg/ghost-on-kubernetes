@@ -3,28 +3,42 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: {{ include "ghost-on-kubernetes.fullname" . }}-mysql
-  namespace: {{ .Release.Namespace }}
   labels:
-    app: {{ include "ghost-on-kubernetes.name" . }}-mysql
     {{- include "ghost-on-kubernetes.labels" . | nindent 4 }}
     app.kubernetes.io/component: database
+  {{- with .Values.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   serviceName: {{ include "ghost-on-kubernetes.fullname" . }}-mysql-service
-  replicas: 1
+  replicas: {{ .Values.mysql.replicaCount }}
   selector:
     matchLabels:
-      app: {{ include "ghost-on-kubernetes.name" . }}-mysql
+      {{- include "ghost-on-kubernetes.mysql.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        app: {{ include "ghost-on-kubernetes.name" . }}-mysql
+        {{- include "ghost-on-kubernetes.mysql.selectorLabels" . | nindent 8 }}
+      {{- with .Values.mysql.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
     spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+      {{- range . }}
+      - name: {{ .name | quote }}
+      {{- end }}
+      {{- end }}
+      serviceAccountName: {{ include "ghost-on-kubernetes.serviceAccountName" . }}
+      {{- if .Values.mysql.initContainer.enabled }}
       initContainers:
       - name: mysql-init
         securityContext:
           {{- toYaml .Values.initContainer.securityContext | nindent 10 }}
         image: "{{ .Values.initContainer.image.repository }}:{{ .Values.initContainer.image.tag }}"
-        imagePullPolicy: {{ .Values.initContainer.image.pullPolicy }}
+        imagePullPolicy: {{ .Values.initContainer.image.pullPolicy | quote }}
         command:
         - /bin/sh
         - -c
@@ -49,21 +63,40 @@ spec:
           readOnly: false
         resources:
           {{- toYaml .Values.mysql.initResources | nindent 10 }}
+      {{- end }}
       containers:
       - name: mysql
         securityContext:
           {{- toYaml .Values.mysql.securityContext | nindent 10 }}
         image: "{{ .Values.mysql.image.repository }}:{{ .Values.mysql.image.tag }}"
-        imagePullPolicy: {{ .Values.mysql.image.pullPolicy }}
+        imagePullPolicy: {{ .Values.mysql.image.pullPolicy | quote }}
         envFrom:
         - secretRef:
-            name: {{ include "ghost-on-kubernetes.fullname" . }}-mysql-env
+            name: {{ include "ghost-on-kubernetes.mysql.secretName" . }}
         resources:
           {{- toYaml .Values.mysql.resources | nindent 10 }}
         ports:
-        - containerPort: 3306
+        - containerPort: {{ .Values.mysql.containerPort }}
           protocol: TCP
           name: mysqlgh
+        {{- with .Values.mysql.livenessProbe.enabled }}
+        livenessProbe:
+          tcpSocket:
+            port: mysqlgh
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 6
+        {{- end }}
+        {{- with .Values.mysql.readinessProbe.enabled }}
+        readinessProbe:
+          tcpSocket:
+            port: mysqlgh
+          initialDelaySeconds: 20
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 6
+        {{- end }}
         volumeMounts:
         - name: mysql-volume
           mountPath: /var/lib/mysql
@@ -76,22 +109,40 @@ spec:
           mountPath: /var/run/mysqld
           readOnly: false
       automountServiceAccountToken: false
-      {{- if .Values.mysql.affinity.enabled }}
+      {{- with (include "ghost-on-kubernetes.affinity" .Values.mysql.affinity | fromYaml) }}
       affinity:
-        {{- $yaml := toYaml .Values.mysql.affinity | replace "enabled: true\n" "" | replace "enabled: true" "" }}
-        {{ $yaml | nindent 8 }}
+        {{- toYaml . | nindent 8 }}
       {{- end }}
-
+      {{- with .Values.mysql.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.mysql.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.mysql.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.mysql.terminationGracePeriodSeconds }}
+      terminationGracePeriodSeconds: {{ . }}
+      {{- end }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       volumes:
       - name: mysql-volume
+        {{- if .Values.persistence.mysql.enabled }}
         persistentVolumeClaim:
           claimName: {{ include "ghost-on-kubernetes.fullname" . }}-mysql-pvc
+        {{- else }}
+        emptyDir:
+          sizeLimit: {{ .Values.volumes.mysqlData.sizeLimit | quote }}
+        {{- end }}
       - name: mysql-tmp
         emptyDir:
-          sizeLimit: {{ .Values.volumes.mysqlTmp.sizeLimit }}
+          sizeLimit: {{ .Values.volumes.mysqlTmp.sizeLimit | quote }}
       - name: mysql-socket
         emptyDir:
-          sizeLimit: {{ .Values.volumes.mysqlSocket.sizeLimit }}
-{{- end }}
+          sizeLimit: {{ .Values.volumes.mysqlSocket.sizeLimit | quote }}
+          {{- end }}

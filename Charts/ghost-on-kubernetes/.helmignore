@@ -1,5 +1,6 @@
 #.helmignore
 # Patterns to ignore when building packages.
+*.tgz
 *.swp
 *.bak
 *.tmp

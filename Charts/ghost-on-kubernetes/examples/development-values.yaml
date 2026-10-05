@@ -1,4 +1,5 @@
-# Development/testing configuration with minimal resources
+# development-values.yaml
+# Local development: smallest useful footprint, no ingress, no TLS.
 
 replicaCount: 1
 
@@ -22,10 +23,12 @@ ghost:
       cpu: 100m
       memory: 128Mi
 
-  livenessProbe:
+  # Nothing to probe before the site is set up.
+  startupProbe:
     enabled: false
-
   readinessProbe:
+    enabled: false
+  livenessProbe:
     enabled: false
 
 mysql:
@@ -57,6 +60,10 @@ persistence:
     storageClassName: "longhorn"
     accessMode: ReadWriteOnce
     size: 1Gi
+
+# Ephemeral is the point in development: no claims to clean up on every reset.
+strategy:
+  type: Recreate
 
 ingress:
   enabled: false
