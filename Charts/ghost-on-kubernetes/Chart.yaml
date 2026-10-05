@@ -5,7 +5,7 @@ type: application
 # The 2.0.x line makes workload selectors release-scoped, drops the root init
 # container from the Ghost pod, renames a few values and enables probes by
 # default. See the upgrade section of README.md.
-version: "2.0.1"
+version: "2.0.2"
 appVersion: "6.55.0"
 kubeVersion: ">=1.25.0-0"
 keywords:

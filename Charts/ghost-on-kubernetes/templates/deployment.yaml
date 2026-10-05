@@ -25,6 +25,7 @@ spec:
     metadata:
       labels:
         {{- include "ghost-on-kubernetes.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: ghost
         {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
