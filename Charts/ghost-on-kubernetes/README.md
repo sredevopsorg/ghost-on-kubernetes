@@ -168,8 +168,8 @@ volume.
 helm upgrade my-ghost sredevopsorg/ghost-on-kubernetes -n ghost --reset-values -f my-values.yaml
 ```
 
-`2.0.0` contains changes that a plain `helm upgrade` cannot apply to a running
-release:
+Every release in the 2.0.x line contains changes that a plain `helm upgrade`
+cannot apply to a running 1.x release:
 
 1. **Workload selectors are release-scoped.** The MySQL StatefulSet and the
    Valkey Deployment used to select on `app: ghost-on-kubernetes-mysql`, which
