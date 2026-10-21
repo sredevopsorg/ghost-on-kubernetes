@@ -57,7 +57,7 @@ jobs:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
       - name: Run chart-releaser (New)
-        uses: sredevopsorg/helm-oci-charts-releaser@1ad212e37490318b18c4b49351440dac643e10ce # v0.0.1
+        uses: sredevopsorg/helm-oci-charts-releaser@6310288e5aff3e5dd7ac235b3b5deae2c65fe7c8 # v0.0.2
         continue-on-error: true
         with:
             oci_registry: ghcr.io/sredevopsorg
