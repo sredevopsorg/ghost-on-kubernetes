@@ -115,7 +115,7 @@ jobs:
           platforms: ${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ steps.meta.outputs.annotations }}
-          build-args: GHOST_VERSION=${{ steps.versions.outputs.ghost-version }}
+          build-args: GHOST_VERSION=${{ steps.versions.outputs.ghost-version }},GHOST_TARBALL_SHA256=${{ steps.versions.outputs.ghost-tarball-sha256 }}
           outputs: type=image,name=${{ env.GHCR_IMAGE }},push-by-digest=true,name-canonical=true,push=true,oci-mediatypes=true
           cache-from: type=gha,scope=${{ github.repository }}-${{ github.ref_name }}-${{ matrix.platform }}
           cache-to: type=gha,scope=${{ github.repository }}-${{ github.ref_name }}-${{ matrix.platform }}
