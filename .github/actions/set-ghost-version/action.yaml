@@ -30,11 +30,11 @@ runs:
         GITHUB_EVENT_NAME: ${{ inputs.event-name }}
       run: |
         if [ "${{ env.GITHUB_EVENT_NAME }}" == "workflow_dispatch" ]; then
-          echo "GHOST_VERSION=$(curl -s https://api.github.com/repos/tryghost/ghost/releases/latest | jq '.name' | sed 's/\"//g')" >> $GITHUB_OUTPUT
+          echo "GHOST_VERSION=$(curl -s https://api.github.com/repos/tryghost/ghost/releases/latest | jq '.name' | sed 's/\"//g' | sed 's/^v//')" >> $GITHUB_OUTPUT
           echo "GHOST_TARBALL_SHA256=$(curl -s https://api.github.com/repos/tryghost/ghost/releases/latest | jq -r '.assets[] | select(.digest != null) | .digest' | head -n 1 | sed 's/^sha256://')" >> "$GITHUB_OUTPUT"
           echo "MANUAL_TAG=${{ inputs.manual-tag }}" >> $GITHUB_OUTPUT
         else
-          echo "GHOST_VERSION=$(curl -s https://api.github.com/repos/tryghost/ghost/releases/latest | jq '.name' | sed 's/\"//g')" >> $GITHUB_OUTPUT
+          echo "GHOST_VERSION=$(curl -s https://api.github.com/repos/tryghost/ghost/releases/latest | jq '.name' | sed 's/\"//g' | sed 's/^v//')" >> $GITHUB_OUTPUT
           echo "GHOST_TARBALL_SHA256=$(curl -s https://api.github.com/repos/tryghost/ghost/releases/latest | jq -r '.assets[] | select(.digest != null) | .digest' | head -n 1 | sed 's/^sha256://')" >> "$GITHUB_OUTPUT"
         fi
 
