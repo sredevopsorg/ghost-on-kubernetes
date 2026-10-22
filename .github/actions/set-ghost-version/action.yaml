@@ -1,5 +1,5 @@
 name: "Set Ghost Version"
-description: "Sets up GHOST_VERSION and MANUAL_TAG values based on event type"
+description: "Sets up GHOST_VERSION, GHOST_TARBALL_SHA256, and MANUAL_TAG values based on event type"
 inputs:
   event-name:
     description: "The GitHub event name"
@@ -17,6 +17,9 @@ outputs:
   manual-tag:
     description: "The manual tag value"
     value: ${{ steps.version-setter.outputs.MANUAL_TAG }}
+  ghost-tarball-sha256:
+    description: "The SHA256 hash of the Ghost tarball"
+    value: ${{ steps.version-setter.outputs.GHOST_TARBALL_SHA256 }}
 runs:
   using: "composite"
   steps:
@@ -27,10 +30,12 @@ runs:
         GITHUB_EVENT_NAME: ${{ inputs.event-name }}
       run: |
         if [ "${{ env.GITHUB_EVENT_NAME }}" == "workflow_dispatch" ]; then
-          echo "GHOST_VERSION=${{ inputs.ghost-version }}" >> $GITHUB_OUTPUT
+          echo "GHOST_VERSION=$(curl -s https://api.github.com/repos/tryghost/ghost/releases/latest | jq '.name' | sed 's/\"//g')" >> $GITHUB_OUTPUT
+          echo "GHOST_TARBALL_SHA256=$(curl -s https://api.github.com/repos/tryghost/ghost/releases/latest | jq -r '.assets[] | select(.digest != null) | .digest' | head -n 1 | sed 's/^sha256://')" >> "$GITHUB_OUTPUT"
           echo "MANUAL_TAG=${{ inputs.manual-tag }}" >> $GITHUB_OUTPUT
         else
           echo "GHOST_VERSION=$(curl -s https://api.github.com/repos/tryghost/ghost/releases/latest | jq '.name' | sed 's/\"//g')" >> $GITHUB_OUTPUT
+          echo "GHOST_TARBALL_SHA256=$(curl -s https://api.github.com/repos/tryghost/ghost/releases/latest | jq -r '.assets[] | select(.digest != null) | .digest' | head -n 1 | sed 's/^sha256://')" >> "$GITHUB_OUTPUT"
         fi
 
     - name: Show Ghost version
@@ -38,4 +43,5 @@ runs:
       continue-on-error: true
       run: |
         echo "output of step for GHOST_VERSION=${{ steps.version-setter.outputs.GHOST_VERSION }}"
+        echo "output of step for GHOST_TARBALL_SHA256=${{ steps.version-setter.outputs.GHOST_TARBALL_SHA256 }}"
         echo "output of step for MANUAL_TAG=${{ steps.version-setter.outputs.MANUAL_TAG }}"
