@@ -51,43 +51,42 @@ RUN corepack enable
 USER nonroot
 RUN mkdir -pv "$GHOST_INSTALL"
 
-RUN set -eux; \
-    # Keep corepack's and pnpm's caches out of the install directory: they are derived from these variables,
-    # and /tmp keeps them out of the layer that is copied into the final image.
-    export XDG_CACHE_HOME=/tmp/xdg-cache XDG_DATA_HOME=/tmp/xdg-data; \
-    cd "$GHOST_INSTALL"; \
-    \
-    # Download the release tarball and verify it against the pinned digest before anything is unpacked.
-    curl -fsSL -o ghost.tgz "$GHOST_TARBALL_URL"; \
-    echo "$GHOST_TARBALL_SHA256  ghost.tgz" | sha256sum -c -; \
-    \
-    # The release tarball has no leading "package/" component, unlike an npm pack, so it unpacks flat into
-    # the install directory. There is no "versions/" directory and no "current" symlink: the entrypoint and
-    # the CMD below are adjusted to match this layout.
-    tar --extract --file ghost.tgz; \
-    rm ghost.tgz; \
-    \
-    # The tarball ships a pruned lockfile, so the tree is installed exactly as locked, not re-solved.
-    pnpm install --prod --frozen-lockfile; \
-    \
-    # Install-time inputs only: package.json points a number of dependencies at "file:components/*.tgz", but
-    # pnpm extracts them into its virtual store and nothing resolves back here afterwards.
-    rm -rf "$GHOST_INSTALL/components"; \
-    \
-    # Ghost's own pruner, as used by its production image: drops dependency TypeScript, sourcemaps, READMEs
-    # and vendored C/C++ (keeping licences and prebuilt .node). The tarball already has the "archive" profile
-    # applied, so this is mostly node_modules.
-    node scripts/prune.mts "$GHOST_INSTALL" --profile=image; \
-    \
-    # Keep the initial content so the entrypoint can seed an empty volume with the bundled themes.
-    mv "$GHOST_CONTENT" "$GHOST_CONTENT_ORIGINAL"; \
-    mkdir -p "$GHOST_CONTENT"; \
-    \
-    rm -rf /tmp/xdg-cache /tmp/xdg-data; \
-    npm cache clean --force; \
-    \
-    # Fail the build rather than the pod: assert that the optional native dependencies are installed and load.
-    node -e 'require("better-sqlite3"); if (!require("@tryghost/image-transform").canTransformFiles()) throw new Error("sharp not installed");'
+# Keep corepack's and pnpm's caches out of the install directory: they are derived from these variables,
+# and /tmp keeps them out of the layer that is copied into the final image.
+ENV XDG_CACHE_HOME=/tmp/xdg-cache XDG_DATA_HOME=/tmp/xdg-data
+WORKDIR "$GHOST_INSTALL"
+
+# Download the release tarball and verify it against the pinned digest before anything is unpacked.
+RUN curl -fsSL -o ghost.tgz "$GHOST_TARBALL_URL"
+RUN echo "$GHOST_TARBALL_SHA256  ghost.tgz" | sha256sum -c -
+
+# The release tarball has no leading "package/" component, unlike an npm pack, so it unpacks flat into
+# the install directory. There is no "versions/" directory and no "current" symlink: the entrypoint and
+# the CMD below are adjusted to match this layout.
+RUN tar --extract --file ghost.tgz && \
+    rm -fv ghost.tgz
+
+# The tarball ships a pruned lockfile, so the tree is installed exactly as locked, not re-solved.
+RUN pnpm install --prod --frozen-lockfile
+
+# Install-time inputs only: package.json points a number of dependencies at "file:components/*.tgz", but
+# pnpm extracts them into its virtual store and nothing resolves back here afterwards.
+RUN rm -rf "$GHOST_INSTALL/components"
+
+# Ghost's own pruner, as used by its production image: drops dependency TypeScript, sourcemaps, READMEs
+# and vendored C/C++ (keeping licences and prebuilt .node). The tarball already has the "archive" profile
+# applied, so this is mostly node_modules.
+RUN node scripts/prune.mts "$GHOST_INSTALL" --profile=image
+
+# Keep the initial content so the entrypoint can seed an empty volume with the bundled themes.
+RUN mv "$GHOST_CONTENT" "$GHOST_CONTENT_ORIGINAL"
+RUN mkdir -p "$GHOST_CONTENT"
+
+RUN rm -rf /tmp/xdg-cache /tmp/xdg-data
+RUN npm cache clean --force
+
+# Fail the build rather than the pod: assert that the optional native dependencies are installed and load.
+RUN node -e 'require("better-sqlite3"); if (!require("@tryghost/image-transform").canTransformFiles()) throw new Error("sharp not installed");'
 
 # Stage 2: Final Image
 FROM gcr.io/distroless/nodejs24-debian13:latest@sha256:c23cc7262662efd642cd9c9d61783d10f600321f7bafdd37c8a82365ffaa2aa6 AS runtime
