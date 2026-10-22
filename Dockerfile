@@ -39,7 +39,7 @@ ENV GHOST_CONTENT_ORIGINAL=/home/nonroot/app/ghost/content.orig
 # (the digest is published on the GitHub release as "digest": "sha256:...").
 ARG GHOST_VERSION
 ENV GHOST_VERSION=$GHOST_VERSION
-ARG GHOST_TARBALL_URL=https://github.com/TryGhost/Ghost/releases/download/v${GHOST_VERSION}/ghost-${GHOST_VERSION}.tgz
+ARG GHOST_TARBALL_URL="https://github.com/TryGhost/Ghost/releases/download/v${GHOST_VERSION}/ghost-${GHOST_VERSION}.tgz"
 ARG GHOST_TARBALL_SHA256
 ENV GHOST_TARBALL_SHA256=$GHOST_TARBALL_SHA256
 
@@ -53,7 +53,8 @@ RUN mkdir -pv "$GHOST_INSTALL"
 
 # Keep corepack's and pnpm's caches out of the install directory: they are derived from these variables,
 # and /tmp keeps them out of the layer that is copied into the final image.
-ENV XDG_CACHE_HOME=/tmp/xdg-cache XDG_DATA_HOME=/tmp/xdg-data
+ENV XDG_CACHE_HOME=/tmp/xdg-cache
+ENV XDG_DATA_HOME=/tmp/xdg-data
 WORKDIR "$GHOST_INSTALL"
 
 # Download the release tarball and verify it against the pinned digest before anything is unpacked.
