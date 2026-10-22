@@ -39,7 +39,7 @@ ENV GHOST_CONTENT_ORIGINAL=/home/nonroot/app/ghost/content.orig
 # (the digest is published on the GitHub release as "digest": "sha256:...").
 ARG GHOST_VERSION
 ENV GHOST_VERSION=$GHOST_VERSION
-ENV GHOST_TARBALL_URL="https://github.com/TryGhost/Ghost/releases/download/${GHOST_VERSION}/ghost-${GHOST_VERSION}.tgz"
+ENV GHOST_TARBALL_URL="https://github.com/TryGhost/Ghost/releases/download/v${GHOST_VERSION}/ghost-${GHOST_VERSION}.tgz"
 ARG GHOST_TARBALL_SHA256
 ENV GHOST_TARBALL_SHA256=$GHOST_TARBALL_SHA256
 
