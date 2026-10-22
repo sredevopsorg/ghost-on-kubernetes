@@ -111,7 +111,9 @@ jobs:
           platforms: ${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ steps.meta.outputs.annotations }}
-          build-args: GHOST_VERSION=${{ steps.versions.outputs.ghost-version }}
+          build-args: |
+            "GHOST_VERSION=${{ steps.versions.outputs.ghost-version }}"
+            "GHOST_TARBALL_SHA256=${{ steps.versions.outputs.ghost-tarball-sha256 }}"
           outputs: type=image,name=${{ env.GHCR_IMAGE }},push-by-digest=true,name-canonical=true,push=true,oci-mediatypes=true
           cache-from: type=gha,scope=${{ github.repository }}-${{ github.ref_name }}-${{ matrix.platform }}
           cache-to: type=gha,scope=${{ github.repository }}-${{ github.ref_name }}-${{ matrix.platform }}
@@ -184,7 +186,7 @@ jobs:
           tags: |
             type=raw,value=main,enable=${{ github.event_name != 'workflow_dispatch' }}
             type=raw,value=latest,enable=${{ github.event_name != 'workflow_dispatch' }}
-            type=raw,value=${{ steps.versions.outputs.ghost-version }},enable=${{ github.event_name != 'workflow_dispatch' }}
+            type=raw,value=v${{ steps.versions.outputs.ghost-version }},enable=${{ github.event_name != 'workflow_dispatch' }}
             type=raw,value=${{ github.event.inputs.manual-tag }},enable=${{ github.event_name == 'workflow_dispatch' }}
 
       - name: Set up Docker Buildx
@@ -214,7 +216,7 @@ jobs:
             --annotation='index:org.opencontainers.image.description=${{ github.event.repository.description }}' \
             --annotation='index:org.opencontainers.image.created=${{ steps.timestamp.outputs.timestamp }}' \
             --annotation='index:org.opencontainers.image.url=${{ github.event.repository.url }}' \
-            --annotation='index:org.opencontainers.image.version=${{ steps.versions.outputs.ghost-version }}' \
+            --annotation='index:org.opencontainers.image.version=v${{ steps.versions.outputs.ghost-version }}' \
             --annotation='index:org.opencontainers.image.source=${{ github.event.repository.url }}' \
             --annotation='index:io.artifacthub.package.readme-url=https://raw.githubusercontent.com/sredevopsorg/ghost-on-kubernetes/main/README.md' \
             --annotation='index:org.opencontainers.image.vendor=SREDevOps.org' \
@@ -237,31 +239,31 @@ jobs:
         run: |
           echo "DIGEST_0=$(docker buildx imagetools inspect --raw ${{ env.GHCR_IMAGE }}:${{ steps.meta.outputs.version }} | jq -r '.manifests[0].digest')" >> $GITHUB_OUTPUT
 
-      - name: Sign image with a key
-        run: |
-          images=""
-          for tag in ${TAGS}; do
-            images+="${tag}@${DIGEST_0} "
-          done
-          cosign sign --recursive --yes --key env://COSIGN_PRIVATE_KEY ${images}
-        env:
-          TAGS: ${{ steps.meta.outputs.tags }}
-          COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
-          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
-          DIGEST_0: ${{ steps.inspect.outputs.DIGEST_0 }}
+      # - name: Sign image with a key
+      #   run: |
+      #     images=""
+      #     for tag in ${TAGS}; do
+      #       images+="${tag}@${DIGEST_0} "
+      #     done
+      #     cosign sign --recursive --yes --key env://COSIGN_PRIVATE_KEY ${images}
+      #   env:
+      #     TAGS: ${{ steps.meta.outputs.tags }}
+      #     COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
+      #     COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+      #     DIGEST_0: ${{ steps.inspect.outputs.DIGEST_0 }}
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
-        continue-on-error: true
-        with:
-          username: ${{ secrets.DOCKER_USER }}
-          password: ${{ secrets.DOCKER_PASS }}
+      # - name: Login to Docker Hub
+      #   uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+      #   continue-on-error: true
+      #   with:
+      #     username: ${{ secrets.DOCKER_USER }}
+      #     password: ${{ secrets.DOCKER_PASS }}
 
-      - name: Push to Docker Hub
-        continue-on-error: true
-        run: |
-          docker buildx imagetools create \
-            --tag ${{ env.DOCKER_IMAGE }}:${{ steps.versions.outputs.ghost-version }} \
-            --tag ${{ env.DOCKER_IMAGE }}:latest \
-            --tag ${{ env.DOCKER_IMAGE }}:main \
-          ${{ env.GHCR_IMAGE }}:${{ steps.meta.outputs.version }}
+      # - name: Push to Docker Hub
+      #   continue-on-error: true
+      #   run: |
+      #     docker buildx imagetools create \
+      #       --tag ${{ env.DOCKER_IMAGE }}:v${{ steps.versions.outputs.ghost-version }} \
+      #       --tag ${{ env.DOCKER_IMAGE }}:latest \
+      #       --tag ${{ env.DOCKER_IMAGE }}:main \
+      #     ${{ env.GHCR_IMAGE }}:${{ steps.meta.outputs.version }}
