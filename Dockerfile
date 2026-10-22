@@ -39,7 +39,7 @@ ENV GHOST_CONTENT_ORIGINAL=/home/nonroot/app/ghost/content.orig
 # (the digest is published on the GitHub release as "digest": "sha256:...").
 ARG GHOST_VERSION
 ENV GHOST_VERSION=$GHOST_VERSION
-ARG GHOST_TARBALL_URL="https://github.com/TryGhost/Ghost/releases/download/v${GHOST_VERSION}/ghost-${GHOST_VERSION}.tgz"
+ENV GHOST_TARBALL_URL="https://github.com/TryGhost/Ghost/releases/download/${GHOST_VERSION}/ghost-${GHOST_VERSION}.tgz"
 ARG GHOST_TARBALL_SHA256
 ENV GHOST_TARBALL_SHA256=$GHOST_TARBALL_SHA256
 
@@ -59,7 +59,7 @@ WORKDIR "$GHOST_INSTALL"
 
 # Download the release tarball and verify it against the pinned digest before anything is unpacked.
 RUN curl -fsSL -o ghost.tgz "$GHOST_TARBALL_URL"
-RUN echo "$GHOST_TARBALL_SHA256  ghost.tgz" | sha256sum -c -
+RUN echo "$GHOST_TARBALL_SHA256 ghost.tgz" | sha256sum -c -
 
 # The release tarball has no leading "package/" component, unlike an npm pack, so it unpacks flat into
 # the install directory. There is no "versions/" directory and no "current" symlink: the entrypoint and
