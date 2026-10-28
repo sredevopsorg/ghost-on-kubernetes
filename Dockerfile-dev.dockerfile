@@ -90,7 +90,7 @@ RUN npm cache clean --force
 RUN node -e 'require("better-sqlite3"); if (!require("@tryghost/image-transform").canTransformFiles()) throw new Error("sharp not installed");'
 
 # Stage 2: Final Image
-FROM gcr.io/distroless/nodejs24-debian13:debug-nonroot@sha256:33449ee136aa2fa6a768dc63f0f852a33d5c8977913e0fec2e3b50d4920e5a97 AS runtime 
+FROM gcr.io/distroless/nodejs24-debian13:debug-nonroot@sha256:54fdff6ae698f05abb702d8e56cc03dca3426df7f3b992c25dba3f9cc2a50c5a AS runtime 
 
 # Set the installation directory and content directory for Ghost
 ENV GHOST_INSTALL_SRC=/home/nonroot/app/ghost
