@@ -2,7 +2,7 @@
 # The image is built with official Node 24 on Debian Trixie (LTS)  image and uses the Google's Distroless nodejs24-debian13 image in the runtime for security and minimalism.
 
 # Stage 1: Build Environment
-FROM docker.io/node:24-trixie@sha256:8c761eca2bf7eec965f946cf47b8090143cb41f45f2f8699af0cc0298d2d2d19 AS build-env
+FROM docker.io/node:26-trixie@sha256:6d2c7d5d074bf72f81ddc252b4fbb5d625bc028eeda49cb4b8c2ff8eda1ee617 AS build-env
 USER root
 # Installs dependencies for sqlite3 node dependencies, and jemalloc for memory allocation
 RUN apt update && \
