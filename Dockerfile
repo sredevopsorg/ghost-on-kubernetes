@@ -15,7 +15,7 @@
 # PVC, ownership is handled by an init container, and credentials must never live in an image layer.
 #
 # Stage 1: Build Environment
-FROM docker.io/node:24-trixie@sha256:5c6e2e57d7dd6652ce6f087ba0328312059d7c77f93baa8751865dbf103f1acb AS build-env
+FROM docker.io/node:24-trixie@sha256:7a6e2becc10d350a76560e3c00e8f32883f65b010b2c06ad2aedc779512960ad AS build-env
 USER root
 # Create a new user and group named "nonroot" with the UID 65532 and GID 65532, not a member of the root, sudo, and sys groups, and set the home directory to /home/nonroot.
 # This user is used to run the Ghost application in the container for security reasons.
